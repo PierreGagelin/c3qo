@@ -172,12 +172,8 @@ void server_us_asnb_start()
 
 
 
-void server_us_asnb_ctrl(void * b_conf, void * b_stats, void * b_ctx,
-                enum block_event event, void * arg)
+void server_us_asnb_ctrl(enum block_event event, void * arg)
 {
-        (void) b_conf;
-        (void) b_ctx;
-        (void) b_stats;
         (void) arg;
 
         switch (event)

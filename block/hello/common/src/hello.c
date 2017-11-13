@@ -22,12 +22,8 @@ void hello_start()
 
 
 
-void hello_ctrl(void * b_conf, void * b_stats, void * b_ctx,
-                enum block_event event, void * arg)
+void hello_ctrl(enum block_event event, void * arg)
 {
-        (void) b_conf;
-        (void) b_ctx;
-        (void) b_stats;
         (void) arg;
 
         switch (event)

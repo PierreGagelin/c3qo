@@ -48,7 +48,7 @@ struct block_if
         /* Data processing */
         void (*rx) (void);
         void (*tx) (void);
-        void (*ctrl) (void *, void *, void *, enum block_event, void *);
+        void (*ctrl) (enum block_event, void *);
 };
 
 #endif

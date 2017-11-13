@@ -20,12 +20,8 @@ void goodbye_start()
 
 
 
-void goodbye_ctrl(void * b_conf, void * b_stats, void * b_ctx,
-                enum block_event event, void * arg)
+void goodbye_ctrl(enum block_event event, void * arg)
 {
-        (void) b_conf;
-        (void) b_ctx;
-        (void) b_stats;
         (void) arg;
 
         switch (event)

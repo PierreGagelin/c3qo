@@ -114,12 +114,8 @@ void client_us_asnb_start()
         fprintf(stdout, "Not implemented yet\n");
 }
 
-void client_us_asnb_ctrl(void * b_conf, void * b_stats, void * b_ctx,
-                enum block_event event, void * arg)
+void client_us_asnb_ctrl(enum block_event event, void * arg)
 {
-        (void) b_conf;
-        (void) b_ctx;
-        (void) b_stats;
         (void) arg;
 
         switch (event)
