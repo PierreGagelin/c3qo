@@ -22,7 +22,7 @@ void hello_start()
 
 
 
-void hello_ctrl(enum block_event event, void * arg)
+void hello_ctrl(enum block_event event, void *arg)
 {
         (void) arg;
 

@@ -20,7 +20,7 @@ void goodbye_start()
 
 
 
-void goodbye_ctrl(enum block_event event, void * arg)
+void goodbye_ctrl(enum block_event event, void *arg)
 {
         (void) arg;
 

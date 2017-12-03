@@ -39,7 +39,7 @@ void c3qo_socket_set_asnb(int fd)
 /**
  * @brief Non-blocking write to the file descriptor
  */
-ssize_t c3qo_socket_write_nb(int fd, const char * buff, size_t size)
+ssize_t c3qo_socket_write_nb(int fd, const char *buff, size_t size)
 {
         ssize_t ret;
 
@@ -76,7 +76,7 @@ ssize_t c3qo_socket_write_nb(int fd, const char * buff, size_t size)
 /**
  * @brief Non-blocking read to the file descriptor
  */
-ssize_t c3qo_socket_read_nb(int fd, char * buff, size_t size)
+ssize_t c3qo_socket_read_nb(int fd, char *buff, size_t size)
 {
         ssize_t ret;
 

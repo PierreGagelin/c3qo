@@ -8,15 +8,15 @@
 
 #include "../../../block/block.h"
 
-int main (int argc, char ** argv)
+int main (int argc, char **argv)
 {
         /* unused parameter */
         (void) argc;
         (void) argv;
 
-        void *            libblock;
-        struct block_if * block;
-        char *            error;
+        void *           libblock;
+        struct block_if *block;
+        char *           error;
 
         libblock = dlopen("libblock.so", RTLD_LAZY);
         if (libblock == NULL)

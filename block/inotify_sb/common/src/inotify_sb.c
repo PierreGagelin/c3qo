@@ -13,7 +13,7 @@
 
 void inotify_sb_ctx_init();
 void inotify_sb_ctx_clean();
-void inotify_sb_ctrl(enum block_event event, void * arg);
+void inotify_sb_ctrl(enum block_event event, void *arg);
 
 struct block_if inotify_sb_entry =
 {
@@ -59,7 +59,7 @@ void inotify_sb_ctx_clean()
  */
 void inotify_sb_init()
 {
-        struct inotify_sb_ctx * ctx;
+        struct inotify_sb_ctx *ctx;
 
         ctx = (struct inotify_sb_ctx *) inotify_sb_entry.ctx;
 
@@ -84,10 +84,10 @@ void inotify_sb_init()
 
 void inotify_sb_start()
 {
-        struct inotify_sb_ctx * ctx;
-        fd_set rfds;
-        struct timeval tv;
-        int retval;
+        struct inotify_sb_ctx *ctx;
+        fd_set                rfds;
+        struct timeval        tv;
+        int                   retval;
 
         ctx = (struct inotify_sb_ctx *) inotify_sb_entry.ctx;
 
@@ -118,7 +118,7 @@ void inotify_sb_start()
 
 
 
-void inotify_sb_ctrl(enum block_event event, void * arg)
+void inotify_sb_ctrl(enum block_event event, void *arg)
 {
         (void) arg;
 

@@ -65,7 +65,7 @@ static void server_us_asnb_flush_fd(int fd)
  *
  * NOTE: it is dangerous to make syscalls here
  */
-void server_us_asnb_handler(int sig, siginfo_t * info, void * context)
+void server_us_asnb_handler(int sig, siginfo_t *info, void *context)
 {
         (void) context;
 
@@ -114,7 +114,7 @@ void server_us_asnb_handler(int sig, siginfo_t * info, void * context)
 /**
  * @brief Initialization function
  */
-void server_us_asnb_init ()
+void server_us_asnb_init()
 {
         struct sockaddr_un srv_addr;
         int                ret;
@@ -172,7 +172,7 @@ void server_us_asnb_start()
 
 
 
-void server_us_asnb_ctrl(enum block_event event, void * arg)
+void server_us_asnb_ctrl(enum block_event event, void *arg)
 {
         (void) arg;
 

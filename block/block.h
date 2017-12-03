@@ -29,18 +29,18 @@ enum block_event
 struct block_if
 {
         /* Configuration management */
-        void * conf;
+        void *conf;
         void (*conf_init) (void);
         void (*conf_set) (void);
         void (*conf_clean) (void);
 
         /* Context management */
-        void * ctx;
+        void *ctx;
         void (*ctx_init) (void);
         void (*ctx_clean) (void);
 
         /* Statistics management */
-        void * stats;
+        void *stats;
         void (*stats_init) (void);
         void (*stats_get) (void);
         void (*stats_clean) (void);

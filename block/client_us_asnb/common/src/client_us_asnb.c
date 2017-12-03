@@ -38,7 +38,7 @@ struct client_us_asnb_ctx ctx;
  *
  * NOTE: it is dangerous to make syscalls here
  */
-void client_us_asnb_handler(int sig, siginfo_t * info, void * context)
+void client_us_asnb_handler(int sig, siginfo_t *info, void *context)
 {
         (void) context;
         (void) info;
@@ -60,7 +60,7 @@ void client_us_asnb_handler(int sig, siginfo_t * info, void * context)
 void client_us_asnb_init()
 {
         struct sockaddr_un clt_addr;
-        const char *       buff;
+        const char         *buff;
         int                ret;
 
         puts("Block client_us_asnb is being initialized");
@@ -114,7 +114,7 @@ void client_us_asnb_start()
         fprintf(stdout, "Not implemented yet\n");
 }
 
-void client_us_asnb_ctrl(enum block_event event, void * arg)
+void client_us_asnb_ctrl(enum block_event event, void *arg)
 {
         (void) arg;
 

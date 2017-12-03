@@ -11,10 +11,10 @@
 /**
  * @brief Registers a callback for a signal
  *
- * @param func Callback to be called upon signal
- * @param sig  Signal to register
+ * @param func : Callback to be called upon signal
+ * @param sig  : Signal to register
  *
- * NOTE: this is not sufficient if many block register on a same signal
+ * NOTE: this is not sufficient if many blocks register on a same signal
  */
 void c3qo_register_fd_handler(int sig,
                 void (*func)(int, siginfo_t *, void *))
