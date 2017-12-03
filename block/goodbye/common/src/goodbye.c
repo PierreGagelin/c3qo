@@ -49,22 +49,8 @@ void goodbye_ctrl(enum block_event event, void *arg)
 
 struct block_if goodbye_entry =
 {
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-
-        NULL,
-        NULL,
-        NULL,
-
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-
-        NULL,
-        NULL,
-        goodbye_ctrl,
+        .rx   = NULL,
+        .tx   = NULL,
+        .ctrl = goodbye_ctrl,
 };
 

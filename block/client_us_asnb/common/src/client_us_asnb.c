@@ -144,22 +144,8 @@ void client_us_asnb_ctrl(enum block_event event, void *arg)
 /* Declare the interface for this block */
 struct block_if client_us_asnb_entry =
 {
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-
-        NULL,
-        NULL,
-        NULL,
-
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-
-        NULL,
-        NULL,
-        client_us_asnb_ctrl,
+        .rx   = NULL,
+        .tx   = NULL,
+        .ctrl = client_us_asnb_ctrl,
 };
 

@@ -51,22 +51,8 @@ void hello_ctrl(enum block_event event, void *arg)
 
 struct block_if hello_entry =
 {
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-
-        NULL,
-        NULL,
-        NULL,
-
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-
-        NULL,
-        NULL,
-        hello_ctrl,
+        .rx   = NULL,
+        .tx   = NULL,
+        .ctrl = hello_ctrl,
 };
 

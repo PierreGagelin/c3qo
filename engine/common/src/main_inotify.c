@@ -14,9 +14,9 @@ int main (int argc, char **argv)
         (void) argc;
         (void) argv;
 
-        void *           libblock;
+        void *          libblock;
         struct block_if *block;
-        char *           error;
+        char *          error;
 
         libblock = dlopen("libblock.so", RTLD_LAZY);
         if (libblock == NULL)
@@ -34,13 +34,12 @@ int main (int argc, char **argv)
                 fprintf(stderr, "%s\n", dlerror());
                 exit(EXIT_FAILURE);
         }
-        block->ctx_init();
         block->ctrl(BLOCK_INIT, NULL);
         block->ctrl(BLOCK_START, NULL);
 
         getchar();
 
-        block->ctx_clean();
+        block->ctrl(BLOCK_STOP, NULL);
 
         exit(EXIT_SUCCESS);
 }

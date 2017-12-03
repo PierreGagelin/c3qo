@@ -32,6 +32,9 @@ c3qo : $(OBJ)
 engine/common/src/main.o : engine/common/src/main.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
+engine/common/src/main_inotify.o : engine/common/src/main_inotify.c
+	$(CC) $(CFLAGS) -o $@ -c $<
+
 engine/common/src/c3qo_signal.o : engine/common/src/c3qo_signal.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
@@ -43,22 +46,25 @@ engine/common/src/c3qo_socket.o : engine/common/src/c3qo_socket.c
 
 ### BLOCKS LIBRARY
 #
+
+BLOCK_DEPENDS = block/block.h
+
 libblock.so : $(SHARED_OBJ)
 	$(CC) $(CFLAGS) -shared -o $@ $^
 
-block/hello/common/src/hello.o : block/hello/common/src/hello.c
+block/hello/common/src/hello.o : block/hello/common/src/hello.c $(BLOCK_DEPENDS)
 	$(CC) $(CFLAGS) -fpic -o $@ -c $<
 
-block/goodbye/common/src/goodbye.o : block/goodbye/common/src/goodbye.c
+block/goodbye/common/src/goodbye.o : block/goodbye/common/src/goodbye.c $(BLOCK_DEPENDS)
 	$(CC) $(CFLAGS) -fpic -o $@ -c $<
 
-block/server_us_asnb/common/src/server_us_asnb.o : block/server_us_asnb/common/src/server_us_asnb.c
+block/server_us_asnb/common/src/server_us_asnb.o : block/server_us_asnb/common/src/server_us_asnb.c $(BLOCK_DEPENDS)
 	$(CC) $(CFLAGS) -fpic -o $@ -c $<
 
-block/client_us_asnb/common/src/client_us_asnb.o : block/client_us_asnb/common/src/client_us_asnb.c
+block/client_us_asnb/common/src/client_us_asnb.o : block/client_us_asnb/common/src/client_us_asnb.c $(BLOCK_DEPENDS)
 	$(CC) $(CFLAGS) -fpic -o $@ -c $<
 
-block/inotify_sb/common/src/inotify_sb.o : block/inotify_sb/common/src/inotify_sb.c
+block/inotify_sb/common/src/inotify_sb.o : block/inotify_sb/common/src/inotify_sb.c $(BLOCK_DEPENDS)
 	$(CC) $(CFLAGS) -fpic -o $@ -c $<
 #
 

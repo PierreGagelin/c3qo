@@ -8,8 +8,8 @@
  */
 enum block_id
 {
-        HELLOER, /**< block that says hello */
-        GOODBYER /**< block that says good bye */
+        HELLOER,  /**< block that says hello */
+        GOODBYER, /**< block that says good bye */
 };
 
 
@@ -19,8 +19,9 @@ enum block_id
  */
 enum block_event
 {
-        BLOCK_INIT, /**< Ask the block to initialize */
-        BLOCK_START /**< Ask the block to start */
+        BLOCK_INIT,  /**< Ask the block to initialize */
+        BLOCK_START, /**< Ask the block to start */
+        BLOCK_STOP,  /**< Ask the block to stop */
 };
 
 /**
@@ -28,22 +29,10 @@ enum block_event
  */
 struct block_if
 {
-        /* Configuration management */
-        void *conf;
-        void (*conf_init) (void);
-        void (*conf_set) (void);
-        void (*conf_clean) (void);
-
         /* Context management */
         void *ctx;
         void (*ctx_init) (void);
         void (*ctx_clean) (void);
-
-        /* Statistics management */
-        void *stats;
-        void (*stats_init) (void);
-        void (*stats_get) (void);
-        void (*stats_clean) (void);
 
         /* Data processing */
         void (*rx) (void);

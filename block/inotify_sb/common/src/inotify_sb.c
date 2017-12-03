@@ -11,46 +11,23 @@
 
 #include "../../../block.h"
 
-void inotify_sb_ctx_init();
-void inotify_sb_ctx_clean();
-void inotify_sb_ctrl(enum block_event event, void *arg);
-
-struct block_if inotify_sb_entry =
-{
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-
-        NULL,
-        inotify_sb_ctx_init,
-        inotify_sb_ctx_clean,
-
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-
-        NULL,
-        NULL,
-        inotify_sb_ctrl,
-};
-
-
 struct inotify_sb_ctx
 {
         int fd; // file descriptor of the inotify
 };
 
+/* context of the block */
+struct inotify_sb_ctx *ctx;
+
 void inotify_sb_ctx_init()
 {
-       inotify_sb_entry.ctx = malloc(sizeof(struct inotify_sb_ctx));
+       ctx = malloc(sizeof(struct inotify_sb_ctx));
 }
 
 
 void inotify_sb_ctx_clean()
 {
-        free(inotify_sb_entry.ctx);
+        free(ctx);
 }
 
 
@@ -59,11 +36,9 @@ void inotify_sb_ctx_clean()
  */
 void inotify_sb_init()
 {
-        struct inotify_sb_ctx *ctx;
+        fprintf(stdout, "Block inotify_sb is being initialized\n");
 
-        ctx = (struct inotify_sb_ctx *) inotify_sb_entry.ctx;
-
-        fprintf(stdout, "Block inotify_sb is being initilized\n");
+        inotify_sb_ctx_init();
 
         ctx->fd = inotify_init1(0);
         if (ctx->fd == -1)
@@ -84,12 +59,9 @@ void inotify_sb_init()
 
 void inotify_sb_start()
 {
-        struct inotify_sb_ctx *ctx;
-        fd_set                rfds;
-        struct timeval        tv;
-        int                   retval;
-
-        ctx = (struct inotify_sb_ctx *) inotify_sb_entry.ctx;
+        fd_set         rfds;
+        struct timeval tv;
+        int            retval;
 
         fprintf(stdout, "Block inotify_sb is being started\n");
 
@@ -134,6 +106,11 @@ void inotify_sb_ctrl(enum block_event event, void *arg)
                 inotify_sb_start();
                 break;
         }
+        case BLOCK_STOP:
+        {
+                inotify_sb_ctx_clean();
+                break;
+        }
         default:
         {
                 fprintf(stderr, "Unknown event called\n");
@@ -145,3 +122,9 @@ void inotify_sb_ctrl(enum block_event event, void *arg)
 
 
 
+struct block_if inotify_sb_entry =
+{
+        .rx   = NULL,
+        .tx   = NULL,
+        .ctrl = inotify_sb_ctrl,
+};
