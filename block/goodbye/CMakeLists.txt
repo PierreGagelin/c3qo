@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(goodbye)
 
-set(SOURCES common/src/goodbye.c)
+set(SOURCES src/goodbye.c)
 
 add_library(goodbye MODULE ${SOURCES})
 

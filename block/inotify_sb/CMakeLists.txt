@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(inotify_sb)
 
-set(SOURCES common/src/inotify_sb.c)
+set(SOURCES src/inotify_sb.c)
 
 add_library(inotify_sb MODULE ${SOURCES})
 

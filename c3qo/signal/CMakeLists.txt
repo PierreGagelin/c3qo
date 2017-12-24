@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(signal)
 
-set(SOURCES common/src/signal.c)
+set(SOURCES src/signal.c)
 
 add_library(signal MODULE ${SOURCES})
 

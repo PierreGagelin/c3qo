@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(socket)
 
-set(SOURCES common/src/socket.c)
+set(SOURCES src/socket.c)
 
 add_library(socket MODULE ${SOURCES})
 

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(client_us_asnb)
 
-set(SOURCES common/src/client_us_asnb.c)
+set(SOURCES src/client_us_asnb.c)
 
 add_library(client_us_asnb MODULE ${SOURCES})
 

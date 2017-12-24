@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(hello)
 
-set(SOURCES common/src/hello.c)
+set(SOURCES src/hello.c)
 
 add_library(hello MODULE ${SOURCES})
 
