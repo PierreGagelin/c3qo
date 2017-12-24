@@ -1,28 +1,23 @@
 
-
-
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "c3qo/block.h"
+#include "block/hello.h"
 
 
-
-void hello_init()
+static void hello_init()
 {
         puts("Block hello is being initilized");
 }
 
 
-
-void hello_start()
+static void hello_start()
 {
         puts("Hello world");
 }
 
 
-
-void hello_ctrl(enum block_event event, void *arg)
+static void hello_ctrl(enum block_event event, void *arg)
 {
         (void) arg;
 
@@ -48,7 +43,9 @@ void hello_ctrl(enum block_event event, void *arg)
 }
 
 
-
+/**
+ * @brief Exported structure of the block
+ */
 struct block_if hello_entry =
 {
         .rx   = NULL,
