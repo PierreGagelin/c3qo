@@ -10,7 +10,7 @@
 
 
 
-#include "../include/c3qo_socket.h"
+#include "c3qo/socket.h"
 
 #include <errno.h>
 #include <fcntl.h>

@@ -2,7 +2,7 @@
  * @brief This file aims to give an API to register signal handlers
  */
 
-#include "../include/c3qo_signal.h"
+#include "c3qo/signal.h"
 
 #include <stdio.h>
 #include <stdlib.h>

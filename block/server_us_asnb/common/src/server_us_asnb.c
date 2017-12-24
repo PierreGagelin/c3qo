@@ -9,9 +9,9 @@
 
 
 /* include from the project itself */
-#include "../../../block.h"
-#include "../../../../engine/common/include/c3qo_signal.h"
-#include "../../../../engine/common/include/c3qo_socket.h"
+#include "c3qo/block.h"
+#include "c3qo/signal.h"
+#include "c3qo/socket.h"
 
 /* include from external libraries */
 #include <fcntl.h>

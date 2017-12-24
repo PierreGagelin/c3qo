@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <sys/select.h>
 
-#include "../../../block.h"
+#include "c3qo/block.h"
 
 struct inotify_sb_ctx
 {
