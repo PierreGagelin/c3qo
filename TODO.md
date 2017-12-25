@@ -1,12 +1,15 @@
-# This file contains some ideas to things to do
+
+
+This file contains some ideas to things to do
+
 
 # Dev
-- timer gestion with setitimer, getitimer
-- implement US ASNB RX and TX
+- synchronous timer management
 - implement a block for synchronous socket
-- make a file to generate a graph instance
+
 
 # Test
-- make some unitary testing
-- set LCOV on the code
+- set LCOV / GCOV on the code
+- make functionnal tests
+
 
