@@ -8,7 +8,7 @@ function build
         mkdir -p "$BUILD_DIR"
         cd "$BUILD_DIR"
         cmake ../
-        make -j8
+        make -j4
         cd -
 }
 

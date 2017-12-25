@@ -20,3 +20,5 @@ set(BLOCK_SERVER_US_ASNB_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/block/server_us_asnb/in
 
 add_subdirectory(c3qo)
 add_subdirectory(block)
+
+add_subdirectory(gtest)
