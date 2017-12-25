@@ -1,6 +1,5 @@
 
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/inotify.h>
@@ -9,7 +8,8 @@
 #include <sys/types.h>
 #include <sys/select.h>
 
-#include "c3qo/block.h"
+#include "block/inotify_sb.h"
+
 
 struct inotify_sb_ctx
 {
@@ -19,13 +19,13 @@ struct inotify_sb_ctx
 /* context of the block */
 struct inotify_sb_ctx *ctx;
 
-void inotify_sb_ctx_init()
+static void inotify_sb_ctx_init()
 {
        ctx = malloc(sizeof(struct inotify_sb_ctx));
 }
 
 
-void inotify_sb_ctx_clean()
+static void inotify_sb_ctx_clean()
 {
         free(ctx);
 }
@@ -34,7 +34,7 @@ void inotify_sb_ctx_clean()
 /**
  * @brief Create a inotify descriptor
  */
-void inotify_sb_init()
+static void inotify_sb_init()
 {
         fprintf(stdout, "Block inotify_sb is being initialized\n");
 
@@ -56,8 +56,7 @@ void inotify_sb_init()
 }
 
 
-
-void inotify_sb_start()
+static void inotify_sb_start()
 {
         fd_set         rfds;
         struct timeval tv;
@@ -89,8 +88,7 @@ void inotify_sb_start()
 }
 
 
-
-void inotify_sb_ctrl(enum block_event event, void *arg)
+static void inotify_sb_ctrl(enum block_event event, void *arg)
 {
         (void) arg;
 
@@ -121,10 +119,11 @@ void inotify_sb_ctrl(enum block_event event, void *arg)
 }
 
 
-
 struct block_if inotify_sb_entry =
 {
         .rx   = NULL,
         .tx   = NULL,
         .ctrl = inotify_sb_ctrl,
 };
+
+

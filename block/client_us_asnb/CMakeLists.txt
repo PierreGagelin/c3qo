@@ -1,10 +1,8 @@
-cmake_minimum_required(VERSION 3.0)
-project(client_us_asnb)
-
 set(SOURCES src/client_us_asnb.c)
 
-add_library(client_us_asnb MODULE ${SOURCES})
+add_library(client_us_asnb STATIC ${SOURCES})
 
+target_include_directories(client_us_asnb PUBLIC ${BLOCK_CLIENT_US_ASNB_INCLUDE_DIR})
 target_include_directories(client_us_asnb PUBLIC ${C3QO_BLOCK_INCLUDE_DIR})
 target_include_directories(client_us_asnb PUBLIC ${C3QO_SIGNAL_INCLUDE_DIR})
 target_include_directories(client_us_asnb PUBLIC ${C3QO_SOCKET_INCLUDE_DIR})

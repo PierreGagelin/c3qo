@@ -11,12 +11,10 @@
  * SIGIO management could be replaced by aio_sigevent */
 #define _GNU_SOURCE
 
-/* include from the project itself */
-#include "c3qo/block.h"
+#include "block/client_us_asnb.h"
 #include "c3qo/signal.h"
 #include "c3qo/socket.h"
 
-/* include from external libraries */
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -25,6 +23,7 @@
 #include <sys/types.h>
 #include <sys/un.h>
 #include <sys/socket.h>
+
 
 struct client_us_asnb_ctx
 {
@@ -38,7 +37,7 @@ struct client_us_asnb_ctx ctx;
  *
  * NOTE: it is dangerous to make syscalls here
  */
-void client_us_asnb_handler(int sig, siginfo_t *info, void *context)
+static void client_us_asnb_handler(int sig, siginfo_t *info, void *context)
 {
         (void) context;
         (void) info;
@@ -53,11 +52,10 @@ void client_us_asnb_handler(int sig, siginfo_t *info, void *context)
 }
 
 
-
 /**
  * @brief Initialization function
  */
-void client_us_asnb_init()
+static void client_us_asnb_init()
 {
         struct sockaddr_un clt_addr;
         const char         *buff;
@@ -105,16 +103,16 @@ void client_us_asnb_init()
 }
 
 
-
 /**
  * @brief Initialization function
  */
-void client_us_asnb_start()
+static void client_us_asnb_start()
 {
         fprintf(stdout, "Not implemented yet\n");
 }
 
-void client_us_asnb_ctrl(enum block_event event, void *arg)
+
+static void client_us_asnb_ctrl(enum block_event event, void *arg)
 {
         (void) arg;
 
@@ -138,7 +136,6 @@ void client_us_asnb_ctrl(enum block_event event, void *arg)
         }
         }
 }
-
 
 
 /* Declare the interface for this block */

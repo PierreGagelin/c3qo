@@ -8,12 +8,10 @@
  */
 
 
-/* include from the project itself */
-#include "c3qo/block.h"
+#include "block/server_us_asnb.h"
 #include "c3qo/signal.h"
 #include "c3qo/socket.h"
 
-/* include from external libraries */
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,8 +21,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+
 #define SOCKET_FD_MAX    64 /* maximum number of file descriptors */
 #define SOCKET_READ_SIZE 256
+
 
 /* context of the block */
 struct server_us_asnb_ctx
@@ -34,10 +34,10 @@ struct server_us_asnb_ctx
 };
 struct server_us_asnb_ctx ctx;
 
+
 /* statistics */
 unsigned int server_us_asnb_count;
 ssize_t      server_us_asnb_bytes;
-
 
 
 /**
@@ -60,12 +60,13 @@ static void server_us_asnb_flush_fd(int fd)
         } while (ret != -1);
 }
 
+
 /**
  * @brief Callback for SIGIO
  *
  * NOTE: it is dangerous to make syscalls here
  */
-void server_us_asnb_handler(int sig, siginfo_t *info, void *context)
+static void server_us_asnb_handler(int sig, siginfo_t *info, void *context)
 {
         (void) context;
 
@@ -110,11 +111,10 @@ void server_us_asnb_handler(int sig, siginfo_t *info, void *context)
 }
 
 
-
 /**
  * @brief Initialization function
  */
-void server_us_asnb_init()
+static void server_us_asnb_init()
 {
         struct sockaddr_un srv_addr;
         int                ret;
@@ -161,18 +161,16 @@ void server_us_asnb_init()
 }
 
 
-
 /**
  * @brief Initialization function
  */
-void server_us_asnb_start()
+static void server_us_asnb_start()
 {
         fprintf(stdout, "Not implemented yet\n");
 }
 
 
-
-void server_us_asnb_ctrl(enum block_event event, void *arg)
+static void server_us_asnb_ctrl(enum block_event event, void *arg)
 {
         (void) arg;
 
@@ -196,7 +194,6 @@ void server_us_asnb_ctrl(enum block_event event, void *arg)
         }
         }
 }
-
 
 
 /* Declare the interface for this block */

@@ -2,25 +2,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "c3qo/block.h"
+#include "block/goodbye.h"
 
 
-
-void goodbye_init()
+static void goodbye_init()
 {
         puts("Block goodbye is being initilized");
 }
 
 
-
-void goodbye_start()
+static void goodbye_start()
 {
         puts("Goodbye world");
 }
 
 
-
-void goodbye_ctrl(enum block_event event, void *arg)
+static void goodbye_ctrl(enum block_event event, void *arg)
 {
         (void) arg;
 
@@ -44,7 +41,6 @@ void goodbye_ctrl(enum block_event event, void *arg)
         }
         }
 }
-
 
 
 struct block_if goodbye_entry =
