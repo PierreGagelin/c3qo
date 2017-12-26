@@ -30,9 +30,9 @@ enum block_event
 struct block_if
 {
         /* Context management */
-        void *ctx;
-        void (*ctx_init) (void);
-        void (*ctx_clean) (void);
+//        void *ctx;
+//        void (*ctx_init) (void);
+//        void (*ctx_clean) (void);
 
         /* Data processing */
         void (*rx) (void);
