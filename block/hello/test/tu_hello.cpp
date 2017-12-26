@@ -10,18 +10,17 @@
 #include "gtest/gtest.h"
 
 
-int main (int argc, char **argv)
+class tu_hello : public testing::Test
 {
-        (void) argc;
-        (void) argv;
+};
+
+
+TEST_F(tu_hello, hello)
+{
+        EXPECT_TRUE(&hello_entry != NULL);
 
         hello_entry.ctrl(BLOCK_INIT, NULL);
         hello_entry.ctrl(BLOCK_START, NULL);
-
-        EXPECT_EQ(1, 1);
-
-        exit(EXIT_SUCCESS);
 }
-
 
 

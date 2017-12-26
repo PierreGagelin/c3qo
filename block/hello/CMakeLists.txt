@@ -19,3 +19,4 @@ target_include_directories(tu_hello PUBLIC "${gtest_SOURCE_DIR}/include")
 
 target_link_libraries(tu_hello debug hello)
 target_link_libraries(tu_hello debug gtest)
+target_link_libraries(tu_hello debug gtest_main)
