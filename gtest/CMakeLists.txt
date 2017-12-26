@@ -18,10 +18,10 @@ else()
   include(GNUInstallDirs)
 endif()
 
-option(BUILD_GTEST "Builds the googletest subproject" OFF)
+option(BUILD_GTEST "Builds the googletest subproject" ON)
 
 #Note that googlemock target already builds googletest
-option(BUILD_GMOCK "Builds the googlemock subproject" ON)
+option(BUILD_GMOCK "Builds the googlemock subproject" OFF)
 
 cmake_dependent_option(INSTALL_GTEST "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" ON "BUILD_GTEST OR BUILD_GMOCK" OFF)
 cmake_dependent_option(INSTALL_GMOCK "Enable installation of googlemock. (Projects embedding googlemock may want to turn this OFF.)" ON "BUILD_GMOCK" OFF)
