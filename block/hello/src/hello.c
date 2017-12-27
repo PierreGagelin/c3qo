@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "block/hello.h"
+#include "c3qo/block.h"
 
 
 static void hello_init()

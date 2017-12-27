@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "block/goodbye.h"
+#include "c3qo/block.h"
 
 
 static void goodbye_init()

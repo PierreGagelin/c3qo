@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <sys/select.h>
 
-#include "block/inotify_sb.h"
+#include "c3qo/block.h"
 
 
 struct inotify_sb_ctx

@@ -5,10 +5,12 @@
 
 #include <stdlib.h>
 
-#include "block/hello.h"
+//#include "block/hello.h"
+#include "c3qo/block.h"
 
 #include "gtest/gtest.h"
 
+extern struct block_if hello_entry;
 
 class tu_hello : public testing::Test
 {

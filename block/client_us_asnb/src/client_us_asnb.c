@@ -11,7 +11,7 @@
  * SIGIO management could be replaced by aio_sigevent */
 #define _GNU_SOURCE
 
-#include "block/client_us_asnb.h"
+#include "c3qo/block.h"
 #include "c3qo/signal.h"
 #include "c3qo/socket.h"
 
