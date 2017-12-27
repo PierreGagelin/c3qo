@@ -11,6 +11,7 @@
 
 
 #include "c3qo/socket.h"
+#include "c3qo/logger.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -57,12 +58,12 @@ ssize_t c3qo_socket_write_nb(int fd, const char *buff, size_t size)
         }
         case EAGAIN:
         {
-                fprintf(stdout, "socket not ready to send data\n");
+                LOGGER_DEBUG("socket not ready to send data\n");
                 break;
         }
         default:
         {
-                fprintf(stderr, "ERROR: non-blocking write failed\n");
+                LOGGER_ERR("non-blocking write failed\n");
                 exit(EXIT_FAILURE);
                 break;
         }
@@ -70,7 +71,6 @@ ssize_t c3qo_socket_write_nb(int fd, const char *buff, size_t size)
 
         return ret;
 }
-
 
 
 /**
@@ -94,12 +94,12 @@ ssize_t c3qo_socket_read_nb(int fd, char *buff, size_t size)
         }
         case EAGAIN:
         {
-                fprintf(stdout, "socket not ready to receive data\n");
+                LOGGER_DEBUG("socket not ready to receive data\n");
                 break;
         }
         default:
         {
-                fprintf(stderr, "ERROR: non-blocking write failed\n");
+                LOGGER_ERR("non-blocking write failed\n");
                 exit(EXIT_FAILURE);
                 break;
         }
@@ -107,3 +107,5 @@ ssize_t c3qo_socket_read_nb(int fd, char *buff, size_t size)
 
         return ret;
 }
+
+

@@ -25,7 +25,7 @@ int main (int argc, char **argv)
         libblock = dlopen("libblock.so", RTLD_LAZY);
         if (libblock == NULL)
         {
-                fprintf(stderr, "%s\n", dlerror());
+                LOGGER_ERR("%s\n", dlerror())
                 exit(EXIT_FAILURE);
         }
 
@@ -45,7 +45,7 @@ int main (int argc, char **argv)
         error = dlerror();
         if (error != NULL)
         {
-                fprintf(stderr, "%s\n", dlerror());
+                LOGGER_ERR("%s\n", dlerror())
                 exit(EXIT_FAILURE);
         }
         block->ctrl(NULL, NULL, NULL, BLOCK_INIT, NULL);

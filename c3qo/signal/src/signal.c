@@ -3,6 +3,7 @@
  */
 
 #include "c3qo/signal.h"
+#include "c3qo/logger.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,7 +30,7 @@ void c3qo_register_fd_handler(int sig,
         ret = sigaction(sig, &fd_callback, NULL);
         if (ret != 0)
         {
-                fprintf(stderr, "ERROR while registering signal handler");
+                LOGGER_ERR("Failed to register signal handler");
                 exit(EXIT_FAILURE);
         }
 }

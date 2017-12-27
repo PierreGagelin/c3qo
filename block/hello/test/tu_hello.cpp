@@ -5,16 +5,30 @@
 
 #include <stdlib.h>
 
-//#include "block/hello.h"
 #include "c3qo/block.h"
+#include "c3qo/logger.h"
 
 #include "gtest/gtest.h"
 
+
+// TU should be linked with the block
 extern struct block_if hello_entry;
 
 class tu_hello : public testing::Test
 {
+        void SetUp();
+        void TearDown();
 };
+
+void tu_hello::SetUp()
+{
+        LOGGER_OPEN();
+}
+
+void tu_hello::TearDown()
+{
+        LOGGER_CLOSE();
+}
 
 
 TEST_F(tu_hello, hello)

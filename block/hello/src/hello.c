@@ -3,17 +3,18 @@
 #include <stdlib.h>
 
 #include "c3qo/block.h"
+#include "c3qo/logger.h"
 
 
 static void hello_init()
 {
-        puts("Block hello is being initilized");
+        LOGGER_INFO("Block hello is being initialized");
 }
 
 
 static void hello_start()
 {
-        puts("Hello world");
+        LOGGER_INFO("Hello world");
 }
 
 
@@ -35,8 +36,7 @@ static void hello_ctrl(enum block_event event, void *arg)
         }
         default:
         {
-                fprintf(stderr, "Unknown event called\n");
-                exit(EXIT_FAILURE);
+                LOGGER_ERR("Unknown event called\n");
                 break;
         }
         }
