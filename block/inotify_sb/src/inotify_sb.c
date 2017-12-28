@@ -9,6 +9,7 @@
 #include <sys/select.h>
 
 #include "c3qo/block.h"
+#include "c3qo/logger.h"
 
 
 struct inotify_sb_ctx
@@ -36,21 +37,21 @@ static void inotify_sb_ctx_clean()
  */
 static void inotify_sb_init()
 {
-        fprintf(stdout, "Block inotify_sb is being initialized\n");
+        LOGGER_INFO("Block inotify_sb is being initialized");
 
         inotify_sb_ctx_init();
 
         ctx->fd = inotify_init1(0);
         if (ctx->fd == -1)
         {
-                fprintf(stderr, "Failed to init inotify\n");
+                LOGGER_ERR("Failed to init inotify");
                 exit(EXIT_FAILURE);
         }
 
         /* Add a pathname to watch */
         if (inotify_add_watch(ctx->fd, "/tmp/toto/", IN_CLOSE_WRITE) == -1)
         {
-                fprintf(stderr, "Failed to watch pathname\n");
+                LOGGER_ERR("Failed to watch pathname");
                 exit(EXIT_FAILURE);
         }
 }
@@ -62,7 +63,7 @@ static void inotify_sb_start()
         struct timeval tv;
         int            retval;
 
-        fprintf(stdout, "Block inotify_sb is being started\n");
+        LOGGER_INFO("Block inotify_sb is being started");
 
         FD_ZERO(&rfds);
         FD_SET(ctx->fd, &rfds);
@@ -74,25 +75,25 @@ static void inotify_sb_start()
 
         if (retval == -1)
         {
-                fprintf(stderr, "select() failed\n");
+                LOGGER_ERR("select() failed");
                 exit(EXIT_FAILURE);
         }
         else if (retval)
         {
-                printf("Data is available now.\n");
+                LOGGER_DEBUG("Data is available now");
         }
         else
         {
-                fprintf(stdout, "No data within fifty seconds.\n");
+                LOGGER_DEBUG("No data within fifty seconds");
         }
 }
 
 
-static void inotify_sb_ctrl(enum block_event event, void *arg)
+static void inotify_sb_ctrl(enum block_cmd cmd, void *arg)
 {
         (void) arg;
 
-        switch (event)
+        switch (cmd)
         {
         case BLOCK_INIT:
         {
@@ -111,7 +112,7 @@ static void inotify_sb_ctrl(enum block_event event, void *arg)
         }
         default:
         {
-                fprintf(stderr, "Unknown event called\n");
+                LOGGER_ERR("Unknown cmd called");
                 exit(EXIT_FAILURE);
                 break;
         }
@@ -121,6 +122,8 @@ static void inotify_sb_ctrl(enum block_event event, void *arg)
 
 struct block_if inotify_sb_entry =
 {
+        .ctx = NULL,
+
         .rx   = NULL,
         .tx   = NULL,
         .ctrl = inotify_sb_ctrl,

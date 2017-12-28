@@ -15,7 +15,7 @@ set(SOURCES_TEST test/tu_hello.cpp)
 add_executable(tu_hello ${SOURCES_TEST})
 
 target_include_directories(tu_hello PUBLIC "${gtest_SOURCE_DIR}/include")
-target_include_directories(hello PUBLIC ${C3QO_LOGGER_INCLUDE_DIR})
+target_include_directories(tu_hello PUBLIC ${C3QO_LOGGER_INCLUDE_DIR})
 
 target_link_libraries(tu_hello debug hello)
 target_link_libraries(tu_hello debug gtest)

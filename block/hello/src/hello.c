@@ -18,11 +18,11 @@ static void hello_start()
 }
 
 
-static void hello_ctrl(enum block_event event, void *arg)
+static void hello_ctrl(enum block_cmd cmd, void *arg)
 {
         (void) arg;
 
-        switch (event)
+        switch (cmd)
         {
         case BLOCK_INIT:
         {
@@ -36,7 +36,7 @@ static void hello_ctrl(enum block_event event, void *arg)
         }
         default:
         {
-                LOGGER_ERR("Unknown event called\n");
+                LOGGER_ERR("Unknown cmd called\n");
                 break;
         }
         }
@@ -48,6 +48,8 @@ static void hello_ctrl(enum block_event event, void *arg)
  */
 struct block_if hello_entry =
 {
+        .ctx = NULL,
+
         .rx   = NULL,
         .tx   = NULL,
         .ctrl = hello_ctrl,

@@ -8,10 +8,6 @@
  */
 
 
-#include "c3qo/block.h"
-#include "c3qo/signal.h"
-#include "c3qo/socket.h"
-
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,6 +16,11 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include "c3qo/block.h"
+#include "c3qo/logger.h"
+#include "c3qo/signal.h"
+#include "c3qo/socket.h"
 
 
 #define SOCKET_FD_MAX    64 /* maximum number of file descriptors */
@@ -72,7 +73,7 @@ static void server_us_asnb_handler(int sig, siginfo_t *info, void *context)
 
         if (sig != SIGIO)
         {
-                fprintf(stderr, "ERROR: bad signal\n");
+                LOGGER_ERR("bad signal");
                 exit(EXIT_FAILURE);
         }
 
@@ -82,13 +83,12 @@ static void server_us_asnb_handler(int sig, siginfo_t *info, void *context)
                 socklen_t          size;
                 int                ret;
 
-                fprintf(stdout, "Main file descriptor called\n");
-
                 /* new connection has arrived */
                 size = sizeof(client);
                 ret = accept(ctx.fd[0], (struct sockaddr *) &client, &size);
                 if (ret == -1)
                 {
+                        LOGGER_ERR("Failed to accept new client");
                         exit(EXIT_FAILURE);
                 }
 
@@ -100,13 +100,13 @@ static void server_us_asnb_handler(int sig, siginfo_t *info, void *context)
         {
                 server_us_asnb_flush_fd(ctx.fd[1]);
 
-                fprintf(stdout, "INFO: count=%u, bytes=%ld\n",
+                LOGGER_DEBUG("dump stats : count=%u, bytes=%ld",
                                 server_us_asnb_count,
                                 server_us_asnb_bytes);
         }
         else
         {
-                fprintf(stderr, "Unknown descriptor called\n");
+                LOGGER_ERR("Unknown descriptor called");
         }
 }
 
@@ -119,7 +119,7 @@ static void server_us_asnb_init()
         struct sockaddr_un srv_addr;
         int                ret;
 
-        puts("Block server_us_asnb is being initialized");
+        LOGGER_INFO("Block server_us_asnb is being initialized");
 
         /* context initialization */
         memset(&ctx, -1, sizeof(ctx));
@@ -129,7 +129,7 @@ static void server_us_asnb_init()
         ctx.fd[0] = socket(AF_UNIX, SOCK_STREAM, 0);
         if (ctx.fd[0] == -1)
         {
-                fprintf(stderr, "ERROR while opening socket");
+                LOGGER_ERR("Failed to open socket");
                 exit(EXIT_FAILURE);
         }
 
@@ -148,14 +148,14 @@ static void server_us_asnb_init()
                         sizeof(srv_addr));
         if (ret < 0)
         {
-                fprintf(stderr, "ERROR while binding socket");
+                LOGGER_ERR("Failed to bind socket");
                 exit(EXIT_FAILURE);
         }
 
         ret = listen(ctx.fd[0], SOCKET_FD_MAX -1);
         if (ret == -1)
         {
-                fprintf(stderr, "ERROR while listening socket");
+                LOGGER_ERR("Failed to listen on socket");
                 exit(EXIT_FAILURE);
         }
 }
@@ -166,15 +166,15 @@ static void server_us_asnb_init()
  */
 static void server_us_asnb_start()
 {
-        fprintf(stdout, "Not implemented yet\n");
+        LOGGER_DEBUG("Not implemented yet");
 }
 
 
-static void server_us_asnb_ctrl(enum block_event event, void *arg)
+static void server_us_asnb_ctrl(enum block_cmd cmd, void *arg)
 {
         (void) arg;
 
-        switch (event)
+        switch (cmd)
         {
         case BLOCK_INIT:
         {
@@ -188,7 +188,7 @@ static void server_us_asnb_ctrl(enum block_event event, void *arg)
         }
         default:
         {
-                fprintf(stderr, "Unknown event called\n");
+                LOGGER_ERR("Unknown cmd called");
                 exit(EXIT_FAILURE);
                 break;
         }
@@ -199,6 +199,8 @@ static void server_us_asnb_ctrl(enum block_event event, void *arg)
 /* Declare the interface for this block */
 struct block_if server_us_asnb_entry =
 {
+        .ctx = NULL,
+
         .rx   = NULL,
         .tx   = NULL,
         .ctrl = server_us_asnb_ctrl,

@@ -11,10 +11,6 @@
  * SIGIO management could be replaced by aio_sigevent */
 #define _GNU_SOURCE
 
-#include "c3qo/block.h"
-#include "c3qo/signal.h"
-#include "c3qo/socket.h"
-
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -23,6 +19,11 @@
 #include <sys/types.h>
 #include <sys/un.h>
 #include <sys/socket.h>
+
+#include "c3qo/block.h"
+#include "c3qo/logger.h"
+#include "c3qo/signal.h"
+#include "c3qo/socket.h"
 
 
 struct client_us_asnb_ctx
@@ -42,11 +43,9 @@ static void client_us_asnb_handler(int sig, siginfo_t *info, void *context)
         (void) context;
         (void) info;
 
-        fprintf(stdout, "client_us_asnb SIGIO handler called\n");
-
         if (sig != SIGIO)
         {
-                fprintf(stderr, "ERROR: bad signal\n");
+                LOGGER_ERR("bad signal");
                 exit(EXIT_FAILURE);
         }
 }
@@ -61,7 +60,7 @@ static void client_us_asnb_init()
         const char         *buff;
         int                ret;
 
-        puts("Block client_us_asnb is being initialized");
+        LOGGER_INFO("Block client_us_asnb is being initialized");
 
         /* context initialization */
         memset(&ctx, -1, sizeof(ctx));
@@ -70,7 +69,7 @@ static void client_us_asnb_init()
         ctx.fd = socket(AF_UNIX, SOCK_STREAM, 0);
         if (ctx.fd == -1)
         {
-                fprintf(stderr, "ERROR while opening socket");
+                LOGGER_ERR("Failed to open socket");
                 exit(EXIT_FAILURE);
         }
 
@@ -86,7 +85,7 @@ static void client_us_asnb_init()
                         sizeof(clt_addr));
         if (ret == -1)
         {
-                fprintf(stdout, "ERROR: couldn't connect to server\n");
+                LOGGER_ERR("Failed to connect socket");
                 exit(EXIT_FAILURE);
         }
 
@@ -108,15 +107,15 @@ static void client_us_asnb_init()
  */
 static void client_us_asnb_start()
 {
-        fprintf(stdout, "Not implemented yet\n");
+        LOGGER_DEBUG("Not implemented yet");
 }
 
 
-static void client_us_asnb_ctrl(enum block_event event, void *arg)
+static void client_us_asnb_ctrl(enum block_cmd cmd, void *arg)
 {
         (void) arg;
 
-        switch (event)
+        switch (cmd)
         {
         case BLOCK_INIT:
         {
@@ -130,7 +129,7 @@ static void client_us_asnb_ctrl(enum block_event event, void *arg)
         }
         default:
         {
-                fprintf(stderr, "Unknown event called\n");
+                LOGGER_ERR("Unknown cmd called");
                 exit(EXIT_FAILURE);
                 break;
         }
@@ -141,6 +140,8 @@ static void client_us_asnb_ctrl(enum block_event event, void *arg)
 /* Declare the interface for this block */
 struct block_if client_us_asnb_entry =
 {
+        .ctx = NULL,
+
         .rx   = NULL,
         .tx   = NULL,
         .ctrl = client_us_asnb_ctrl,

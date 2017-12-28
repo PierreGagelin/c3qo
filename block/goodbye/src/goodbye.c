@@ -3,25 +3,26 @@
 #include <stdlib.h>
 
 #include "c3qo/block.h"
+#include "c3qo/logger.h"
 
 
 static void goodbye_init()
 {
-        puts("Block goodbye is being initilized");
+        LOGGER_INFO("Block goodbye is being initilized");
 }
 
 
 static void goodbye_start()
 {
-        puts("Goodbye world");
+        LOGGER_INFO("Goodbye world");
 }
 
 
-static void goodbye_ctrl(enum block_event event, void *arg)
+static void goodbye_ctrl(enum block_cmd cmd, void *arg)
 {
         (void) arg;
 
-        switch (event)
+        switch (cmd)
         {
         case BLOCK_INIT:
         {
@@ -35,7 +36,7 @@ static void goodbye_ctrl(enum block_event event, void *arg)
         }
         default:
         {
-                fprintf(stderr, "Unknown event called\n");
+                LOGGER_ERR("Unknown cmd called");
                 exit(EXIT_FAILURE);
                 break;
         }
@@ -45,6 +46,8 @@ static void goodbye_ctrl(enum block_event event, void *arg)
 
 struct block_if goodbye_entry =
 {
+        .ctx = NULL,
+
         .rx   = NULL,
         .tx   = NULL,
         .ctrl = goodbye_ctrl,
