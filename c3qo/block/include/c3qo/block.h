@@ -3,12 +3,16 @@
 
 
 /**
- * @brief Identifier for each block
+ * @brief Identifier for block type
  */
-enum block_id
+enum block_type
 {
-        HELLOER,  /**< block that says hello */
-        GOODBYER, /**< block that says good bye */
+        BLOCK_NONE = 0, /**< Default value */
+
+        BLOCK_GOODBYE, /**< block that says goodbye */
+        BLOCK_HELLO,   /**< block that says hello */
+
+        BLOCK_TYPE_MAX = 2, /**< Maximum value */
 };
 
 
@@ -17,12 +21,16 @@ enum block_id
  */
 enum block_cmd
 {
+        BLOCK_NOOP = 0,  /**< Default value */
+
         BLOCK_ADD,       /**< Create a block */
         BLOCK_INIT,      /**< Initialize a block */
         BLOCK_CONFIGURE, /**< Configure a block */
         BLOCK_BIND,      /**< Bind a block to another */
         BLOCK_START,     /**< Ask the block to start */
         BLOCK_STOP,      /**< Ask the block to stop */
+
+        BLOCK_CMD_MAX = 6, /**< Maximum value */
 };
 
 
