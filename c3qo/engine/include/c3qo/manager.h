@@ -1,4 +1,5 @@
-
+#ifndef C3QO_MANAGER_H
+#define C3QO_MANAGER_H
 
 #include <stdbool.h>
 
@@ -18,5 +19,8 @@
  *            - <cmd_arg> : Arguments specific to the command (see each command in specific)
  */
 bool manager_parse_conf(const char *filename);
+
+
+#endif
 
 

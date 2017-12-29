@@ -1,5 +1,5 @@
-#ifndef C3QO_LOGGER_H_
-#define C3QO_LOGGER_H_
+#ifndef C3QO_LOGGER_H
+#define C3QO_LOGGER_H
 
 
 #include <syslog.h> /* syslog */
