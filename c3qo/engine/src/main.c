@@ -2,18 +2,30 @@
 
 #include <stdlib.h>
 
-#include "manager.h"
+#include "c3qo/logger.h"
+#include "c3qo/manager.h"
 
 
 int main(char argc, char ** argv)
 {
+        bool conf;
+        int  ret = 0;
+
         (void) argc;
         (void) argv;
 
-        /* Parse configuration file */
-        manager_parse_conf("/tmp/config.txt");
+        LOGGER_OPEN();
 
-        return 0;
+        /* Parse configuration file */
+        conf = manager_parse_conf("/tmp/config.txt");
+        if (conf == false)
+        {
+                ret = -1;
+        }
+
+        LOGGER_CLOSE();
+
+        return ret;
 }
 
 
