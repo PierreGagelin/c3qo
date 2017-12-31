@@ -10,22 +10,29 @@
 #include "c3qo/manager.h"
 
 
-
-
 /* Each block shall be linked */
-extern struct block_if hello_entry;
-extern struct block_if goodbye_entry;
+extern struct bk_if hello_entry;
+extern struct bk_if goodbye_entry;
+extern struct bk_if inotify_sb_entry;
+extern struct bk_if client_us_asnb_entry;
+extern struct bk_if server_us_asnb_entry;
 
 /* List of pointers to block interfaces */
-const uint16_t         BLOCK_ID_MAX = UINT16_MAX - 1;
-static struct block_if *block_list[UINT16_MAX];
+struct bk_info
+{
+        struct bk_if  bk;
+        enum bk_type  type;
+        enum bk_state state;
+};
+struct bk_info *bk_list[UINT16_MAX];
+uint16_t       bk_list_count;
 
 /* Generic command to manage a block */
 struct manager_cmd 
 {
-        enum block_cmd cmd;
-        uint16_t       id;
-        char           arg[4096];
+        enum bk_cmd cmd;
+        uint16_t    id;
+        char        arg[4096];
 
 };
 
@@ -36,35 +43,65 @@ struct manager_cmd cmd;
 /**
  * @brief : Create a block interface
  *
- * @param block_id   : Identifier in the block list
- * @param block_type : Type of interface to implement
+ * @param id   : Identifier in the block list
+ * @param type : Type of interface to implement
  */
-static void manager_block_add(uint16_t block_id, enum block_type type)
+static void manager_block_add(uint16_t id, enum bk_type type)
 {
-        block_list[block_id] = (struct block_if *)
-                               malloc(sizeof(struct block_if));
-        if (block_list[block_id] == NULL)
+        if (type > BK_TYPE_MAX)
+        {
+                LOGGER_WARNING("Block type does not exist");
+                return;
+        }
+
+        bk_list[id] = (struct bk_info *) malloc(sizeof(*bk_list[id]));
+
+        if (bk_list[id] == NULL)
         {
                 LOGGER_CRIT("Out of memory!");
                 return;
         }
 
+        LOGGER_DEBUG("Add block bk_id=%u, bk_type=%d", id, type);
+        bk_list_count++;
+        bk_list[id]->type  = type;
+        bk_list[id]->state = BK_STOPPED;
+
         switch (type)
         {
-        case BLOCK_HELLO:
+        case BK_HELLO:
         {
-                *block_list[block_id] = hello_entry;
+                bk_list[id]->bk = hello_entry;
                 break;
         }
-        case BLOCK_GOODBYE:
+        case BK_GOODBYE:
         {
-                *block_list[block_id] = goodbye_entry;
+                bk_list[id]->bk = goodbye_entry;
+                break;
+        }
+        case BK_INOTIFY_SB:
+        {
+                bk_list[id]->bk = inotify_sb_entry;
+                break;
+        }
+        case BK_CLIENT_US_ASNB:
+        {
+                bk_list[id]->bk = client_us_asnb_entry;
+                break;
+        }
+        case BK_SERVER_US_ASNB:
+        {
+                bk_list[id]->bk = server_us_asnb_entry;
                 break;
         }
         default:
         {
-                LOGGER_WARNING("Block type does not exist");
-                break;
+                /* This case mean all values in enum bk_type aren't used */
+                LOGGER_CRIT("Block type enumerate incomplete");
+                free(bk_list[id]);
+                bk_list[id] = NULL;
+                bk_list_count--;
+                return;
         }
         }
 }
@@ -78,39 +115,35 @@ static void manager_exec_cmd()
 {
         switch (cmd.cmd)
         {
-        case BLOCK_ADD:
+        case BK_ADD:
         {
-                unsigned long int block_type;
+                unsigned long int bk_type;
                 
-                if (block_list[cmd.id] != NULL)
+                if (bk_list[cmd.id] != NULL)
                 {
                         LOGGER_WARNING("Cannot add an existing block");
                         break;
                 }
 
-                block_type = strtoul(cmd.arg, NULL, 10);
-                if (block_type > BLOCK_TYPE_MAX)
-                {
-                        LOGGER_WARNING("Block type does not exist");
-                }
+                bk_type = strtoul(cmd.arg, NULL, 10);
 
-                manager_block_add(cmd.id, (enum block_type) block_type);
+                manager_block_add(cmd.id, (enum bk_type) bk_type);
 
                 break;
         }
-        case BLOCK_INIT:
-        case BLOCK_CONFIGURE:
-        case BLOCK_BIND:
-        case BLOCK_START:
-        case BLOCK_STOP:
+        case BK_INIT:
+        case BK_CONFIGURE:
+        case BK_BIND:
+        case BK_START:
+        case BK_STOP:
         {
-                if (block_list[cmd.id] == NULL);
+                if (bk_list[cmd.id] == NULL);
                 {
                         LOGGER_ERR("Can't find block");
                         break;
                 }
 
-                block_list[cmd.id]->ctrl(cmd.cmd, cmd.arg);
+                bk_list[cmd.id]->bk.ctrl(cmd.cmd, cmd.arg);
                 break;
         }
         default:
@@ -145,11 +178,7 @@ static int manager_conf_parse_line(FILE *file)
                 return 0;
         }
 
-        nb_arg = fscanf(file,
-                     "%u %u %4095s\n",
-                     &u_cmd,
-                     &u_id,
-                     cmd.arg);
+        nb_arg = fscanf(file, "%u %u %4095s\n", &u_cmd, &u_id, cmd.arg);
         if (nb_arg != 3)
         {
                 LOGGER_ERR("Corrupted configuration entry");
@@ -157,18 +186,18 @@ static int manager_conf_parse_line(FILE *file)
         }
 
         /* Check values (shouldn't stop the configuration) */
-        if (u_cmd > BLOCK_CMD_MAX)
+        if (u_cmd > BK_CMD_MAX)
         {
-                LOGGER_WARNING("block_cmd=%u does not exist", u_cmd);
+                LOGGER_WARNING("bk_cmd=%u does not exist", u_cmd);
                 return -1;
         }
-        if (u_id > BLOCK_ID_MAX)
+        if (u_id >= UINT16_MAX)
         {
-                LOGGER_WARNING("block_id=%u can't fit on 16 bits", u_id);
+                LOGGER_WARNING("bk_id=%u can't fit on 16 bits", u_id);
                 return -1;
         }
 
-        cmd.cmd = (enum block_cmd) u_cmd;
+        cmd.cmd = (enum bk_cmd) u_cmd;
         cmd.id  = (uint16_t) u_id;
 
         return 1;
@@ -176,23 +205,87 @@ static int manager_conf_parse_line(FILE *file)
 
 
 /**
- * @brief Clean all blocks
+ * @brief : Clean all blocks
  */
-void manager_clean()
+void manager_block_clean()
 {
         uint16_t id;
 
         for (id = 0; id < UINT16_MAX; id++)
         {
-                if (block_list[id] == NULL)
+                if (bk_list[id] == NULL)
                 {
                         continue;
                 }
 
-                block_list[id]->ctrl(BLOCK_STOP, NULL);
-                free(block_list[id]);
-                block_list[id] = NULL;
+                bk_list[id]->bk.ctrl(BK_STOP, NULL);
+                free(bk_list[id]);
+                bk_list[id] = NULL;
+                bk_list_count--;
+
+                /* Stop if all blocks are already deallocated */
+                if (bk_list_count == 0)
+                {
+                        break;
+                }
         }
+}
+
+
+/**
+ * @brief : Fill a string representing existing blocks
+ *          Format for each entry follows :
+ *            - <bk_id> <bk_type> <bk_state>;
+ *
+ * @param buf : string to fill
+ * @param len : maximum length to write
+ *
+ * @return : actual length written
+ */
+size_t manager_conf_get(char *buf, size_t len)
+{
+        size_t   w = 0;
+        uint16_t i;
+        uint16_t c; /* Count of block information dumped */
+
+        LOGGER_DEBUG("Getting blocks information")
+
+        for (i = 0; i < UINT16_MAX; i++)
+        {
+                int ret;
+
+                if (bk_list[i] == NULL)
+                {
+                        continue;
+                }
+
+                c++;
+                ret = snprintf(buf + w, len - w, "%u %d %d;", i, bk_list[i]->type, bk_list[i]->state);
+                if (ret < 0)
+                {
+                        LOGGER_ERR("snprintf failed");
+                        break;
+                }
+                else
+                {
+                        w += (size_t) ret;
+                }
+
+                /* Stop if all blocks are already dumped */
+                if (c == bk_list_count)
+                {
+                        break;
+                }
+
+                /* Stop if there's no more room in buf */
+                if (w >= len)
+                {
+                        LOGGER_WARNING("No enough space to dump blocks information");
+                        break;
+                }
+        }
+
+        return w;
 }
 
 
@@ -203,7 +296,7 @@ void manager_clean()
  *
  * @note : See header file for description
  */
-bool manager_parse_conf(const char *filename)
+bool manager_conf_parse(const char *filename)
 {
         FILE *file;
         bool ret = true;

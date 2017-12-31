@@ -9,4 +9,7 @@ target_include_directories(client_us_asnb PUBLIC ${C3QO_LOGGER_INCLUDE_DIR})
 target_include_directories(client_us_asnb PUBLIC ${C3QO_SIGNAL_INCLUDE_DIR})
 target_include_directories(client_us_asnb PUBLIC ${C3QO_SOCKET_INCLUDE_DIR})
 
+target_link_libraries(client_us_asnb signal)
+target_link_libraries(client_us_asnb socket)
+
 

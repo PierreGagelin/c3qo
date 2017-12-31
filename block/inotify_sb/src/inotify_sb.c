@@ -89,23 +89,23 @@ static void inotify_sb_start()
 }
 
 
-static void inotify_sb_ctrl(enum block_cmd cmd, void *arg)
+static void inotify_sb_ctrl(enum bk_cmd cmd, void *arg)
 {
         (void) arg;
 
         switch (cmd)
         {
-        case BLOCK_INIT:
+        case BK_INIT:
         {
                 inotify_sb_init();
                 break;
         }
-        case BLOCK_START:
+        case BK_START:
         {
                 inotify_sb_start();
                 break;
         }
-        case BLOCK_STOP:
+        case BK_STOP:
         {
                 inotify_sb_ctx_clean();
                 break;
@@ -120,7 +120,7 @@ static void inotify_sb_ctrl(enum block_cmd cmd, void *arg)
 }
 
 
-struct block_if inotify_sb_entry =
+struct bk_if inotify_sb_entry =
 {
         .ctx = NULL,
 

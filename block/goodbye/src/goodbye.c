@@ -18,18 +18,18 @@ static void goodbye_start()
 }
 
 
-static void goodbye_ctrl(enum block_cmd cmd, void *arg)
+static void goodbye_ctrl(enum bk_cmd cmd, void *arg)
 {
         (void) arg;
 
         switch (cmd)
         {
-        case BLOCK_INIT:
+        case BK_INIT:
         {
                 goodbye_init();
                 break;
         }
-        case BLOCK_START:
+        case BK_START:
         {
                 goodbye_start();
                 break;
@@ -44,7 +44,7 @@ static void goodbye_ctrl(enum block_cmd cmd, void *arg)
 }
 
 
-struct block_if goodbye_entry =
+struct bk_if goodbye_entry =
 {
         .ctx = NULL,
 

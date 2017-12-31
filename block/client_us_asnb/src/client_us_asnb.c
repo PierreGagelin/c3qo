@@ -111,18 +111,18 @@ static void client_us_asnb_start()
 }
 
 
-static void client_us_asnb_ctrl(enum block_cmd cmd, void *arg)
+static void client_us_asnb_ctrl(enum bk_cmd cmd, void *arg)
 {
         (void) arg;
 
         switch (cmd)
         {
-        case BLOCK_INIT:
+        case BK_INIT:
         {
                 client_us_asnb_init();
                 break;
         }
-        case BLOCK_START:
+        case BK_START:
         {
                 client_us_asnb_start();
                 break;
@@ -138,7 +138,7 @@ static void client_us_asnb_ctrl(enum block_cmd cmd, void *arg)
 
 
 /* Declare the interface for this block */
-struct block_if client_us_asnb_entry =
+struct bk_if client_us_asnb_entry =
 {
         .ctx = NULL,
 

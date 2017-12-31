@@ -12,7 +12,7 @@
 
 
 // TU should be linked with the block
-extern struct block_if hello_entry;
+extern struct bk_if hello_entry;
 
 class tu_hello : public testing::Test
 {
@@ -35,8 +35,8 @@ TEST_F(tu_hello, hello)
 {
         EXPECT_TRUE(&hello_entry != NULL);
 
-        hello_entry.ctrl(BLOCK_INIT, NULL);
-        hello_entry.ctrl(BLOCK_START, NULL);
+        hello_entry.ctrl(BK_INIT, NULL);
+        hello_entry.ctrl(BK_START, NULL);
 }
 
 

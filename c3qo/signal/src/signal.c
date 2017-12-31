@@ -17,8 +17,7 @@
  *
  * NOTE: this is not sufficient if many blocks register on a same signal
  */
-void c3qo_register_fd_handler(int sig,
-                void (*func)(int, siginfo_t *, void *))
+void c3qo_register_fd_handler(int sig, void (*func)(int, siginfo_t *, void *))
 {
         struct sigaction fd_callback;
         int ret;

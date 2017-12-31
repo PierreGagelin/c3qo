@@ -18,18 +18,18 @@ static void hello_start()
 }
 
 
-static void hello_ctrl(enum block_cmd cmd, void *arg)
+static void hello_ctrl(enum bk_cmd cmd, void *arg)
 {
         (void) arg;
 
         switch (cmd)
         {
-        case BLOCK_INIT:
+        case BK_INIT:
         {
                 hello_init();
                 break;
         }
-        case BLOCK_START:
+        case BK_START:
         {
                 hello_start();
                 break;
@@ -46,7 +46,7 @@ static void hello_ctrl(enum block_cmd cmd, void *arg)
 /**
  * @brief Exported structure of the block
  */
-struct block_if hello_entry =
+struct bk_if hello_entry =
 {
         .ctx = NULL,
 

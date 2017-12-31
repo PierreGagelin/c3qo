@@ -17,7 +17,7 @@ int main(char argc, char ** argv)
         LOGGER_OPEN();
 
         /* Parse configuration file */
-        conf = manager_parse_conf("/tmp/config.txt");
+        conf = manager_conf_parse("/tmp/config.txt");
         if (conf == false)
         {
                 ret = -1;
