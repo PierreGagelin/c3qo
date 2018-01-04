@@ -1,3 +1,5 @@
+
+
 # Build manager as a static library
 set(SOURCES_MANAGER src/manager.c)
 
@@ -36,6 +38,7 @@ set(SOURCES_TU_MANAGER test/tu_manager.cpp)
 
 
 add_executable(tu_manager ${SOURCES_TU_MANAGER})
+add_test(NAME tu_manager COMMAND tu_manager)
 
 
 target_include_directories(tu_manager PUBLIC ${C3QO_LOGGER_INCLUDE_DIR})

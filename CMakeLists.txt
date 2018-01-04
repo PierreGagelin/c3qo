@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 3.0)
 project(c3q0)
 
+
+# Compile with DEBUG level
 set(CMAKE_BUILD_TYPE Debug)
+
+
+# Allow to run "make test"
+enable_testing()
 
 
 # engine include directories
