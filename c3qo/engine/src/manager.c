@@ -280,7 +280,8 @@ size_t manager_conf_get(char *buf, size_t len)
                 /* Stop if there's no more room in buf */
                 if (w >= len)
                 {
-                        LOGGER_WARNING("No enough space to dump blocks information");
+                        LOGGER_WARNING("Not enough space to dump blocks information");
+                        w = len;
                         break;
                 }
         }
