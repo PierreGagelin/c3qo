@@ -31,6 +31,7 @@ target_include_directories(c3qo PUBLIC ${C3QO_MANAGER_INCLUDE_DIR})
 
 
 target_link_libraries(c3qo manager)
+target_link_libraries(c3qo logger)
 
 
 # Build TU for manager
@@ -46,6 +47,7 @@ target_include_directories(tu_manager PUBLIC ${C3QO_MANAGER_INCLUDE_DIR})
 
 
 target_link_libraries(tu_manager manager)
+target_link_libraries(tu_manager logger)
 target_link_libraries(tu_manager gtest)
 target_link_libraries(tu_manager gtest_main)
 

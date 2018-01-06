@@ -24,6 +24,7 @@ class tu_manager : public testing::Test
 void tu_manager::SetUp()
 {
         LOGGER_OPEN();
+        logger_set_level(LOGGER_LEVEL_INFO);
 }
 
 void tu_manager::TearDown()

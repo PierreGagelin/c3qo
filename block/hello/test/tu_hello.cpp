@@ -5,8 +5,11 @@
 
 #include <stdlib.h>
 
+extern "C"
+{
 #include "c3qo/block.h"
 #include "c3qo/logger.h"
+}
 
 #include "gtest/gtest.h"
 
@@ -23,6 +26,7 @@ class tu_hello : public testing::Test
 void tu_hello::SetUp()
 {
         LOGGER_OPEN();
+        logger_set_level(LOGGER_LEVEL_DEBUG);
 }
 
 void tu_hello::TearDown()

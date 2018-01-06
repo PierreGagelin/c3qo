@@ -14,13 +14,17 @@ static void hello_init()
 
 static void hello_start()
 {
-        LOGGER_INFO("Hello world");
+        LOGGER_INFO("Block hello is being started");
+
+        LOGGER_DEBUG("Hello world");
 }
 
 
 static void hello_ctrl(enum bk_cmd cmd, void *arg)
 {
         (void) arg;
+
+        LOGGER_DEBUG("Block command bk_cmd=%d called with argument arg=%p", cmd, arg);
 
         switch (cmd)
         {
@@ -36,7 +40,7 @@ static void hello_ctrl(enum bk_cmd cmd, void *arg)
         }
         default:
         {
-                LOGGER_ERR("Unknown cmd called\n");
+                LOGGER_ERR("Unknown bk_cmd=%d called", cmd);
                 break;
         }
         }

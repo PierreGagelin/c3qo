@@ -18,20 +18,32 @@ int main(char argc, char ** argv)
         int        ret = 0;
 
         LOGGER_OPEN();
+        logger_set_level(LOGGER_LEVEL_MAX);
 
-        while ((opt = getopt(argc, argv, "hf:")) != -1)
+        while ((opt = getopt(argc, argv, "hf:l:")) != -1)
         {
                 switch (opt)
                 {
                 case 'h':
                 {
-                        LOGGER_DEBUG("lol, help is for the weaks");
+                        LOGGER_DEBUG("CLI help : lol, help is for the weaks");
                         break;
                 }
                 case 'f':
                 {
                         LOGGER_DEBUG("CLI file to load configuration : %s", optarg);
                         filename = optarg;
+                        break;
+                }
+                case 'l':
+                {
+                        unsigned long int level;
+
+                        LOGGER_DEBUG("CLI setting log level to %s", optarg);
+
+                        level = strtoul(optarg, NULL, 10);
+                        logger_set_level((enum logger_level) level);
+
                         break;
                 }
                 default:

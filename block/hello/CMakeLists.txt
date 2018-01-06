@@ -24,6 +24,7 @@ target_include_directories(tu_hello PUBLIC ${C3QO_LOGGER_INCLUDE_DIR})
 
 
 target_link_libraries(tu_hello hello)
+target_link_libraries(tu_hello logger)
 target_link_libraries(tu_hello gtest)
 target_link_libraries(tu_hello gtest_main)
 
