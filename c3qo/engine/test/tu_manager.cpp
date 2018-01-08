@@ -8,15 +8,26 @@
 
 extern "C" 
 {
-#include "c3qo/logger.h"  // LOGGER_OPEN, LOGGER_CLOSE
-#include "c3qo/manager.h" // manager_conf_parse
+#include <stdio.h> // fopen, fileno
+
+#include "c3qo/logger.h"     // LOGGER_OPEN, LOGGER_CLOSE
+#include "c3qo/manager_bk.h" // manager_conf_parse
+#include "c3qo/manager_fd.h" // manager_fd_init/clean/add/remove/select
 }
 
 #include "gtest/gtest.h"
 
 
+bool fd_called;
+static void fd_callback(int fd)
+{
+        fd_called = true;
+}
+
+
 class tu_manager : public testing::Test
 {
+public:
         void SetUp();
         void TearDown();
 };
@@ -25,6 +36,8 @@ void tu_manager::SetUp()
 {
         LOGGER_OPEN();
         logger_set_level(LOGGER_LEVEL_INFO);
+
+        fd_called = false;
 }
 
 void tu_manager::TearDown()
@@ -33,7 +46,10 @@ void tu_manager::TearDown()
 }
 
 
-TEST_F(tu_manager, manager)
+/**
+ * @brief Test the block manager
+ */
+TEST_F(tu_manager, manager_bk)
 {
         const char        *filename = "/tmp/tu_manager_config.txt";
         std::fstream      file;
@@ -74,6 +90,36 @@ TEST_F(tu_manager, manager)
         len = manager_conf_get(buf, sizeof(buf));
         EXPECT_EQ(len, buf_exp.length());
         EXPECT_EQ(memcmp(buf, buf_exp.c_str(), len), 0);
+}
+
+
+/**
+ * @brief Test the file descriptor manager
+ */
+TEST_F(tu_manager, manager_fd)
+{
+        const char *filename = "/tmp/tu_manager_fd.txt";
+        FILE       *file;
+        int        fd;
+
+        // Open a file and get its file descriptor
+        file = fopen(filename, "w+");
+        ASSERT_TRUE(file != NULL);
+        fd   = fileno(file);
+        ASSERT_TRUE(fd != -1);
+
+        // Add and write to the file
+        manager_fd_init();
+        EXPECT_TRUE(manager_fd_add(fd, &fd_callback) == true);
+        fprintf(file, "hello world!");
+
+        // Verify that callback was called
+        manager_fd_select();
+        EXPECT_TRUE(fd_called == true);
+
+        manager_fd_remove(fd);
+        manager_fd_clean();
+        fclose(file);
 }
 
 

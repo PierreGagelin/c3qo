@@ -7,7 +7,7 @@
 
 #include "c3qo/block.h"
 #include "c3qo/logger.h"
-#include "c3qo/manager.h"
+#include "c3qo/manager_bk.h"
 
 
 /* Each block shall be linked */

@@ -1,7 +1,8 @@
 
 
 # Build manager as a static library
-set(SOURCES_MANAGER src/manager.c)
+set(SOURCES_MANAGER                    src/manager_bk.c)
+set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_fd.c)
 
 
 add_library(manager STATIC ${SOURCES_MANAGER})
