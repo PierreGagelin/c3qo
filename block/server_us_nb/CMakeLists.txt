@@ -1,16 +1,18 @@
-set(SOURCES src/server_us_asnb.c)
 
 
-add_library(server_us_asnb STATIC ${SOURCES})
+set(SOURCES src/server_us_nb.c)
 
 
-target_include_directories(server_us_asnb PUBLIC ${C3QO_BLOCK_INCLUDE_DIR})
-target_include_directories(server_us_asnb PUBLIC ${C3QO_LOGGER_INCLUDE_DIR})
-target_include_directories(server_us_asnb PUBLIC ${C3QO_SIGNAL_INCLUDE_DIR})
-target_include_directories(server_us_asnb PUBLIC ${C3QO_SOCKET_INCLUDE_DIR})
+add_library(server_us_nb STATIC ${SOURCES})
 
 
-target_link_libraries(server_us_asnb signal)
-target_link_libraries(server_us_asnb socket)
+target_include_directories(server_us_nb PUBLIC ${C3QO_BLOCK_INCLUDE_DIR})
+target_include_directories(server_us_nb PUBLIC ${C3QO_LOGGER_INCLUDE_DIR})
+target_include_directories(server_us_nb PUBLIC ${C3QO_SIGNAL_INCLUDE_DIR})
+target_include_directories(server_us_nb PUBLIC ${C3QO_SOCKET_INCLUDE_DIR})
+
+
+target_link_libraries(server_us_nb signal)
+target_link_libraries(server_us_nb socket)
 
 

@@ -16,8 +16,8 @@ target_include_directories(manager PUBLIC ${C3QO_MANAGER_INCLUDE_DIR})
 target_link_libraries(manager hello)
 target_link_libraries(manager goodbye)
 target_link_libraries(manager inotify_sb)
-target_link_libraries(manager client_us_asnb)
-target_link_libraries(manager server_us_asnb)
+target_link_libraries(manager client_us_nb)
+target_link_libraries(manager server_us_nb)
 
 
 # Build c3qo main executable
