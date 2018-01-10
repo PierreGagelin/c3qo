@@ -15,7 +15,7 @@ extern struct bk_if hello_entry;
 extern struct bk_if goodbye_entry;
 extern struct bk_if inotify_sb_entry;
 extern struct bk_if client_us_asnb_entry;
-extern struct bk_if server_us_asnb_entry;
+extern struct bk_if server_us_nb_entry;
 
 /* List of pointers to block interfaces */
 struct bk_info
@@ -91,7 +91,7 @@ static void manager_block_add(uint16_t id, enum bk_type type)
         }
         case BK_SERVER_US_ASNB:
         {
-                bk_list[id]->bk = server_us_asnb_entry;
+                bk_list[id]->bk = server_us_nb_entry;
                 break;
         }
         default:

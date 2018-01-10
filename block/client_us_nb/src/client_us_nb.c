@@ -78,7 +78,7 @@ static void client_us_asnb_init()
 
         memset(&clt_addr, 0, sizeof(clt_addr));
         clt_addr.sun_family = AF_UNIX;
-        strcpy(clt_addr.sun_path, "/tmp/server_us_asnb");
+        strcpy(clt_addr.sun_path, "/tmp/server_us_nb");
 
         ret = connect(ctx.fd, (struct sockaddr *) &clt_addr, sizeof(clt_addr));
         if (ret == -1)
