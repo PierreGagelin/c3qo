@@ -66,7 +66,7 @@ static void client_us_nb_init()
 
         /* set the socket to be ASNB and register SIGIO handler */
         c3qo_register_fd_handler(SIGIO, client_us_nb_handler);
-        c3qo_socket_set_asnb(ctx.fd);
+        c3qo_socket_set_nb(ctx.fd);
 
         memset(&clt_addr, 0, sizeof(clt_addr));
         clt_addr.sun_family = AF_UNIX;

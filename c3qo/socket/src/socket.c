@@ -3,11 +3,8 @@
  */
 
 
-
-/* WARN: non-POSIX
- * SIGIO management could be replaced by aio_sigevent */
+/* WARN: non-POSIX */
 #define _GNU_SOURCE
-
 
 
 #include "c3qo/socket.h"
@@ -15,26 +12,24 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <sys/signal.h>
 #include <unistd.h>
 
+
 /**
- * @brief Set the file descriptor to be AYNCHRONOUS and NON-BLOCKING
+ * @brief Set the file descriptor to be NON-BLOCKING
  */
-void c3qo_socket_set_asnb(int fd)
+void c3qo_socket_set_nb(int fd)
 {
         int flags;
 
-        flags = fcntl(fd, F_GETFL, 0);
-        flags |= O_ASYNC | O_NONBLOCK;
+        flags  = fcntl(fd, F_GETFL, 0);
+        flags |= O_NONBLOCK;
 
         fcntl(fd, F_SETOWN, getpid()); /* WARN: not POSIX */
         fcntl(fd, F_SETFL, flags);     /* WARN: not POSIX */
-        fcntl(fd, F_SETSIG, SIGIO);    /* WARN: not POSIX */
 }
-
 
 
 /**
