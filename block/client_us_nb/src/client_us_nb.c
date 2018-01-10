@@ -1,13 +1,11 @@
 /**
  * @brief Implement a AF_UNIX NON-BLOCKING client socket
- *          - NON-BLOCKING : return error code instead of blocking
  *          - AF_UNIX      : socket domain and SOCK_STREAM type
+ *          - NON-BLOCKING : return error code instead of blocking
  *
- * @note us_asnb stand for unix stream async non-block
+ * @note us_asnb stand for unix stream non-block
  */
 
-/* WARN: non-POSIX */
-#define _GNU_SOURCE
 
 #include <sys/un.h>     /* sockaddr_un */
 #include <sys/socket.h> /* socket */
@@ -23,23 +21,6 @@ struct client_us_nb_ctx
         int fd; /**< File descriptor of the socket */
 };
 struct client_us_nb_ctx ctx;
-
-
-/**
- * @brief Callback for SIGIO
- *
- * NOTE: it is dangerous to make syscalls here
- */
-static void client_us_nb_handler(int sig, siginfo_t *info, void *context)
-{
-        (void) context;
-        (void) info;
-
-        if (sig != SIGIO)
-        {
-                LOGGER_ERR("bad signal");
-        }
-}
 
 
 /**
@@ -64,8 +45,7 @@ static void client_us_nb_init()
                 return;
         }
 
-        /* set the socket to be ASNB and register SIGIO handler */
-        c3qo_register_fd_handler(SIGIO, client_us_nb_handler);
+        /* set the socket to be NB */
         c3qo_socket_set_nb(ctx.fd);
 
         memset(&clt_addr, 0, sizeof(clt_addr));
@@ -81,12 +61,11 @@ static void client_us_nb_init()
 
         buff = "client_us_nb world!\n";
         
-        for (ret=0; ret < 1800; ret++)
+        for (ret = 0; ret < 1800; ret++)
         {
                 if (c3qo_socket_write_nb(ctx.fd, buff, 256) == -1)
                 {
                         ret -= 1;
-                        pause();
                 }
         }
 }
@@ -135,4 +114,5 @@ struct bk_if client_us_nb_entry =
         .tx   = NULL,
         .ctrl = client_us_nb_ctrl,
 };
+
 
