@@ -74,7 +74,7 @@ static void server_us_asnb_handler(int sig, siginfo_t *info, void *context)
         if (sig != SIGIO)
         {
                 LOGGER_ERR("bad signal");
-                exit(EXIT_FAILURE);
+                return;
         }
 
         if (info->si_fd == ctx.fd[0])
@@ -89,7 +89,7 @@ static void server_us_asnb_handler(int sig, siginfo_t *info, void *context)
                 if (ret == -1)
                 {
                         LOGGER_ERR("Failed to accept new client");
-                        exit(EXIT_FAILURE);
+                        return;
                 }
 
                 /* keep the new file descriptor */
@@ -100,9 +100,7 @@ static void server_us_asnb_handler(int sig, siginfo_t *info, void *context)
         {
                 server_us_asnb_flush_fd(ctx.fd[1]);
 
-                LOGGER_DEBUG("dump stats : count=%u, bytes=%ld",
-                                server_us_asnb_count,
-                                server_us_asnb_bytes);
+                LOGGER_DEBUG("dump stats : count=%u, bytes=%ld", server_us_asnb_count, server_us_asnb_bytes);
         }
         else
         {
@@ -130,7 +128,7 @@ static void server_us_asnb_init()
         if (ctx.fd[0] == -1)
         {
                 LOGGER_ERR("Failed to open socket");
-                exit(EXIT_FAILURE);
+                return;
         }
 
         /* set the socket to be ASNB and its handler */
@@ -143,20 +141,18 @@ static void server_us_asnb_init()
 
         /* close an eventual old socket and bind the new one */
         unlink("/tmp/server_us_asnb");
-        ret = bind(ctx.fd[0],
-                        (struct sockaddr *) &srv_addr,
-                        sizeof(srv_addr));
+        ret = bind(ctx.fd[0], (struct sockaddr *) &srv_addr, sizeof(srv_addr));
         if (ret < 0)
         {
                 LOGGER_ERR("Failed to bind socket");
-                exit(EXIT_FAILURE);
+                return;
         }
 
         ret = listen(ctx.fd[0], SOCKET_FD_MAX -1);
         if (ret == -1)
         {
                 LOGGER_ERR("Failed to listen on socket");
-                exit(EXIT_FAILURE);
+                return;
         }
 }
 
@@ -189,8 +185,7 @@ static void server_us_asnb_ctrl(enum bk_cmd cmd, void *arg)
         default:
         {
                 LOGGER_ERR("Unknown cmd called");
-                exit(EXIT_FAILURE);
-                break;
+                return;
         }
         }
 }

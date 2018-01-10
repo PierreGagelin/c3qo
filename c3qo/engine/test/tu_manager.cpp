@@ -90,6 +90,8 @@ TEST_F(tu_manager, manager_bk)
         len = manager_conf_get(buf, sizeof(buf));
         EXPECT_EQ(len, buf_exp.length());
         EXPECT_EQ(memcmp(buf, buf_exp.c_str(), len), 0);
+
+        manager_block_clean();
 }
 
 

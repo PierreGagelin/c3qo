@@ -64,7 +64,6 @@ ssize_t c3qo_socket_write_nb(int fd, const char *buff, size_t size)
         default:
         {
                 LOGGER_ERR("non-blocking write failed\n");
-                exit(EXIT_FAILURE);
                 break;
         }
         }
@@ -100,7 +99,6 @@ ssize_t c3qo_socket_read_nb(int fd, char *buff, size_t size)
         default:
         {
                 LOGGER_ERR("non-blocking write failed\n");
-                exit(EXIT_FAILURE);
                 break;
         }
         }

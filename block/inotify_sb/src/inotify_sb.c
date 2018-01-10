@@ -45,14 +45,14 @@ static void inotify_sb_init()
         if (ctx->fd == -1)
         {
                 LOGGER_ERR("Failed to init inotify");
-                exit(EXIT_FAILURE);
+                return;
         }
 
         /* Add a pathname to watch */
         if (inotify_add_watch(ctx->fd, "/tmp/toto/", IN_CLOSE_WRITE) == -1)
         {
                 LOGGER_ERR("Failed to watch pathname");
-                exit(EXIT_FAILURE);
+                return;
         }
 }
 
@@ -76,7 +76,7 @@ static void inotify_sb_start()
         if (retval == -1)
         {
                 LOGGER_ERR("select() failed");
-                exit(EXIT_FAILURE);
+                return;
         }
         else if (retval)
         {
@@ -113,8 +113,7 @@ static void inotify_sb_ctrl(enum bk_cmd cmd, void *arg)
         default:
         {
                 LOGGER_ERR("Unknown cmd called");
-                exit(EXIT_FAILURE);
-                break;
+                return;
         }
         }
 }

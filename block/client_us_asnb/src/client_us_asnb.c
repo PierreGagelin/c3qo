@@ -46,7 +46,6 @@ static void client_us_asnb_handler(int sig, siginfo_t *info, void *context)
         if (sig != SIGIO)
         {
                 LOGGER_ERR("bad signal");
-                exit(EXIT_FAILURE);
         }
 }
 
@@ -70,7 +69,7 @@ static void client_us_asnb_init()
         if (ctx.fd == -1)
         {
                 LOGGER_ERR("Failed to open socket");
-                exit(EXIT_FAILURE);
+                return;
         }
 
         /* set the socket to be ASNB and register SIGIO handler */
@@ -81,12 +80,11 @@ static void client_us_asnb_init()
         clt_addr.sun_family = AF_UNIX;
         strcpy(clt_addr.sun_path, "/tmp/server_us_asnb");
 
-        ret = connect(ctx.fd, (struct sockaddr *) &clt_addr,
-                        sizeof(clt_addr));
+        ret = connect(ctx.fd, (struct sockaddr *) &clt_addr, sizeof(clt_addr));
         if (ret == -1)
         {
                 LOGGER_ERR("Failed to connect socket");
-                exit(EXIT_FAILURE);
+                return;
         }
 
         buff = "client_us_asnb world!\n";
@@ -130,7 +128,6 @@ static void client_us_asnb_ctrl(enum bk_cmd cmd, void *arg)
         default:
         {
                 LOGGER_ERR("Unknown cmd called");
-                exit(EXIT_FAILURE);
                 break;
         }
         }

@@ -30,7 +30,6 @@ void c3qo_register_fd_handler(int sig, void (*func)(int, siginfo_t *, void *))
         if (ret != 0)
         {
                 LOGGER_ERR("Failed to register signal handler");
-                exit(EXIT_FAILURE);
         }
 }
 

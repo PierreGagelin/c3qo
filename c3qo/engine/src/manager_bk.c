@@ -246,7 +246,7 @@ size_t manager_conf_get(char *buf, size_t len)
 {
         size_t   w = 0;
         uint16_t i;
-        uint16_t c; /* Count of block information dumped */
+        uint16_t c = 0; /* Count of block information dumped */
 
         LOGGER_DEBUG("Getting blocks information")
 

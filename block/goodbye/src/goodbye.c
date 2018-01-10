@@ -37,7 +37,6 @@ static void goodbye_ctrl(enum bk_cmd cmd, void *arg)
         default:
         {
                 LOGGER_ERR("Unknown cmd called");
-                exit(EXIT_FAILURE);
                 break;
         }
         }
