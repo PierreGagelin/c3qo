@@ -37,8 +37,6 @@ void tu_hello::TearDown()
 
 TEST_F(tu_hello, hello)
 {
-        EXPECT_TRUE(&hello_entry != NULL);
-
         hello_entry.ctrl(BK_INIT, NULL);
         hello_entry.ctrl(BK_START, NULL);
 }

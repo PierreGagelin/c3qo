@@ -21,6 +21,8 @@ extern "C"
 bool fd_called;
 static void fd_callback(int fd)
 {
+        (void) fd;
+
         fd_called = true;
 }
 

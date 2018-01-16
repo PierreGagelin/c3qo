@@ -1,9 +1,16 @@
+
+
 cmake_minimum_required(VERSION 3.0)
 project(c3q0)
 
 
 # Compile with DEBUG level
 set(CMAKE_BUILD_TYPE Debug)
+
+
+# Compilation flags
+set(CMAKE_C_FLAGS   "-Wall -Wextra -Werror")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror")
 
 
 # Allow to run "make test"
@@ -21,3 +28,5 @@ add_subdirectory(c3qo)
 add_subdirectory(block)
 
 add_subdirectory(gtest)
+
+

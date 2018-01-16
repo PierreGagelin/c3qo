@@ -129,7 +129,6 @@ bool manager_fd_add(int fd, void (*callback) (int fd))
 void manager_fd_remove(int fd)
 {
         int i;
-        int fd_max;
 
         i = manager_fd_find(fd);
         if (i != -1)
