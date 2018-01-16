@@ -89,7 +89,7 @@ static inline int server_us_nb_fd_add(int fd)
 }
 
 
-static inline int server_us_nb_fd_remove(int fd)
+static inline void server_us_nb_fd_remove(int fd)
 {
         int i;
 

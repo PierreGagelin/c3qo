@@ -10,7 +10,7 @@
 extern char *optarg;
 
 
-int main(char argc, char ** argv)
+int main(int argc, char ** argv)
 {
         bool       conf;
         int        opt;

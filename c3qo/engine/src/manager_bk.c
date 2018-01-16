@@ -137,7 +137,7 @@ static void manager_exec_cmd()
         case BK_START:
         case BK_STOP:
         {
-                if (bk_list[cmd.id] == NULL);
+                if (bk_list[cmd.id] == NULL)
                 {
                         LOGGER_ERR("Can't find block");
                         break;
