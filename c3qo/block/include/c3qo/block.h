@@ -11,13 +11,12 @@
  */
 enum bk_type
 {
-        BK_NONE           = 0, /* Default value */
-        BK_HELLO          = 1, /* Block that says hello */
-        BK_GOODBYE        = 2, /* Block that says goodbye */
-        BK_INOTIFY_SB     = 3, /* Filesystem watcher sync blocking */
-        BK_CLIENT_US_ASNB = 4, /* Unix stream async non-block client */
-        BK_SERVER_US_ASNB = 5, /* Unix stream async non-block server */
-        BK_TYPE_MAX       = 5, /* Maximum value */
+        BK_NONE         = 0, /* Default value */
+        BK_HELLO        = 1, /* Block that says hello */
+        BK_GOODBYE      = 2, /* Block that says goodbye */
+        BK_CLIENT_US_NB = 3, /* Unix stream non-block client */
+        BK_SERVER_US_NB = 4, /* Unix stream non-block server */
+        BK_TYPE_MAX     = 4, /* Maximum value */
 };
 
 

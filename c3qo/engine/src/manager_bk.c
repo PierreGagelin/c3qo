@@ -13,7 +13,6 @@
 /* Each block shall be linked */
 extern struct bk_if hello_entry;
 extern struct bk_if goodbye_entry;
-extern struct bk_if inotify_sb_entry;
 extern struct bk_if client_us_nb_entry;
 extern struct bk_if server_us_nb_entry;
 
@@ -79,17 +78,12 @@ static void manager_block_add(uint16_t id, enum bk_type type)
                 bk_list[id]->bk = goodbye_entry;
                 break;
         }
-        case BK_INOTIFY_SB:
-        {
-                bk_list[id]->bk = inotify_sb_entry;
-                break;
-        }
-        case BK_CLIENT_US_ASNB:
+        case BK_CLIENT_US_NB:
         {
                 bk_list[id]->bk = client_us_nb_entry;
                 break;
         }
-        case BK_SERVER_US_ASNB:
+        case BK_SERVER_US_NB:
         {
                 bk_list[id]->bk = server_us_nb_entry;
                 break;
