@@ -10,6 +10,7 @@ extern "C"
 {
 #include <stdio.h> // fopen, fileno
 
+#include "c3qo/block.h"      // BK_ADD, BK_HELLO, BK_GOODBYE...
 #include "c3qo/logger.h"     // LOGGER_OPEN, LOGGER_CLOSE
 #include "c3qo/manager_bk.h" // manager_conf_parse
 #include "c3qo/manager_fd.h" // manager_fd_init/clean/add/remove/select
@@ -37,13 +38,14 @@ public:
 void tu_manager::SetUp()
 {
         LOGGER_OPEN();
-        logger_set_level(LOGGER_LEVEL_INFO);
+        logger_set_level(LOGGER_LEVEL_WARNING);
 
         fd_called = false;
 }
 
 void tu_manager::TearDown()
 {
+        logger_set_level(LOGGER_LEVEL_NONE);
         LOGGER_CLOSE();
 }
 
@@ -63,36 +65,38 @@ TEST_F(tu_manager, manager_bk)
         file.open(filename, std::ios::out | std::ios::trunc);
         ASSERT_EQ(file.is_open(), true);
 
-        // bk_cmd=1 (BK_ADD), bk_id=0, bk_type=1 (BK_HELLO)
-        // bk_cmd=1 (BK_ADD), bk_id=1, bk_type=2 (BK_GOODBYE)
-        file << "1 0 1\n";
-        file << "1 1 2\n";
+        // Add 2 blocks
+        //   - format : "<bk_cmd> <bk_id> <bk_type>\n"
+        file << BK_ADD << " 0 " << BK_HELLO   << std::endl;
+        file << BK_ADD << " 1 " << BK_GOODBYE << std::endl; 
 
-        // Adding tons of block
+        // Add tons of block
         for (int i = 2; i < 5000; i++)
         {
-                file << "1 " << i << " 1\n";
+                file << BK_ADD << " " << i << " " << BK_HELLO << std::endl;
         }
 
         file.close();
 
+        // Parsing configuration
         EXPECT_EQ(manager_conf_parse(filename), true);
 
-        // bk_id=0, bk_type=1 (BK_HELLO),   bk_state=0 (BK_STOPPED)
-        // bk_id=1, bk_type=2 (BK_GOODBYE), bk_state=0 (BK_STOPPED)
-        ss << "0 1 0;1 2 0;";
-
-        // rest of the blocks
+        // Prepare expected configuration dump for the blocks
+        //   - format : "<bk_id> <bk_type> <bk_state>;"
+        ss << "0 " << BK_HELLO   << " " << BK_STOPPED << ";";
+        ss << "1 " << BK_GOODBYE << " " << BK_STOPPED << ";";
         for (int i = 2; i < 5000; i++)
         {
-                ss << i << " 1 0;";
+                ss << i << " " << BK_HELLO << " " << BK_STOPPED << ";";
         }
         buf_exp = ss.str();
 
+        // Verify the configuration dump
         len = manager_conf_get(buf, sizeof(buf));
         EXPECT_EQ(len, buf_exp.length());
         EXPECT_EQ(memcmp(buf, buf_exp.c_str(), len), 0);
 
+        // Clean blocks
         manager_block_clean();
 }
 

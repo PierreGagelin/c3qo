@@ -16,7 +16,7 @@ enum logger_level
         LOGGER_LEVEL_EMERG   = 1,
         LOGGER_LEVEL_ALERT   = 2,
         LOGGER_LEVEL_CRIT    = 3,
-        LOGGER_LEVEL_ERR   = 4,
+        LOGGER_LEVEL_ERR     = 4,
         LOGGER_LEVEL_WARNING = 5,
         LOGGER_LEVEL_NOTICE  = 6,
         LOGGER_LEVEL_INFO    = 7,
@@ -52,6 +52,6 @@ void logger_set_level(enum logger_level l);
 #define LOGGER_INFO(msg, ...)    if (logger_level >= LOGGER_LEVEL_INFO)    { syslog(LOG_INFO,    "[INFO] "    msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); }
 #define LOGGER_DEBUG(msg, ...)   if (logger_level >= LOGGER_LEVEL_DEBUG)   { syslog(LOG_DEBUG,   "[DEBUG] "   msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); }
 
-#endif
+#endif /* C3QO_LOGGER_H */
 
 

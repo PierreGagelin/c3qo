@@ -1,4 +1,5 @@
 
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -6,15 +7,23 @@
 #include "c3qo/logger.h"
 
 
-static void goodbye_init()
+static inline void goodbye_init()
 {
         LOGGER_INFO("Block goodbye is being initilized");
 }
 
 
-static void goodbye_start()
+static inline void goodbye_start()
 {
-        LOGGER_INFO("Goodbye world");
+        LOGGER_INFO("Block goodbye is being started");
+
+        LOGGER_DEBUG("Goodbye world");
+}
+
+
+static inline void goodbye_stop()
+{
+        LOGGER_INFO("Block goodbye is being stopped");
 }
 
 
@@ -34,6 +43,11 @@ static void goodbye_ctrl(enum bk_cmd cmd, void *arg)
                 goodbye_start();
                 break;
         }
+        case BK_STOP:
+        {
+                goodbye_stop();
+                break;
+        }
         default:
         {
                 LOGGER_ERR("Unknown cmd called");
@@ -51,4 +65,5 @@ struct bk_if goodbye_entry =
         .tx   = NULL,
         .ctrl = goodbye_ctrl,
 };
+
 

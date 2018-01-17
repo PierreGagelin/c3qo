@@ -1,4 +1,5 @@
 
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -6,17 +7,23 @@
 #include "c3qo/logger.h"
 
 
-static void hello_init()
+static inline void hello_init()
 {
         LOGGER_INFO("Block hello is being initialized");
 }
 
 
-static void hello_start()
+static inline void hello_start()
 {
         LOGGER_INFO("Block hello is being started");
 
         LOGGER_DEBUG("Hello world");
+}
+
+
+static inline void hello_stop()
+{
+        LOGGER_INFO("Block hello is being stopped");
 }
 
 
@@ -36,6 +43,11 @@ static void hello_ctrl(enum bk_cmd cmd, void *arg)
         case BK_START:
         {
                 hello_start();
+                break;
+        }
+        case BK_STOP:
+        {
+                hello_stop();
                 break;
         }
         default:
@@ -58,4 +70,5 @@ struct bk_if hello_entry =
         .tx   = NULL,
         .ctrl = hello_ctrl,
 };
+
 
