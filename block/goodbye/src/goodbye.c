@@ -61,6 +61,8 @@ struct bk_if goodbye_entry =
 {
         .ctx = NULL,
 
+        .stats = NULL,
+
         .rx   = NULL,
         .tx   = NULL,
         .ctrl = goodbye_ctrl,

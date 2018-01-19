@@ -36,7 +36,8 @@ enum bk_cmd
         BK_BIND      = 4, /* Bind a block to another */
         BK_START     = 5, /* Ask the block to start */
         BK_STOP      = 6, /* Ask the block to stop */
-        BK_CMD_MAX   = 6, /* Maximum value */
+        BK_STATS     = 7, /* Ask the block to stop */
+        BK_CMD_MAX   = 7, /* Maximum value */
 };
 
 
@@ -53,6 +54,36 @@ enum bk_state
 
 
 /**
+ * @brief : Different type of block data
+ */
+enum bk_data_type
+{
+        BK_DATA_TYPE_NONE = 0, /* The data is unknown */
+        BK_DATA_TYPE_BUF  = 1, /* The data is a buffer */
+};
+
+
+/**
+ * @brief : Data that travel through blocks
+ */
+struct bk_data
+{
+        enum bk_data_type type;  /* Type of data */
+        void              *data; /* data */
+};
+
+
+/**
+ * @brief : Data corresponding to BK_DATA_TYPE_BUF
+ */
+struct bk_buf
+{
+        size_t len;  /* size of the buffer */
+        void   *buf; /* buffer */
+};
+
+
+/**
  * @brief : Declare the interface to manage blocks
  */
 struct bk_if
@@ -60,13 +91,16 @@ struct bk_if
         /* Context */
         void *ctx;
 
+        /* Get Statistics */
+        size_t (*stats) (char *buf, size_t len);
+
         /* Data processing */
-        void (*rx) (void);
-        void (*tx) (void);
+        void (*rx) (struct bk_data *data);
+        void (*tx) (struct bk_data *data);
         void (*ctrl) (enum bk_cmd cmd, void *arg);
 };
 
 
-#endif
+#endif /* C3QO_BLOCK_H */
 
 

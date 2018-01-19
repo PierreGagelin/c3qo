@@ -118,14 +118,14 @@ TEST_F(tu_manager, manager_fd)
 
         // Add and write to the file
         manager_fd_init();
-        EXPECT_TRUE(manager_fd_add(fd, &fd_callback) == true);
+        EXPECT_TRUE(manager_fd_add(fd, &fd_callback, true) == true);
         fprintf(file, "hello world!");
 
-        // Verify that callback was called
-        manager_fd_select();
+        // Verify something is ready to be read and callback is called
+        EXPECT_TRUE(manager_fd_select() > 0);
         EXPECT_TRUE(fd_called == true);
 
-        manager_fd_remove(fd);
+        manager_fd_remove(fd, true);
         manager_fd_clean();
         fclose(file);
 }

@@ -66,6 +66,8 @@ struct bk_if hello_entry =
 {
         .ctx = NULL,
 
+        .stats = NULL,
+
         .rx   = NULL,
         .tx   = NULL,
         .ctrl = hello_ctrl,

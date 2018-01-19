@@ -53,12 +53,12 @@ ssize_t c3qo_socket_write_nb(int fd, const char *buff, size_t size)
         }
         case EAGAIN:
         {
-                LOGGER_DEBUG("socket not ready to send data\n");
+                LOGGER_DEBUG("Socket not ready to send data [fd=%d]", fd);
                 break;
         }
         default:
         {
-                LOGGER_ERR("non-blocking write failed\n");
+                LOGGER_ERR("Failed non-blocking write on socket [fd=%d]", fd);
                 break;
         }
         }
@@ -88,12 +88,12 @@ ssize_t c3qo_socket_read_nb(int fd, char *buff, size_t size)
         }
         case EAGAIN:
         {
-                LOGGER_DEBUG("socket not ready to receive data\n");
+                LOGGER_DEBUG("Socket not ready to receive data [fd=%d]", fd);
                 break;
         }
         default:
         {
-                LOGGER_ERR("non-blocking write failed\n");
+                LOGGER_ERR("Failed non-blocking read on socket [fd=%d]", fd);
                 break;
         }
         }

@@ -11,12 +11,12 @@ void manager_fd_clean();
 
 
 /* Add or remove a file descriptor */
-bool manager_fd_add(int fd, void (*callback) (int fd));
-void manager_fd_remove(int fd);
+bool manager_fd_add(int fd, void (*callback) (int fd), bool read);
+void manager_fd_remove(int fd, bool read);
 
 
-/* Try to find fd ready for reading */
-void manager_fd_select();
+/* Lookup fd ready for reading */
+int manager_fd_select();
 
 
 #endif /* C3QO_MANAGER_FD_H */

@@ -7,8 +7,10 @@
  */
 
 
+#include <stdio.h>      /* snprintf */
+#include <sys/types.h>  /* listen */
 #include <sys/un.h>     /* sockaddr_un */
-#include <sys/socket.h> /* socket */
+#include <sys/socket.h> /* socket, listen */
 
 #include "c3qo/block.h"
 #include "c3qo/logger.h"
@@ -16,22 +18,23 @@
 #include "c3qo/socket.h"
 
 
-#define SOCKET_FD_MAX    64 /* maximum number of file descriptors */
+#define SOCKET_FD_MAX    64 /* Maximum number of file descriptors */
 #define SOCKET_READ_SIZE 256
+#define SOCKET_NAME      "/tmp/server_us_nb"
 
 
-/* context of the block */
+/* Context of the block */
 struct server_us_nb_ctx
 {
-        int fd[SOCKET_FD_MAX]; /* file descriptors of the socket */
-        int fd_count;          /* number of fd in use */
+        int fd[SOCKET_FD_MAX]; /* File descriptors of the socket */
+        int fd_count;          /* Number of fd in use */
 };
-struct server_us_nb_ctx ctx;
+struct server_us_nb_ctx ctx_s;
 
 
-/* statistics */
-static unsigned int server_us_nb_count;
-static ssize_t      server_us_nb_bytes;
+/* Statistics */
+unsigned int server_us_nb_count;
+ssize_t      server_us_nb_bytes;
 
 
 static inline int server_us_nb_fd_find(int fd)
@@ -40,7 +43,7 @@ static inline int server_us_nb_fd_find(int fd)
 
         for (i = 0; i < SOCKET_FD_MAX; i++)
         {
-                if (ctx.fd[i] != fd)
+                if (ctx_s.fd[i] != fd)
                 {
                         continue;
                 }
@@ -63,10 +66,10 @@ static inline int server_us_nb_fd_add(int fd)
 
         c3qo_socket_set_nb(fd);
 
-        if (ctx.fd[ctx.fd_count] != -1)
+        if (ctx_s.fd[ctx_s.fd_count] != -1)
         {
                 /* First easy try */
-                i = ctx.fd_count;
+                i = ctx_s.fd_count;
         }
         else
         {
@@ -76,14 +79,13 @@ static inline int server_us_nb_fd_add(int fd)
 
         if (i != -1)
         {
-                ctx.fd[i] = fd;
-                ctx.fd_count++;
+                ctx_s.fd[i] = fd;
+                ctx_s.fd_count++;
 
                 return i;
         }
         else
         {
-                LOGGER_ERR("No more room available for new file descriptor");
                 return -1;
         }
 }
@@ -97,8 +99,10 @@ static inline void server_us_nb_fd_remove(int fd)
 
         if (i != -1)
         {
-                ctx.fd[i] = -1;
-                ctx.fd_count--;
+                manager_fd_remove(fd, true);
+                close(fd);
+                ctx_s.fd[i] = -1;
+                ctx_s.fd_count--;
         }
 }
 
@@ -115,12 +119,12 @@ static void server_us_nb_flush_fd(int fd)
         {
                 memset(buff, 0, sizeof(buff));
                 ret = c3qo_socket_read_nb(fd, buff, sizeof(buff));
-                if (ret != -1)
+                if (ret == 0)
                 {
                         server_us_nb_count += 1;
                         server_us_nb_bytes += ret;
                 }
-        } while (ret != -1);
+        } while (ret == 0);
 }
 
 
@@ -131,34 +135,40 @@ static void server_us_nb_flush_fd(int fd)
  */
 static void server_us_nb_handler(int fd)
 {
-        if (fd == ctx.fd[0])
+        LOGGER_DEBUG("Data available on socket [fd=%d]", fd);
+        if (fd == ctx_s.fd[0])
         {
                 struct sockaddr_un client;
                 socklen_t          size;
                 int                fd_client;
 
-                /* new connection has arrived */
+                /* New connection has arrived */
                 size = sizeof(client);
-                fd_client = accept(ctx.fd[0], (struct sockaddr *) &client, &size);
+                fd_client = accept(ctx_s.fd[0], (struct sockaddr *) &client, &size);
                 if (fd_client == -1)
                 {
-                        LOGGER_ERR("Failed to accept new client");
+                        LOGGER_ERR("Failed to accept new client socket [fd_server=%d ; fd_client=%d]", fd, fd_client);
                         return;
                 }
 
-                /* keep the new file descriptor */
+                /* Keep the new file descriptor */
                 if (server_us_nb_fd_add(fd_client) == -1)
                 {
-                        close(fd_client);
+                        LOGGER_ERR("Failed to add new client socket [fd=%d]", fd_client);
+                        server_us_nb_fd_remove(fd_client);
                         return;
                 }
 
-                /* register the fd for event */
-                if (manager_fd_add(fd_client, &server_us_nb_handler) == false)
+                /* Register the fd for event */
+                if (manager_fd_add(fd_client, &server_us_nb_handler, true) == false)
                 {
-                        close(fd_client);
+                        LOGGER_ERR("Failed to register callback on new client socket [fd=%d ; callback=%p]", fd_client, &server_us_nb_handler);
                         server_us_nb_fd_remove(fd_client);
                         return;
+                }
+                else
+                {
+                        LOGGER_DEBUG("Registered callback on new client socket [fd=%d ; callback=%p]", fd_client, &server_us_nb_handler);
                 }
         }
         else
@@ -166,66 +176,85 @@ static void server_us_nb_handler(int fd)
                 /* Data available from the client */
                 server_us_nb_flush_fd(fd);
 
-                LOGGER_DEBUG("dump stats : count=%u, bytes=%ld", server_us_nb_count, server_us_nb_bytes);
+                LOGGER_DEBUG("Statistics of server_us_nb [count=%u ; bytes=%ld]", server_us_nb_count, server_us_nb_bytes);
         }
 }
 
 
 /**
- * @brief Initialization function
+ * @brief Initialize the block
  */
 static void server_us_nb_init()
+{
+        LOGGER_INFO("Initialize block server_us_nb");
+
+        /* Initialize context */
+        memset(&ctx_s, -1, sizeof(ctx_s));
+        ctx_s.fd_count = 0;
+}
+
+
+/**
+ * @brief Start the block
+ */
+static void server_us_nb_start()
 {
         struct sockaddr_un srv_addr;
         int                ret;
 
-        LOGGER_INFO("Block server_us_nb is being initialized");
+        LOGGER_INFO("Start block server_us_nb");
 
-        /* context initialization */
-        memset(&ctx, -1, sizeof(ctx));
-        ctx.fd_count = 0;
-
-        /* creation of the server socket */
-        ctx.fd[0] = socket(AF_UNIX, SOCK_STREAM, 0);
-        ctx.fd_count++;
-        if (ctx.fd[0] == -1)
+        /* Creation of the server socket */
+        ctx_s.fd[0] = socket(AF_UNIX, SOCK_STREAM, 0);
+        ctx_s.fd_count++;
+        if (ctx_s.fd[0] == -1)
         {
-                LOGGER_ERR("Failed to open socket");
+                LOGGER_ERR("Failed to open server socket [fd=%d]", ctx_s.fd[0]);
                 return;
         }
 
-        /* set the socket to be NB */
-        c3qo_socket_set_nb(ctx.fd[0]);
+        /* Register the file descriptor for reading */
+        if (manager_fd_add(ctx_s.fd[0], &server_us_nb_handler, true) == false)
+        {
+                LOGGER_ERR("Failed to register callback on server socket [fd=%d ; callback=%p]", ctx_s.fd[0], &server_us_nb_handler);
+                server_us_nb_fd_remove(ctx_s.fd[0]);
+                return;
+        }
+
+        /* Set the socket to be NB */
+        c3qo_socket_set_nb(ctx_s.fd[0]);
 
         memset(&srv_addr, 0, sizeof(srv_addr));
         srv_addr.sun_family = AF_UNIX;
-        strcpy(srv_addr.sun_path, "/tmp/server_us_nb");
+        strcpy(srv_addr.sun_path, SOCKET_NAME);
 
-        /* close an eventual old socket and bind the new one */
-        unlink("/tmp/server_us_nb");
-        ret = bind(ctx.fd[0], (struct sockaddr *) &srv_addr, sizeof(srv_addr));
+        /* Close an eventual old socket and bind the new one */
+        unlink(SOCKET_NAME);
+        ret = bind(ctx_s.fd[0], (struct sockaddr *) &srv_addr, sizeof(srv_addr));
         if (ret < 0)
         {
-                LOGGER_ERR("Failed to bind socket");
+                LOGGER_ERR("Failed to bind server socket [fd=%d]", ctx_s.fd[0]);
+                server_us_nb_fd_remove(ctx_s.fd[0]);
                 return;
         }
 
-        /* register the file descriptor in order to be called when client is ready */
-        if (manager_fd_add(ctx.fd[0], &server_us_nb_handler) == false)
+        /* Listen on the socket with 5 pending connections maximum */
+        ret = listen(ctx_s.fd[0], 5);
+        if (ret != 0)
         {
-                LOGGER_ERR("Failed to register socket fd callback");
+                LOGGER_ERR("Failed to listen on server socket [fd=%d]", ctx_s.fd[0]);
+                server_us_nb_fd_remove(ctx_s.fd[0]);
+                return;
         }
-        else
-        {
-                LOGGER_DEBUG("Socket to accept clients is initialized");
-        }
+
+        LOGGER_DEBUG("Server socket ready to accept clients [fd=%d ; callback=%p]", ctx_s.fd[0], &server_us_nb_handler);
 }
 
 
 /**
- * @brief Initialization function
+ * @brief Stop the block
  */
-static void server_us_nb_start()
+static void server_us_nb_stop()
 {
         LOGGER_DEBUG("Not implemented yet");
 }
@@ -247,11 +276,53 @@ static void server_us_nb_ctrl(enum bk_cmd cmd, void *arg)
                 server_us_nb_start();
                 break;
         }
+        case BK_STOP:
+        {
+                server_us_nb_stop();
+                break;
+        }
         default:
         {
-                LOGGER_ERR("Unknown bk_cmd=%d called", cmd);
+                LOGGER_ERR("Unknown command called [bk_cmd=%d]", cmd);
                 return;
         }
+        }
+}
+
+
+/**
+ * @brief Dump statistics of the block in a string
+ *
+ * @param buf : String to dump statistics
+ * @param len : Size of the string
+ *
+ * @return Actual size written
+ */
+static size_t server_us_nb_get_stats(char *buf, size_t len)
+{
+        int    ret;
+        size_t count;
+
+        LOGGER_DEBUG("Get statistics for block server_us_nb [buf=%p ; len=%lu]", buf, len);
+
+        ret = snprintf(buf, len, "%d", ctx_s.fd_count);
+        if (ret < 0)
+        {
+                LOGGER_ERR("snprintf failed to write statistics into buffer [buf=%p ; len=%lu]", buf, len);
+                return 0;
+        }
+        else
+        {
+                count = (size_t) ret;
+        }
+
+        if (count > len)
+        {
+                return len;
+        }
+        else
+        {
+                return count;
         }
 }
 
@@ -261,8 +332,11 @@ struct bk_if server_us_nb_entry =
 {
         .ctx = NULL,
 
+        .stats = server_us_nb_get_stats,
+
         .rx   = NULL,
         .tx   = NULL,
         .ctrl = server_us_nb_ctrl,
 };
+
 

@@ -8,7 +8,8 @@
 #include "c3qo/logger.h" /* LOGGER */
 
 
-static fd_set mfd_set;     /* Set of file descriptor */
+static fd_set mfd_set_r;   /* Set of file descriptor for reading */
+static fd_set mfd_set_w;   /* Set of file descriptor for writing */
 static int    mfd_set_max; /* Current maximum register fd value */
 
 /**
@@ -21,7 +22,8 @@ struct mfd_entry
 };
 
 #define MFD_ENTRY_MAX 256
-static struct mfd_entry mfd_list[MFD_ENTRY_MAX]; /* List of file descriptors registered */
+static struct mfd_entry mfd_list_r[MFD_ENTRY_MAX]; /* List of file descriptors registered for reading */
+static struct mfd_entry mfd_list_w[MFD_ENTRY_MAX]; /* List of file descriptors registered for writing */
 
 
 /**
@@ -32,7 +34,7 @@ static struct mfd_entry mfd_list[MFD_ENTRY_MAX]; /* List of file descriptors reg
  * @return Index in the list where fd is registered
  *         -1 if not found
  */
-static inline int manager_fd_find(int fd)
+static inline int manager_fd_find(struct mfd_entry *mfd_list, int fd)
 {
         int i;
         int index = -1;
@@ -63,9 +65,13 @@ static inline void manager_fd_update_max()
 
         for (i = 0; i < MFD_ENTRY_MAX; i++)
         {
-                if (mfd_list[i].fd > mfd_set_max)
+                if (mfd_list_r[i].fd > mfd_set_max)
                 {
-                        mfd_set_max = mfd_list[i].fd;
+                        mfd_set_max = mfd_list_r[i].fd;
+                }
+                if (mfd_list_w[i].fd > mfd_set_max)
+                {
+                        mfd_set_max = mfd_list_w[i].fd;
                 }
         }
 }
@@ -76,35 +82,54 @@ static inline void manager_fd_update_max()
  */
 void manager_fd_init()
 {
-        memset(&mfd_list, -1, sizeof(mfd_list));
+        LOGGER_DEBUG("Initialize manager_fd");
 
+        memset(&mfd_list_r, -1, sizeof(mfd_list_r));
+        memset(&mfd_list_w, -1, sizeof(mfd_list_w));
         mfd_set_max = -1;
-
-        LOGGER_DEBUG("Initialized file descriptor list");
 }
 
 
 /**
- * @brief Add a file descriptor into the reading list
+ * @brief Add a file descriptor
+ *
+ * @param fd       : file descriptor
+ * @param callback : function to call when fd is ready
+ * @param read     : register into reading list
+ *
+ * @return true on success, false on failure
  */
-bool manager_fd_add(int fd, void (*callback) (int fd))
+bool manager_fd_add(int fd, void (*callback) (int fd), bool read)
 {
-        int  i;
+        struct mfd_entry *mfd_list;
+        static fd_set    *mfd_set;
+        int              i;
+
+        if (read == true)
+        {
+                mfd_list = mfd_list_r;
+                mfd_set  = &mfd_set_r;
+        }
+        else
+        {
+                mfd_list = mfd_list_w;
+                mfd_set  = &mfd_set_w;
+        }
 
         if (callback == NULL)
         {
-                LOGGER_WARNING("Cannot add fd=%d with callback=NULL", fd);
+                LOGGER_WARNING("Cannot add file descriptor without callback [fd=%d ; callback=%p]", fd, callback);
                 return false;
         }
 
         /* Look for a free entry */
-        i = manager_fd_find(-1);
+        i = manager_fd_find(mfd_list, -1);
         if (i != -1)
         {
                 mfd_list[i].fd       = fd;
                 mfd_list[i].callback = callback;
 
-                FD_SET(fd, &mfd_set);
+                FD_SET(fd, mfd_set);
 
                 /* Update max file descriptor if necessary */
                 if (fd > mfd_set_max)
@@ -112,12 +137,11 @@ bool manager_fd_add(int fd, void (*callback) (int fd))
                         mfd_set_max = fd;
                 }
 
-                LOGGER_DEBUG("Added fd=%d with callback=%p", fd, callback);
                 return true;
         }
         else
         {
-                LOGGER_ERR("Could not find room to register fd=%d", fd);
+                LOGGER_ERR("Failed to find room to add file descriptor [fd=%d ; callback=%p]", fd, callback);
                 return false;
         }
 }
@@ -126,23 +150,33 @@ bool manager_fd_add(int fd, void (*callback) (int fd))
 /**
  * @brief Remove a file descriptor from the reading list
  */
-void manager_fd_remove(int fd)
+void manager_fd_remove(int fd, bool read)
 {
-        int i;
+        struct mfd_entry *mfd_list;
+        static fd_set    *mfd_set;
+        int               i;
 
-        i = manager_fd_find(fd);
-        if (i != -1)
+        if (read == true)
         {
-                mfd_list[i].fd = -1;
-                LOGGER_DEBUG("Removed fd=%d from reading list", fd);
+                mfd_list = mfd_list_r;
+                mfd_set  = &mfd_set_r;
         }
         else
         {
-                LOGGER_WARNING("Couldn't find fd=%d", fd);
+                mfd_list = mfd_list_w;
+                mfd_set  = &mfd_set_w;
+        }
+
+        i = manager_fd_find(mfd_list, fd);
+        if (i == -1)
+        {
+                /* Unknown file descriptor, do nothing */
                 return;
         }
 
-        FD_CLR(fd, &mfd_set);
+        /* Remove from list and set */
+        mfd_list[i].fd = -1;
+        FD_CLR(fd, mfd_set);
 
         /* If this value was the maximum fd value, we need to refresh it */
         if (fd == mfd_set_max)
@@ -157,63 +191,74 @@ void manager_fd_remove(int fd)
  */
 void manager_fd_clean()
 {
-        FD_ZERO(&mfd_set);
+        LOGGER_DEBUG("Clear file descriptor list");
 
-        memset(&mfd_list, -1, sizeof(mfd_list));
+        FD_ZERO(&mfd_set_r);
+        FD_ZERO(&mfd_set_w);
+
+        memset(&mfd_list_r, -1, sizeof(mfd_list_r));
+        memset(&mfd_list_w, -1, sizeof(mfd_list_w));
 
         mfd_set_max = -1;
-
-        LOGGER_DEBUG("Cleared file descriptor list");
 }
 
 
 /**
  * @brief Verify if a file descriptor is ready for reading
+ *
+ * @return Return code of select
  */
-void manager_fd_select()
+int manager_fd_select()
 {
         struct timeval tv;
         int            ret;
-        int            c = 0; /* Count of failed select in order not to spam */
 
         /* Wait up to 10 ms */
         tv.tv_sec  = 0;
         tv.tv_usec = 10000;
 
-        ret = select(mfd_set_max + 1, &mfd_set, NULL, NULL, &tv);
-        if (ret == -1)
+        ret = select(mfd_set_max + 1, &mfd_set_r, &mfd_set_w, NULL, &tv);
+        if (ret == 0)
         {
-                if (c < 10)
-                {
-                        LOGGER_ALERT("file descriptor select failed");
-                        c++; /* C++ always come with bad things */
-                }
+                /* Nothing to read, select timed out */
+        }
+        else if (ret == -1)
+        {
+                LOGGER_ERR("Failed to select on file descriptor set");
         }
         else if (ret > 0)
         {
-                /* There are 'ret' fd ready for reading */
                 int i;
-                int j = 0; /* Number of executed callbacks */
+                int j; /* Number of executed callbacks */
 
+                /* There are 'ret' fd ready for reading */
+
+                j = 0;
                 for (i = 0; i < MFD_ENTRY_MAX; i++)
                 {
-                        if ((mfd_list[i].fd == -1) || (FD_ISSET(mfd_list[i].fd, &mfd_set) == 0))
+                        if ((mfd_list_r[i].fd != -1) && (FD_ISSET(mfd_list_r[i].fd, &mfd_set_r) != 0))
                         {
-                                continue;
+                                /* Data ready for reading */
+                                mfd_list_r[i].callback(mfd_list_r[i].fd);
+                                j++;
+                        }
+                        if ((mfd_list_w[i].fd != -1) && (FD_ISSET(mfd_list_w[i].fd, &mfd_set_w) != 0))
+                        {
+                                /* Data ready for writing */
+                                mfd_list_w[i].callback(mfd_list_w[i].fd);
+                                j++;
                         }
 
-                        LOGGER_DEBUG("Data available on fd=%d", mfd_list[i].fd);
 
-                        mfd_list[i].callback(mfd_list[i].fd);
-                        j++;
-
-                        if (j == ret)
+                        if (j >= ret)
                         {
                                 /* Finished to read */
                                 break;
                         }
                 }
         }
+
+        return ret;
 }
 
 
