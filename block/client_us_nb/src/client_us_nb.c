@@ -7,6 +7,7 @@
  */
 
 
+#include <unistd.h>     /* close */
 #include <sys/types.h>  /* getsockopt */
 #include <sys/un.h>     /* sockaddr_un */
 #include <sys/socket.h> /* socket, getsockopt */
@@ -59,8 +60,8 @@ static void client_us_nb_callback(int fd)
  */
 static void client_us_nb_connect(int fd)
 {
-        socklen_t lon;
-        int       optval;
+        socklen_t          lon;
+        int                optval;
 
         if (fd != ctx_c.fd)
         {
@@ -68,6 +69,7 @@ static void client_us_nb_connect(int fd)
                 return;
         }
 
+        /* Verify connection status */
         lon = sizeof(optval);
         if (getsockopt(ctx_c.fd, SOL_SOCKET, SO_ERROR, (void *)(&optval), &lon) != 0)
         {
@@ -126,23 +128,38 @@ static void client_us_nb_start()
         memset(&clt_addr, 0, sizeof(clt_addr));
         clt_addr.sun_family = AF_UNIX;
         strcpy(clt_addr.sun_path, SOCKET_NAME);
-        ret = connect(ctx_c.fd, (struct sockaddr *) &clt_addr, sizeof(clt_addr));
+        ret = c3qo_socket_connect_nb(ctx_c.fd, (struct sockaddr *) &clt_addr, sizeof(clt_addr));
         if (ret == -1)
+        {
+                LOGGER_ERR("Failed to connect to server [fd=%d]", ctx_c.fd);
+                client_us_nb_clean();
+                return;
+        }
+        else if (ret == 1)
         {
                 LOGGER_DEBUG("Server not ready to receive client socket, will try later [fd=%d]", ctx_c.fd);
                 manager_fd_add(ctx_c.fd, &client_us_nb_connect, false);
                 return;
         }
-
-        /* Register the file descriptor with a callback for data reception */
-        if (manager_fd_add(ctx_c.fd, &client_us_nb_callback, true) == false)
+        else if (ret == 2)
         {
-                LOGGER_ERR("Failed to register callback on client socket [fd=%d ; callback=%p]", ctx_c.fd, &client_us_nb_callback);
+                LOGGER_ERR("Failed to find someone listening, need to launch timer for reconnection [fd=%d]", ctx_c.fd);
                 client_us_nb_clean();
+                return;
         }
         else
         {
-                LOGGER_DEBUG("Registered callback on client socket [fd=%d ; callback=%p]", ctx_c.fd, &client_us_nb_callback);
+                /* Success : register the file descriptor with a callback for data reception */
+                if (manager_fd_add(ctx_c.fd, &client_us_nb_callback, true) == false)
+                {
+                        LOGGER_ERR("Failed to register callback on client socket [fd=%d ; callback=%p]", ctx_c.fd, &client_us_nb_callback);
+                        client_us_nb_clean();
+                        return;
+                }
+                else
+                {
+                        LOGGER_DEBUG("Registered callback on client socket [fd=%d ; callback=%p]", ctx_c.fd, &client_us_nb_callback);
+                }
         }
 }
 

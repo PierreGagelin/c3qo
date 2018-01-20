@@ -7,6 +7,7 @@
  */
 
 
+#include <unistd.h>     /* close, unlink */
 #include <stdio.h>      /* snprintf */
 #include <sys/types.h>  /* listen */
 #include <sys/un.h>     /* sockaddr_un */
@@ -60,7 +61,7 @@ static inline int server_us_nb_fd_find(int fd)
  *
  * @return -1 on failure, index of input on success
  */
-static inline int server_us_nb_fd_add(int fd)
+static int server_us_nb_fd_add(int fd)
 {
         int i;
 
@@ -79,19 +80,48 @@ static inline int server_us_nb_fd_add(int fd)
 
         if (i != -1)
         {
+                LOGGER_DEBUG("Add file descriptor to block server_us_nb [fd=%d ; fd_count_old=%d ; fd_count_new=%d]", fd, ctx_s.fd_count, ctx_s.fd_count + 1);
+
                 ctx_s.fd[i] = fd;
                 ctx_s.fd_count++;
-
-                return i;
         }
         else
         {
-                return -1;
+                LOGGER_ERR("Failed to find room for new file descriptor [fd=%d ; fd_count=%d]", fd, ctx_s.fd_count);
         }
+
+        return i;
 }
 
 
-static inline void server_us_nb_fd_remove(int fd)
+/**
+ * @brief Removes a file descriptor
+ *
+ * @param i : index where to find the file descriptor
+ */
+static void server_us_nb_remove(int i)
+{
+        /* Check bounds and coherency */
+        if ((i < 0) || (i >= SOCKET_FD_MAX) || (ctx_s.fd[i] == -1))
+        {
+                return;
+        }
+
+        LOGGER_DEBUG("Remove file descriptor from block server_us_nb [fd=%d ; fd_count_old=%d ; fd_count_new=%d]", ctx_s.fd[i], ctx_s.fd_count, ctx_s.fd_count - 1);
+
+        manager_fd_remove(ctx_s.fd[i], true);
+        close(ctx_s.fd[i]);
+        ctx_s.fd[i] = -1;
+        ctx_s.fd_count--;
+}
+
+
+/**
+ * @brief Removes a file descriptor
+ *
+ * @param fd : file descriptor
+ */
+static inline void server_us_nb_remove_fd(int fd)
 {
         int i;
 
@@ -99,10 +129,7 @@ static inline void server_us_nb_fd_remove(int fd)
 
         if (i != -1)
         {
-                manager_fd_remove(fd, true);
-                close(fd);
-                ctx_s.fd[i] = -1;
-                ctx_s.fd_count--;
+                server_us_nb_remove(i);
         }
 }
 
@@ -155,7 +182,7 @@ static void server_us_nb_handler(int fd)
                 if (server_us_nb_fd_add(fd_client) == -1)
                 {
                         LOGGER_ERR("Failed to add new client socket [fd=%d]", fd_client);
-                        server_us_nb_fd_remove(fd_client);
+                        server_us_nb_remove_fd(fd_client);
                         return;
                 }
 
@@ -163,7 +190,7 @@ static void server_us_nb_handler(int fd)
                 if (manager_fd_add(fd_client, &server_us_nb_handler, true) == false)
                 {
                         LOGGER_ERR("Failed to register callback on new client socket [fd=%d ; callback=%p]", fd_client, &server_us_nb_handler);
-                        server_us_nb_fd_remove(fd_client);
+                        server_us_nb_remove_fd(fd_client);
                         return;
                 }
                 else
@@ -191,6 +218,13 @@ static void server_us_nb_init()
         /* Initialize context */
         memset(&ctx_s, -1, sizeof(ctx_s));
         ctx_s.fd_count = 0;
+
+        /* Initialize stats */
+        server_us_nb_count = 0;
+        server_us_nb_bytes = 0;
+
+        /* Remove UNIX socket */
+        unlink(SOCKET_NAME);
 }
 
 
@@ -217,7 +251,7 @@ static void server_us_nb_start()
         if (manager_fd_add(ctx_s.fd[0], &server_us_nb_handler, true) == false)
         {
                 LOGGER_ERR("Failed to register callback on server socket [fd=%d ; callback=%p]", ctx_s.fd[0], &server_us_nb_handler);
-                server_us_nb_fd_remove(ctx_s.fd[0]);
+                server_us_nb_remove_fd(ctx_s.fd[0]);
                 return;
         }
 
@@ -234,7 +268,7 @@ static void server_us_nb_start()
         if (ret < 0)
         {
                 LOGGER_ERR("Failed to bind server socket [fd=%d]", ctx_s.fd[0]);
-                server_us_nb_fd_remove(ctx_s.fd[0]);
+                server_us_nb_remove_fd(ctx_s.fd[0]);
                 return;
         }
 
@@ -243,7 +277,7 @@ static void server_us_nb_start()
         if (ret != 0)
         {
                 LOGGER_ERR("Failed to listen on server socket [fd=%d]", ctx_s.fd[0]);
-                server_us_nb_fd_remove(ctx_s.fd[0]);
+                server_us_nb_remove_fd(ctx_s.fd[0]);
                 return;
         }
 
@@ -256,7 +290,23 @@ static void server_us_nb_start()
  */
 static void server_us_nb_stop()
 {
-        LOGGER_DEBUG("Not implemented yet");
+        int i;
+
+        LOGGER_INFO("Stop block server_us_nb");
+
+        /* Close every file descriptors */
+        for (i = 0 ; i < SOCKET_FD_MAX ; i++)
+        {
+                server_us_nb_remove(i);
+        }
+
+        /* Initialize stats */
+        server_us_nb_count = 0;
+        server_us_nb_bytes = 0;
+
+        /* Remove UNIX socket */
+        unlink(SOCKET_NAME);
+
 }
 
 

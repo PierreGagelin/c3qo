@@ -119,7 +119,11 @@ static void * thread_socket_server(void *arg)
 }
 
 
-TEST_F(tu_socket_us_nb, connection)
+/**
+ * @brief Establish a connection between server and client in two threads
+ *        This is bad because code isn't thread-safe
+ */
+TEST_F(tu_socket_us_nb, connection_pthread)
 {
         pthread_attr_t     attr[2];
         struct thread_info tinf[2];
@@ -139,6 +143,39 @@ TEST_F(tu_socket_us_nb, connection)
         // Join threads
         EXPECT_TRUE(pthread_join(tinf[CLIENT].tid, &res) == 0);
         EXPECT_TRUE(pthread_join(tinf[SERVER].tid, &res) == 0);
+}
+
+
+/**
+ * @brief Establish a connection between server and client
+ *          - start server then client
+ *          - wait for connection to be acknowledged
+ *
+ * @note Next step : reconnection when client is started first
+ */
+TEST_F(tu_socket_us_nb, connection_monothread)
+{
+        int fd_count; // count of file descriptor handled by the server
+
+        server_us_nb_entry.ctrl(BK_INIT, NULL);
+        client_us_nb_entry.ctrl(BK_INIT, NULL);
+
+        server_us_nb_entry.ctrl(BK_START, NULL);
+        client_us_nb_entry.ctrl(BK_START, NULL);
+
+        do
+        {
+                char buf[16];
+
+                manager_fd_select();
+
+                server_us_nb_entry.stats(buf, 16);
+                fd_count = atoi(buf);
+        }
+        while (fd_count < 2);
+
+        server_us_nb_entry.ctrl(BK_STOP, NULL);
+        client_us_nb_entry.ctrl(BK_STOP, NULL);
 }
 
 

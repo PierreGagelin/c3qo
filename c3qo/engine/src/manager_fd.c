@@ -213,7 +213,7 @@ int manager_fd_select()
         struct timeval tv;
         int            ret;
 
-        /* Wait up to 10 ms */
+        /* Wait up to 10ms */
         tv.tv_sec  = 0;
         tv.tv_usec = 10000;
 
