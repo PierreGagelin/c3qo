@@ -9,6 +9,7 @@
 
 #include <unistd.h>     /* close, unlink */
 #include <stdio.h>      /* snprintf */
+#include <string.h>     /* memset */
 #include <sys/types.h>  /* listen */
 #include <sys/un.h>     /* sockaddr_un */
 #include <sys/socket.h> /* socket, listen */

@@ -8,6 +8,7 @@
 
 
 #include <unistd.h>     /* close */
+#include <string.h>     /* memset */
 #include <sys/types.h>  /* getsockopt */
 #include <sys/un.h>     /* sockaddr_un */
 #include <sys/socket.h> /* socket, getsockopt */

@@ -1,2 +1,7 @@
+
+
 tags
 build/
+*.DS_Store
+
+
