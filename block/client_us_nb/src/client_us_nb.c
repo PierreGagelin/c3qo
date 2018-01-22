@@ -109,10 +109,12 @@ static int client_us_nb_connect(int fd)
         if (ret < 0)
         {
                 LOGGER_ERR("Failed snprintf [buf=%p ; size=%lu ; string=%s]", clt_addr.sun_path, sizeof(clt_addr.sun_path), SOCKET_NAME);
+                return -1;
         }
         else if (((size_t) ret) > sizeof(clt_addr.sun_path))
         {
                 LOGGER_ERR("Failed to write socket name, it's too large [sun_path=%s ; max_size=%lu]", SOCKET_NAME, sizeof(clt_addr.sun_path));
+                return -1;
         }
 
         return c3qo_socket_connect_nb(fd, (struct sockaddr *) &clt_addr, sizeof(clt_addr));
@@ -162,14 +164,15 @@ static void client_us_nb_start()
         }
         else if (ret == 1)
         {
-                LOGGER_DEBUG("Server not ready to receive client socket, will try later [fd=%d]", ctx_c.fd);
+                LOGGER_DEBUG("Connection sent but not acknowledged, will check later [fd=%d]", ctx_c.fd);
                 manager_fd_add(ctx_c.fd, &client_us_nb_connect_check, false);
                 return;
         }
         else if (ret == 2)
         {
-                LOGGER_ERR("Failed to find someone listening, need to launch timer for reconnection [fd=%d]", ctx_c.fd);
-                client_us_nb_clean();
+                LOGGER_ERR("Failed to find someone listening, launch timer for reconnection [fd=%d]", ctx_c.fd);
+
+
                 return;
         }
         else

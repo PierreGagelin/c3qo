@@ -8,23 +8,38 @@
 
 extern "C" 
 {
-#include <stdio.h> // fopen, fileno
+#include <unistd.h> // sleep
+#include <stdio.h>  // fopen, fileno, snprintf
+#include <string.h> // memcmp, strlen
 
 #include "c3qo/block.h"      // BK_ADD, BK_HELLO, BK_GOODBYE...
 #include "c3qo/logger.h"     // LOGGER_OPEN, LOGGER_CLOSE
 #include "c3qo/manager_bk.h" // manager_conf_parse
 #include "c3qo/manager_fd.h" // manager_fd_init/clean/add/remove/select
+#include "c3qo/manager_tm.h" // manager_tm_init
 }
 
 #include "gtest/gtest.h"
 
 
-bool fd_called;
+static bool fd_called;
 static void fd_callback(int fd)
 {
         (void) fd;
 
         fd_called = true;
+}
+
+
+static char zozo_l_asticot[8] = "hello";
+static void tm_callback(void *arg)
+{
+        int ret;
+
+        ret = snprintf(zozo_l_asticot, sizeof(zozo_l_asticot), (char *) arg);
+
+        EXPECT_TRUE(ret > 0);
+        EXPECT_TRUE((size_t) ret <= sizeof(zozo_l_asticot));
 }
 
 
@@ -128,6 +143,39 @@ TEST_F(tu_manager, manager_fd)
         manager_fd_remove(fd, true);
         manager_fd_clean();
         fclose(file);
+}
+
+
+/**
+ * @brief Test the timer manager
+ */
+TEST_F(tu_manager, manager_tm)
+{
+        timer_t           tid;
+        struct itimerspec its;
+        char              arg[8] = "world";
+
+        EXPECT_TRUE(manager_tm_init() == true);
+
+        /* Register a timer */
+        manager_tm_create(&tid, arg, &tm_callback);
+
+        /* Set the timer to trigger each 1ms */
+        its.it_value.tv_sec  = 0;
+        its.it_value.tv_nsec = 1000000;
+
+        its.it_interval.tv_sec  = its.it_value.tv_sec;
+        its.it_interval.tv_nsec = its.it_value.tv_nsec;
+
+        manager_tm_set(tid, &its);
+
+        /* Should be awaken by timer */
+        sleep(1);
+
+        /* Verify callback was called */
+        EXPECT_TRUE(memcmp(zozo_l_asticot, arg, strlen(arg) + 1) == 0);
+        
+        manager_tm_clean();
 }
 
 

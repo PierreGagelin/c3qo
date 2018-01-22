@@ -53,3 +53,6 @@ target_link_libraries(tu_manager gtest)
 target_link_libraries(tu_manager gtest_main)
 
 
+# Need a special link for timer management
+set_target_properties(tu_manager PROPERTIES LINK_FLAGS -lrt)
+
