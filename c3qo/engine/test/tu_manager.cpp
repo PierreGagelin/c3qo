@@ -9,8 +9,8 @@
 extern "C" 
 {
 #include <unistd.h> // sleep
-#include <stdio.h>  // fopen, fileno, snprintf
-#include <string.h> // memcmp, strlen
+#include <stdio.h>  // fopen, fileno
+#include <string.h> // memcmp, strlen, strncpy
 
 #include "c3qo/block.h"      // BK_ADD, BK_HELLO, BK_GOODBYE...
 #include "c3qo/logger.h"     // LOGGER_OPEN, LOGGER_CLOSE
@@ -34,12 +34,10 @@ static void fd_callback(int fd)
 static char zozo_l_asticot[8] = "hello";
 static void tm_callback(void *arg)
 {
-        int ret;
+        /* We need strlen + 1 bytes to write it */
+        EXPECT_TRUE(strlen((char *) arg) < sizeof(zozo_l_asticot));
 
-        ret = snprintf(zozo_l_asticot, sizeof(zozo_l_asticot), (char *) arg);
-
-        EXPECT_TRUE(ret > 0);
-        EXPECT_TRUE((size_t) ret <= sizeof(zozo_l_asticot));
+        strncpy(zozo_l_asticot, (char *) arg, sizeof(zozo_l_asticot));
 }
 
 
