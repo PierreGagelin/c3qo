@@ -17,8 +17,8 @@
 
 struct manager_tm_entry
 {
-        timer_t  tid;                  /* Timer ID */
-        void     *arg;                 /* Argument to give to the callback */
+        timer_t  tid;                   /* Timer ID */
+        void     *arg;                  /* Argument to give to the callback */
         void    (*callback)(void *arg); /* Function to call when timer expires */
 };
 struct manager_tm_entry tm_list[MANAGER_TM_MAX];

@@ -17,15 +17,20 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror")
 enable_testing()
 
 
-# engine include directories
+# Engine include directories
 set(C3QO_BLOCK_INCLUDE_DIR   ${CMAKE_SOURCE_DIR}/c3qo/block/include)
 set(C3QO_LOGGER_INCLUDE_DIR  ${CMAKE_SOURCE_DIR}/c3qo/logger/include)
 set(C3QO_MANAGER_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/c3qo/engine/include)
 set(C3QO_SOCKET_INCLUDE_DIR  ${CMAKE_SOURCE_DIR}/c3qo/socket/include)
 
 
+# Utils include directory
+set(UTILS_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/utils/include)
+
+
 add_subdirectory(c3qo)
 add_subdirectory(block)
+add_subdirectory(utils)
 
 add_subdirectory(gtest)
 

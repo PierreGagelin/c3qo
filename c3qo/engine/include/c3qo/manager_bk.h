@@ -1,5 +1,8 @@
+
+
 #ifndef C3QO_MANAGER_H
 #define C3QO_MANAGER_H
+
 
 #include <stdbool.h>
 
@@ -24,6 +27,6 @@ size_t manager_conf_get(char *buf, size_t len);
 void manager_block_clean();
 
 
-#endif
+#endif /* C3QO_MANAGER_H */
 
 
