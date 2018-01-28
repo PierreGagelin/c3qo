@@ -6,7 +6,8 @@
 #include "utils/vector.h"
 
 
-#define VECTOR_DEFAULT_ENTRY 1 << 3
+/* Default number of entries allocated must be a power of 2 minus 1 */
+#define VECTOR_DEFAULT_ENTRY 15u
 
 
 /**
@@ -67,30 +68,48 @@ static inline void vector_update_tail(struct vector *vec)
 
 
 /**
- * @brief Double the size of the vector
+ * @brief Reserve space for a specified number of elements
+ *
+ * @param elem_max : Maximum number of elements desired
  *
  * @return true on success, false on failure
  */
-static inline bool vector_realloc(struct vector *vec)
+static inline bool vector_realloc(struct vector *vec, uint32_t elem_max)
 {
         void *array;
 
-        if ((vector_check(vec) == false) || (vec->max >= (UINT16_MAX >> 1)))
+        /**
+         * Refuse to realloc if:
+         *   - vector is inconsistent
+         *   - too much entries asked
+         *   - tail is beyond last new element
+         */
+        if ((vector_check(vec) == false)   ||
+            (elem_max  > UINT16_MAX) ||
+            (vec->tail > elem_max))
         {
                 return false;
         }
 
-        /* Double the maximum number of elements */
-        array = realloc(vec->array, (vec->max << 1) * vec->size);
+        if (elem_max == vec->max)
+        {
+                /* Nothing to do */
+                return true;
+        }
+
+        array = realloc(vec->array, (elem_max) * vec->size);
         if (array == NULL)
         {
                 return false;
         }
 
-        /* Fill the new area with empty value */
-        memset(array + vec->max * vec->size, *((char *) vec->empty), vec->max * vec->size);
+        if (vec->max < elem_max)
+        {
+                /* Fill the new area with empty value */
+                memset(array + vec->max * vec->size, *((char *) vec->empty), (elem_max - vec->max) * vec->size);
+        }
 
-        vec->max <<= 1;
+        vec->max   = elem_max;
         vec->array = array;
 
         return true;
@@ -171,43 +190,37 @@ void vector_delete(struct vector *vec)
 
 
 /**
- * @brief Add an element at the end of the vector
- */
-bool vector_append(struct vector *vec, void *elem)
-{
-        if ((vector_check(vec) == false) || (elem == NULL))
-        {
-                return false;
-        }
-
-        /* Increase the size of the vector if necessary */
-        if (vec->nb == vec->max)
-        {
-                /* No more room in vector */
-                if (vector_realloc(vec) == false)
-                {
-                        return false;
-                }
-        }
-
-        memcpy(vec->array + vec->tail * vec->size, elem, vec->size);
-        vec->nb++;
-        vec->tail++;
-
-        return true;
-}
-
-
-/**
  * @brief Insert an element at a given index
  *
  * @return true on success, false on failure
  */
 bool vector_insert(struct vector *vec, void *elem, uint16_t i)
 {
-        if ((vector_check(vec) == false) || (i >= vec->max))
+        if (vector_check(vec) == false || (i == UINT16_MAX))
         {
+                /**
+                 * Vector inconsistent or index too high (we lose
+                 * 1 element because of the tail and nb value being on 16 bits)
+                 */
                 return false;
+        }
+
+        if (i >= vec->max)
+        {
+                uint32_t p;
+
+                /* Round up to a power of two minus 1 and realloc */
+                p = (vec->max + 1) << 1;
+                while (p < i)
+                {
+                        p <<= 1;
+                }
+                p--;
+
+                if (vector_realloc(vec, p) == false)
+                {
+                        return false;
+                }
         }
 
         memcpy(vec->array + i * vec->size, elem, vec->size);
@@ -232,7 +245,7 @@ void vector_remove(struct vector *vec, uint16_t i)
                 return;
         }
 
-        memset(vec->array + i * vec->size, 0, vec->size);
+        memset(vec->array + i * vec->size, *((char *) vec->empty), vec->size);
         vec->nb--;
 
         if ((i + 1) == vec->tail)

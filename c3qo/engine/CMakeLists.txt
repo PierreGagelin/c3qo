@@ -18,6 +18,7 @@ target_link_libraries(manager hello)
 target_link_libraries(manager goodbye)
 target_link_libraries(manager client_us_nb)
 target_link_libraries(manager server_us_nb)
+target_link_libraries(manager logger)
 
 
 # Build c3qo main executable
@@ -32,7 +33,6 @@ target_include_directories(c3qo PUBLIC ${C3QO_MANAGER_INCLUDE_DIR})
 
 
 target_link_libraries(c3qo manager)
-target_link_libraries(c3qo logger)
 
 
 # Build TU for manager
@@ -57,24 +57,23 @@ target_link_libraries(tu_manager gtest_main)
 set_target_properties(tu_manager PROPERTIES LINK_FLAGS -lrt)
 
 
-# TESTESTESTESTESTEST
-set(SOURCES_TU_TEST test/main.cpp)
+# Build special TU for a bug happening with (gtest, valgrind, signal)
+set(SOURCES_TU_TEST test/tu_test.cpp)
 
 
 add_executable(tu_test ${SOURCES_TU_TEST})
 add_test(NAME tu_test COMMAND tu_test)
 
 
-target_include_directories(tu_test PUBLIC ${C3QO_LOGGER_INCLUDE_DIR})
 target_include_directories(tu_test PUBLIC ${C3QO_MANAGER_INCLUDE_DIR})
 
 
 target_link_libraries(tu_test manager)
-target_link_libraries(tu_test logger)
 target_link_libraries(tu_test gtest)
 target_link_libraries(tu_test gtest_main)
 
 
 # Need a special link for timer management
 set_target_properties(tu_test PROPERTIES LINK_FLAGS -lrt)
+
 

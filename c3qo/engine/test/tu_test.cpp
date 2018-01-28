@@ -9,7 +9,6 @@ extern "C"
 #include <string.h> // memcmp, strlen, strncpy
 #include <stdlib.h> // exit
 
-#include "c3qo/logger.h"     // LOGGER_OPEN, LOGGER_CLOSE
 #include "c3qo/manager_tm.h" // manager_tm_init
 }
 

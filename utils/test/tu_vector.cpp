@@ -3,6 +3,9 @@
  */
 
 
+#include <vector>
+#include <queue>
+
 extern "C"
 {
 #include <stdlib.h> /* NULL */
@@ -87,7 +90,6 @@ TEST_F(tu_vector, append)
 
         e.a = 1;
         e.b = 1;
-
         v = vector_create(sizeof(struct elem), 0);
         ASSERT_TRUE(v != NULL);
         ASSERT_TRUE(v->size == sizeof(struct elem));
@@ -100,6 +102,41 @@ TEST_F(tu_vector, append)
         }
 
         vector_delete(v);
+}
+
+
+TEST_F(tu_vector, std_queue)
+{
+        std::queue<struct elem> v = std::queue<struct elem>();
+        struct elem             e;
+
+        e.a = 1;
+        e.b = 1;
+
+        for (unsigned int i = 0; i < 4096; i++)
+        {
+                v.push(e);
+        }
+
+        while (v.empty() == false)
+        {
+                v.pop();
+        }
+}
+
+
+TEST_F(tu_vector, std_vector)
+{
+        std::vector<struct elem> v;
+        struct elem              e;
+
+        e.a = 1;
+        e.b = 1;
+
+        for (unsigned int i = 0; i < 4096; i++)
+        {
+                v.push_back(e);
+        }
 }
 
 
