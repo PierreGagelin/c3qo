@@ -5,12 +5,9 @@
 
 #include "gtest/gtest.h"
 
-extern "C"
-{
-#include "c3qo/block.h"      // BK_INIT, BK_START...
-#include "c3qo/logger.h"     // LOGGER_OPEN, LOGGER_DEBUG...
-#include "c3qo/manager_fd.h" // manager_fd_init
-}
+#include "c3qo/block.hpp"      // BK_INIT, BK_START...
+#include "c3qo/logger.hpp"     // LOGGER_OPEN, LOGGER_DEBUG...
+#include "c3qo/manager_fd.hpp" // manager_fd_init
 
 
 // TU should be linked with the block

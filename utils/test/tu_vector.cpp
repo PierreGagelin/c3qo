@@ -6,12 +6,9 @@
 #include <vector>
 #include <queue>
 
-extern "C"
-{
 #include <stdlib.h> /* NULL */
 
-#include "utils/vector.h" /* vector */
-}
+#include "utils/vector.hpp" /* vector */
 
 #include "gtest/gtest.h"
 

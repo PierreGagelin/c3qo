@@ -14,10 +14,10 @@
 #include <sys/un.h>     /* sockaddr_un */
 #include <sys/socket.h> /* socket, listen */
 
-#include "c3qo/block.h"
-#include "c3qo/logger.h"
-#include "c3qo/manager_fd.h"
-#include "c3qo/socket.h"
+#include "c3qo/block.hpp"
+#include "c3qo/logger.hpp"
+#include "c3qo/manager_fd.hpp"
+#include "c3qo/socket.hpp"
 
 
 #define SOCKET_FD_MAX    64 /* Maximum number of file descriptors */

@@ -3,8 +3,8 @@
 #include <signal.h>  /* timer_create, sigevent, sigaction */
 #include <string.h>  /* memset, memcpy */
 
-#include "c3qo/logger.h"     /* LOGGER */
-#include "c3qo/manager_tm.h" /* bool, timer_t, itimerspec */
+#include "c3qo/logger.hpp"     /* LOGGER */
+#include "c3qo/manager_tm.hpp" /* bool, timer_t, itimerspec */
 
 
 /* Signal and clock used by timers */

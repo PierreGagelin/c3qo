@@ -3,7 +3,7 @@
 #include <stdlib.h> /* malloc, free, NULL */
 #include <string.h> /* memset, memcpy */
 
-#include "utils/vector.h"
+#include "utils/vector.hpp"
 
 
 /* Default number of entries allocated must be a power of 2 minus 1 */
@@ -50,7 +50,9 @@ static inline void vector_update_tail(struct vector *vec)
         i = vec->tail - 1;
         while (i != UINT16_MAX)
         {
-                if (memcmp(vec->array + i * vec->size, vec->empty, vec->size) == 0)
+                char *begin = (char *) vec->array;
+
+                if (memcmp(begin + i * vec->size, vec->empty, vec->size) == 0)
                 {
                         i--;
                         continue;
@@ -76,7 +78,7 @@ static inline void vector_update_tail(struct vector *vec)
  */
 static inline bool vector_realloc(struct vector *vec, uint32_t elem_max)
 {
-        void *array;
+        char *array;
 
         /**
          * Refuse to realloc if:
@@ -97,7 +99,7 @@ static inline bool vector_realloc(struct vector *vec, uint32_t elem_max)
                 return true;
         }
 
-        array = realloc(vec->array, (elem_max) * vec->size);
+        array = (char *) realloc(vec->array, (elem_max) * vec->size);
         if (array == NULL)
         {
                 return false;
@@ -131,7 +133,7 @@ struct vector * vector_create(size_t size, char empty)
                 return NULL;
         }
 
-        vec = malloc(sizeof(*vec));
+        vec = (struct vector *) malloc(sizeof(*vec));
         if (vec == NULL)
         {
                 return NULL;
@@ -196,6 +198,8 @@ void vector_delete(struct vector *vec)
  */
 bool vector_insert(struct vector *vec, void *elem, uint16_t i)
 {
+        char *begin;
+
         if (vector_check(vec) == false || (i == UINT16_MAX))
         {
                 /**
@@ -223,7 +227,8 @@ bool vector_insert(struct vector *vec, void *elem, uint16_t i)
                 }
         }
 
-        memcpy(vec->array + i * vec->size, elem, vec->size);
+        begin = (char *) vec->array;
+        memcpy(begin + i * vec->size, elem, vec->size);
         vec->nb++;
 
         if (i >= vec->tail)
@@ -240,12 +245,15 @@ bool vector_insert(struct vector *vec, void *elem, uint16_t i)
  */
 void vector_remove(struct vector *vec, uint16_t i)
 {
+        char *begin;
+
         if ((vector_check(vec) == false) || (i >= vec->max))
         {
                 return;
         }
 
-        memset(vec->array + i * vec->size, *((char *) vec->empty), vec->size);
+        begin = (char *) vec->array;
+        memset(begin + i * vec->size, *((char *) vec->empty), vec->size);
         vec->nb--;
 
         if ((i + 1) == vec->tail)
@@ -271,7 +279,10 @@ uint16_t vector_find(struct vector *vec, void* elem)
 
         for (i = 0; i < vec->max; i++)
         {
-                if (memcmp(vec->array + i * vec->size, elem, vec->size) != 0)
+                char *begin;
+
+                begin = (char *) vec->array;
+                if (memcmp(begin + i * vec->size, elem, vec->size) != 0)
                 {
                         continue;
                 }

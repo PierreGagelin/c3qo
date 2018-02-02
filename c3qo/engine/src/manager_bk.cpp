@@ -5,9 +5,9 @@
 #include <unistd.h> /* sysconf */
 #include <stdint.h> /* fixed-size data types */
 
-#include "c3qo/block.h"
-#include "c3qo/logger.h"
-#include "c3qo/manager_bk.h"
+#include "c3qo/block.hpp"
+#include "c3qo/logger.hpp"
+#include "c3qo/manager_bk.hpp"
 
 
 /* Each block shall be linked */

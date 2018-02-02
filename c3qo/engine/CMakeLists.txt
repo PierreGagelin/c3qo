@@ -1,9 +1,9 @@
 
 
 # Build manager as a static library
-set(SOURCES_MANAGER                    src/manager_bk.c)
-set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_fd.c)
-set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_tm.c)
+set(SOURCES_MANAGER                    src/manager_bk.cpp)
+set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_fd.cpp)
+set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_tm.cpp)
 
 
 add_library(manager STATIC ${SOURCES_MANAGER})
@@ -22,7 +22,7 @@ target_link_libraries(manager logger)
 
 
 # Build c3qo main executable
-set(SOURCES src/main.c)
+set(SOURCES src/main.cpp)
 
 
 add_executable(c3qo ${SOURCES})

@@ -1,6 +1,6 @@
 
 
-set(SOURCES src/client_us_nb.c)
+set(SOURCES src/client_us_nb.cpp)
 
 
 add_library(client_us_nb STATIC ${SOURCES})

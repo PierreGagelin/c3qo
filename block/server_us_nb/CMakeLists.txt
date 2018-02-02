@@ -1,7 +1,7 @@
 
 
 # Build server_us_nb as a static library
-set(SOURCES src/server_us_nb.c)
+set(SOURCES src/server_us_nb.cpp)
 
 
 add_library(server_us_nb STATIC ${SOURCES})

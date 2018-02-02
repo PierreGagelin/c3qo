@@ -5,11 +5,8 @@
 
 #include <stdlib.h>
 
-extern "C"
-{
-#include "c3qo/block.h"
-#include "c3qo/logger.h"
-}
+#include "c3qo/block.hpp"
+#include "c3qo/logger.hpp"
 
 #include "gtest/gtest.h"
 

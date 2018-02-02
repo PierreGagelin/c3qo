@@ -1,6 +1,6 @@
 
 
-#include "c3qo/logger.h"
+#include "c3qo/logger.hpp"
 
 
 enum logger_level logger_level;

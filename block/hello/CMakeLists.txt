@@ -1,7 +1,7 @@
 
 
 # Build block hello as a static library
-set(SOURCES src/hello.c)
+set(SOURCES src/hello.cpp)
 
 
 add_library(hello STATIC ${SOURCES})

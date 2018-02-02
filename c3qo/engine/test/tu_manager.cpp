@@ -6,18 +6,15 @@
 #include <fstream> // open, close
 #include <sstream> // stringstream
 
-extern "C" 
-{
 #include <unistd.h> // sleep
 #include <stdio.h>  // fopen, fileno
 #include <string.h> // memcmp, strlen, strncpy
 
-#include "c3qo/block.h"      // BK_ADD, BK_HELLO, BK_GOODBYE...
-#include "c3qo/logger.h"     // LOGGER_OPEN, LOGGER_CLOSE
-#include "c3qo/manager_bk.h" // manager_conf_parse
-#include "c3qo/manager_fd.h" // manager_fd_init/clean/add/remove/select
-#include "c3qo/manager_tm.h" // manager_tm_init
-}
+#include "c3qo/block.hpp"      // BK_ADD, BK_HELLO, BK_GOODBYE...
+#include "c3qo/logger.hpp"     // LOGGER_OPEN, LOGGER_CLOSE
+#include "c3qo/manager_bk.hpp" // manager_conf_parse
+#include "c3qo/manager_fd.hpp" // manager_fd_init/clean/add/remove/select
+#include "c3qo/manager_tm.hpp" // manager_tm_init
 
 #include "gtest/gtest.h"
 

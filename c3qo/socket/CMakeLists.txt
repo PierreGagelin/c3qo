@@ -1,4 +1,6 @@
-set(SOURCES src/socket.c)
+
+
+set(SOURCES src/socket.cpp)
 
 
 add_library(socket STATIC ${SOURCES})

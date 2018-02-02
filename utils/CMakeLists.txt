@@ -1,7 +1,7 @@
 
 
 # Build vector as a STATIC library
-set(SOURCES src/vector.c)
+set(SOURCES src/vector.cpp)
 
 
 add_library(vector STATIC ${SOURCES})

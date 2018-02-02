@@ -5,7 +5,7 @@
 #include <string.h>     /* memset */
 #include <sys/select.h> /* select and associated definitions */
 
-#include "c3qo/logger.h" /* LOGGER */
+#include "c3qo/logger.hpp" /* LOGGER */
 
 
 static fd_set mfd_set_r;   /* Set of file descriptor for reading */

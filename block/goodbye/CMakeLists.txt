@@ -1,4 +1,6 @@
-set(SOURCES src/goodbye.c)
+
+
+set(SOURCES src/goodbye.cpp)
 
 
 add_library(goodbye STATIC ${SOURCES})

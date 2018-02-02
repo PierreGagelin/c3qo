@@ -3,12 +3,8 @@
  */
 
 
-/* WARN: non-POSIX */
-#define _GNU_SOURCE
-
-
-#include "c3qo/socket.h"
-#include "c3qo/logger.h"
+#include "c3qo/socket.hpp"
+#include "c3qo/logger.hpp"
 
 #include <errno.h>
 #include <fcntl.h>

@@ -3,14 +3,11 @@
  */
 
 
-extern "C" 
-{
 #include <unistd.h> // sleep
 #include <string.h> // memcmp, strlen, strncpy
 #include <stdlib.h> // exit
 
-#include "c3qo/manager_tm.h" // manager_tm_init
-}
+#include "c3qo/manager_tm.hpp" // manager_tm_init
 
 
 static char zozo_l_asticot[8] = "hello";

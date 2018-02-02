@@ -14,10 +14,10 @@
 #include <sys/un.h>     /* sockaddr_un */
 #include <sys/socket.h> /* socket, getsockopt */
 
-#include "c3qo/block.h"      /* bk_cmd, bk_data... */
-#include "c3qo/logger.h"     /* LOGGER_INFO, LOGGER_ERR... */
-#include "c3qo/manager_fd.h" /* manager_fd_add */
-#include "c3qo/socket.h"     /* c3qo_socket_set_nb */
+#include "c3qo/block.hpp"      /* bk_cmd, bk_data... */
+#include "c3qo/logger.hpp"     /* LOGGER_INFO, LOGGER_ERR... */
+#include "c3qo/manager_fd.hpp" /* manager_fd_add */
+#include "c3qo/socket.hpp"     /* c3qo_socket_set_nb */
 
 
 #define SOCKET_NAME "/tmp/server_us_nb"

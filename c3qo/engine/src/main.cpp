@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <unistd.h> /* getopt */
 
-#include "c3qo/logger.h"
-#include "c3qo/manager_bk.h"
+#include "c3qo/logger.hpp"
+#include "c3qo/manager_bk.hpp"
 
 
 extern char *optarg;
