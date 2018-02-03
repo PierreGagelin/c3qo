@@ -19,7 +19,7 @@ set(CMAKE_C_FLAGS_RELEASE   "-O2")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 
 set(CMAKE_C_FLAGS   "-Wall -Wextra -Werror")
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror")
+set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Werror")
 
 
 # Allow to run "make test"

@@ -6,16 +6,14 @@
 #include "c3qo/logger.hpp"
 #include "c3qo/manager_bk.hpp"
 
-
 extern char *optarg;
 
-
-int main(int argc, char ** argv)
+int main(int argc, char **argv)
 {
-        bool       conf;
-        int        opt;
+        bool conf;
+        int opt;
         const char *filename = "/tmp/config.txt";
-        int        ret = 0;
+        int ret = 0;
 
         LOGGER_OPEN();
         logger_set_level(LOGGER_LEVEL_MAX);
@@ -42,7 +40,7 @@ int main(int argc, char ** argv)
                         LOGGER_DEBUG("CLI setting log level to %s", optarg);
 
                         level = strtoul(optarg, NULL, 10);
-                        logger_set_level((enum logger_level) level);
+                        logger_set_level((enum logger_level)level);
 
                         break;
                 }
@@ -55,7 +53,7 @@ int main(int argc, char ** argv)
         }
 
         // Parse configuration file
-        conf = manager_conf_parse(filename);
+        conf = manager_bk::conf_parse(filename);
         if (conf == false)
         {
                 ret = -1;
@@ -65,5 +63,3 @@ int main(int argc, char ** argv)
 
         return ret;
 }
-
-

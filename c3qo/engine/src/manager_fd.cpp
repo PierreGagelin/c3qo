@@ -12,7 +12,6 @@
 //
 
 extern "C" {
-#include <stdbool.h>    // bool
 #include <stdlib.h>     // NULL
 #include <string.h>     // memset
 #include <sys/select.h> // select and associated definitions

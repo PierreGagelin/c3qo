@@ -1,7 +1,6 @@
 #ifndef C3QO_MANAGER_FD_H
 #define C3QO_MANAGER_FD_H
 
-#include <stdbool.h>
 
 namespace manager_fd
 {
