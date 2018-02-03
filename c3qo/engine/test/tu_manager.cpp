@@ -13,7 +13,7 @@
 #include "c3qo/block.hpp"      // BK_ADD, BK_HELLO, BK_GOODBYE...
 #include "c3qo/logger.hpp"     // LOGGER_OPEN, LOGGER_CLOSE
 #include "c3qo/manager_bk.hpp" // manager_conf_parse
-#include "c3qo/manager_fd.hpp" // manager_fd_init/clean/add/remove/select
+#include "c3qo/manager_fd.hpp" // manager_fd::init/clean/add/remove/select
 #include "c3qo/manager_tm.hpp" // manager_tm_init
 
 #include "gtest/gtest.h"
@@ -127,16 +127,16 @@ TEST_F(tu_manager, manager_fd)
         ASSERT_TRUE(fd != -1);
 
         // Add and write to the file
-        manager_fd_init();
-        EXPECT_TRUE(manager_fd_add(fd, &fd_callback, true) == true);
+        manager_fd::init();
+        EXPECT_TRUE(manager_fd::add(fd, &fd_callback, true) == true);
         fprintf(file, "hello world!");
 
         // Verify something is ready to be read and callback is called
-        EXPECT_TRUE(manager_fd_select() > 0);
+        EXPECT_TRUE(manager_fd::select() > 0);
         EXPECT_TRUE(fd_called == true);
 
-        manager_fd_remove(fd, true);
-        manager_fd_clean();
+        manager_fd::remove(fd, true);
+        manager_fd::clean();
         fclose(file);
 }
 

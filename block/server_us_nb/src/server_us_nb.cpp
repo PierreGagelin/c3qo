@@ -110,7 +110,7 @@ static void server_us_nb_remove(int i)
 
         LOGGER_DEBUG("Remove file descriptor from block server_us_nb [fd=%d ; fd_count_old=%d ; fd_count_new=%d]", ctx_s.fd[i], ctx_s.fd_count, ctx_s.fd_count - 1);
 
-        manager_fd_remove(ctx_s.fd[i], true);
+        manager_fd::remove(ctx_s.fd[i], true);
         close(ctx_s.fd[i]);
         ctx_s.fd[i] = -1;
         ctx_s.fd_count--;
@@ -188,7 +188,7 @@ static void server_us_nb_handler(int fd)
                 }
 
                 /* Register the fd for event */
-                if (manager_fd_add(fd_client, &server_us_nb_handler, true) == false)
+                if (manager_fd::add(fd_client, &server_us_nb_handler, true) == false)
                 {
                         LOGGER_ERR("Failed to register callback on new client socket [fd=%d ; callback=%p]", fd_client, &server_us_nb_handler);
                         server_us_nb_remove_fd(fd_client);
@@ -249,7 +249,7 @@ static void server_us_nb_start()
         }
 
         /* Register the file descriptor for reading */
-        if (manager_fd_add(ctx_s.fd[0], &server_us_nb_handler, true) == false)
+        if (manager_fd::add(ctx_s.fd[0], &server_us_nb_handler, true) == false)
         {
                 LOGGER_ERR("Failed to register callback on server socket [fd=%d ; callback=%p]", ctx_s.fd[0], &server_us_nb_handler);
                 server_us_nb_remove_fd(ctx_s.fd[0]);

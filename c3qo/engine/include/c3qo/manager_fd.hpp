@@ -1,24 +1,22 @@
 #ifndef C3QO_MANAGER_FD_H
 #define C3QO_MANAGER_FD_H
 
-
 #include <stdbool.h>
 
+namespace manager_fd
+{
 
 /* Initialize and clean the file descriptor manager */
-void manager_fd_init();
-void manager_fd_clean();
-
+void init();
+void clean();
 
 /* Add or remove a file descriptor */
-bool manager_fd_add(int fd, void (*callback) (int fd), bool read);
-void manager_fd_remove(int fd, bool read);
+bool add(int fd, void (*callback)(int fd), bool read);
+void remove(int fd, bool read);
 
+/* Lookup fd ready */
+int select();
 
-/* Lookup fd ready for reading */
-int manager_fd_select();
-
+} // END namespace manager_fd
 
 #endif /* C3QO_MANAGER_FD_H */
-
-

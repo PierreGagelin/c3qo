@@ -7,7 +7,7 @@
 
 #include "c3qo/block.hpp"      // BK_INIT, BK_START...
 #include "c3qo/logger.hpp"     // LOGGER_OPEN, LOGGER_DEBUG...
-#include "c3qo/manager_fd.hpp" // manager_fd_init
+#include "c3qo/manager_fd.hpp" // manager_fd::init
 
 
 // TU should be linked with the block
@@ -27,7 +27,7 @@ void tu_socket_us_nb::SetUp()
         logger_set_level(LOGGER_LEVEL_MAX);
         LOGGER_DEBUG("/**** BEGIN TEST CASE ****/");
 
-        manager_fd_init();
+        manager_fd::init();
 }
 
 void tu_socket_us_nb::TearDown()
@@ -59,7 +59,7 @@ TEST_F(tu_socket_us_nb, connection)
         {
                 char buf[16];
 
-                manager_fd_select();
+                manager_fd::select();
 
                 server_us_nb_entry.stats(buf, 16);
                 fd_count = atoi(buf);

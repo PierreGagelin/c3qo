@@ -1,94 +1,74 @@
 
 
+//
+// @brief Library to manage file descriptors
+//
+// Basic usage :
+//   - register a fd
+//   - look for event on the fd
+//   - execute callback
+//
+// Is meant to be a static management of every fd of the process
+//
+
+extern "C" {
 #include <stdbool.h>    /* bool */
 #include <stdlib.h>     /* NULL */
 #include <string.h>     /* memset */
 #include <sys/select.h> /* select and associated definitions */
+}
 
 #include "c3qo/logger.hpp" /* LOGGER */
 
-
-static fd_set mfd_set_r;   /* Set of file descriptor for reading */
-static fd_set mfd_set_w;   /* Set of file descriptor for writing */
-static int    mfd_set_max; /* Current maximum register fd value */
-
-/**
- * @brief Entry containing a routine to call on a fd
- */
-struct mfd_entry
+namespace manager_fd
 {
-        int   fd;
-        void (*callback) (int fd);
+
+// Routine to call on a fd
+struct fd_call
+{
+        void (*callback)(int fd);
 };
 
-#define MFD_ENTRY_MAX 256
-static struct mfd_entry mfd_list_r[MFD_ENTRY_MAX]; /* List of file descriptors registered for reading */
-static struct mfd_entry mfd_list_w[MFD_ENTRY_MAX]; /* List of file descriptors registered for writing */
+// Sets of file descriptors managed for read and write
+fd_set set_r;
+fd_set set_w;
+int set_max;
 
-
-/**
- * @brief Find the index of a file descriptor in the list
- *
- * @param fd : file descriptor to find
- *
- * @return Index in the list where fd is registered
- *         -1 if not found
- */
-static inline int manager_fd_find(struct mfd_entry *mfd_list, int fd)
-{
-        int i;
-        int index = -1;
-
-        for (i = 0; i < MFD_ENTRY_MAX; i++)
-        {
-                if (mfd_list[i].fd != fd)
-                {
-                        continue;
-                }
-
-                index = i;
-                break;
-        }
-
-        return index;
-}
-
-
-/**
- * @brief Update the maximum fd value in the list
- */
-static inline void manager_fd_update_max()
-{
-        int i;
-
-        mfd_set_max = -1;
-
-        for (i = 0; i < MFD_ENTRY_MAX; i++)
-        {
-                if (mfd_list_r[i].fd > mfd_set_max)
-                {
-                        mfd_set_max = mfd_list_r[i].fd;
-                }
-                if (mfd_list_w[i].fd > mfd_set_max)
-                {
-                        mfd_set_max = mfd_list_w[i].fd;
-                }
-        }
-}
-
+// List of registered callbacks for read and write events
+struct fd_call list_r[FD_SETSIZE];
+struct fd_call list_w[FD_SETSIZE];
 
 /**
  * @brief Initialize the file descriptor manager
  */
-void manager_fd_init()
+void init()
 {
-        LOGGER_DEBUG("Initialize manager_fd");
+        LOGGER_INFO("Initialize manager_fd");
 
-        memset(&mfd_list_r, -1, sizeof(mfd_list_r));
-        memset(&mfd_list_w, -1, sizeof(mfd_list_w));
-        mfd_set_max = -1;
+        memset(&manager_fd::list_r, 0, sizeof(manager_fd::list_r));
+        memset(&manager_fd::list_w, 0, sizeof(manager_fd::list_w));
+        manager_fd::set_max = -1;
 }
 
+/**
+ * @brief Update the maximum fd value in the list
+ */
+void update_max()
+{
+        // Find previous file descriptor managed
+        for (int i = manager_fd::set_max; i >= 0; i--)
+        {
+                if ((manager_fd::list_r[i].callback != NULL) || (manager_fd::list_w[i].callback != NULL))
+                {
+                        manager_fd::set_max = i;
+                        return;
+                }
+        }
+
+        // We manage no descriptor
+        manager_fd::set_max = -1;
+        return;
+}
 
 /**
  * @brief Add a file descriptor
@@ -99,125 +79,131 @@ void manager_fd_init()
  *
  * @return true on success, false on failure
  */
-bool manager_fd_add(int fd, void (*callback) (int fd), bool read)
+bool add(int fd, void (*callback)(int fd), bool read)
 {
-        struct mfd_entry *mfd_list;
-        static fd_set    *mfd_set;
-        int              i;
+        struct fd_call *list;
+        static fd_set *set;
 
-        if (read == true)
-        {
-                mfd_list = mfd_list_r;
-                mfd_set  = &mfd_set_r;
-        }
-        else
-        {
-                mfd_list = mfd_list_w;
-                mfd_set  = &mfd_set_w;
-        }
-
+        // Verify user input
         if (callback == NULL)
         {
                 LOGGER_WARNING("Cannot add file descriptor without callback [fd=%d ; callback=%p]", fd, callback);
                 return false;
         }
-
-        /* Look for a free entry */
-        i = manager_fd_find(mfd_list, -1);
-        if (i != -1)
+        if (fd >= FD_SETSIZE)
         {
-                mfd_list[i].fd       = fd;
-                mfd_list[i].callback = callback;
+                LOGGER_CRIT("File descriptor value too high for select, need to use poll [fd=%d ; callback=%p]", fd, callback);
+                return false;
+        }
+        if (fd < 0)
+        {
+                LOGGER_WARNING("Cannot add negative file descriptor [fd=%d ; callback=%p]", fd, callback);
+                return false;
+        }
 
-                FD_SET(fd, mfd_set);
-
-                /* Update max file descriptor if necessary */
-                if (fd > mfd_set_max)
-                {
-                        mfd_set_max = fd;
-                }
-
-                return true;
+        // Work either on read or write for this file descriptor
+        if (read == true)
+        {
+                list = manager_fd::list_r;
+                set = &manager_fd::set_r;
         }
         else
         {
-                LOGGER_ERR("Failed to find room to add file descriptor [fd=%d ; callback=%p]", fd, callback);
-                return false;
+                list = manager_fd::list_w;
+                set = &manager_fd::set_w;
         }
-}
 
+        // Add new file descriptor if not already registered
+        if (list[fd].callback == NULL)
+        {
+                FD_SET(fd, set);
+
+                // Update max file descriptor if necessary
+                if (fd > manager_fd::set_max)
+                {
+                        manager_fd::set_max = fd;
+                }
+        }
+
+        list[fd].callback = callback;
+
+        return true;
+}
 
 /**
  * @brief Remove a file descriptor from the reading list
  */
-void manager_fd_remove(int fd, bool read)
+void remove(int fd, bool read)
 {
-        struct mfd_entry *mfd_list;
-        static fd_set    *mfd_set;
-        int               i;
+        struct fd_call *list;
+        static fd_set *set;
 
+        // Verify user input
+        if ((fd >= FD_SETSIZE) || (fd < 0))
+        {
+                return;
+        }
+
+        // Work either on read or write for this file descriptor
         if (read == true)
         {
-                mfd_list = mfd_list_r;
-                mfd_set  = &mfd_set_r;
+                list = manager_fd::list_r;
+                set = &manager_fd::set_r;
         }
         else
         {
-                mfd_list = mfd_list_w;
-                mfd_set  = &mfd_set_w;
+                list = manager_fd::list_w;
+                set = &manager_fd::set_w;
         }
 
-        i = manager_fd_find(mfd_list, fd);
-        if (i == -1)
+        if (list[fd].callback == NULL)
         {
                 /* Unknown file descriptor, do nothing */
                 return;
         }
 
         /* Remove from list and set */
-        mfd_list[i].fd = -1;
-        FD_CLR(fd, mfd_set);
+        list[fd].callback = NULL;
+        FD_CLR(fd, set);
 
         /* If this value was the maximum fd value, we need to refresh it */
-        if (fd == mfd_set_max)
+        if (fd == manager_fd::set_max)
         {
-                manager_fd_update_max();
+                update_max();
         }
 }
-
 
 /**
  * @brief Clean the file descriptor set
  */
-void manager_fd_clean()
+void clean()
 {
-        LOGGER_DEBUG("Clear file descriptor list");
+        LOGGER_INFO("Clear file descriptor list");
 
-        FD_ZERO(&mfd_set_r);
-        FD_ZERO(&mfd_set_w);
+        FD_ZERO(&manager_fd::set_r);
+        FD_ZERO(&manager_fd::set_w);
 
-        memset(&mfd_list_r, -1, sizeof(mfd_list_r));
-        memset(&mfd_list_w, -1, sizeof(mfd_list_w));
+        memset(&manager_fd::list_r, 0, sizeof(manager_fd::list_r));
+        memset(&manager_fd::list_w, 0, sizeof(manager_fd::list_w));
 
-        mfd_set_max = -1;
+        manager_fd::set_max = -1;
 }
-
 
 /**
  * @brief Verify if a file descriptor is ready for reading
  *
  * @return Return code of select
  */
-int manager_fd_select()
+int select()
 {
         struct timeval tv;
-        int            ret;
+        int ret;
 
         /* Wait up to 10ms */
-        tv.tv_sec  = 0;
+        tv.tv_sec = 0;
         tv.tv_usec = 10000;
 
-        ret = select(mfd_set_max + 1, &mfd_set_r, &mfd_set_w, NULL, &tv);
+        ret = select(manager_fd::set_max + 1, &manager_fd::set_r, &manager_fd::set_w, NULL, &tv);
         if (ret == 0)
         {
                 /* Nothing to read, select timed out */
@@ -228,27 +214,25 @@ int manager_fd_select()
         }
         else if (ret > 0)
         {
-                int i;
                 int j; /* Number of executed callbacks */
 
                 /* There are 'ret' fd ready for reading */
 
                 j = 0;
-                for (i = 0; i < MFD_ENTRY_MAX; i++)
+                for (int fd = 0; fd <= manager_fd::set_max; fd++)
                 {
-                        if ((mfd_list_r[i].fd != -1) && (FD_ISSET(mfd_list_r[i].fd, &mfd_set_r) != 0))
+                        if ((manager_fd::list_r[fd].callback != NULL) && (FD_ISSET(fd, &manager_fd::set_r) != 0))
                         {
                                 /* Data ready for reading */
-                                mfd_list_r[i].callback(mfd_list_r[i].fd);
+                                manager_fd::list_r[fd].callback(fd);
                                 j++;
                         }
-                        if ((mfd_list_w[i].fd != -1) && (FD_ISSET(mfd_list_w[i].fd, &mfd_set_w) != 0))
+                        if ((manager_fd::list_w[fd].callback != NULL) && (FD_ISSET(fd, &manager_fd::set_w) != 0))
                         {
                                 /* Data ready for writing */
-                                mfd_list_w[i].callback(mfd_list_w[i].fd);
+                                manager_fd::list_w[fd].callback(fd);
                                 j++;
                         }
-
 
                         if (j >= ret)
                         {
@@ -261,4 +245,4 @@ int manager_fd_select()
         return ret;
 }
 
-
+} // END namespace manager_fd
