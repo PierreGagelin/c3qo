@@ -1,7 +1,9 @@
 
 
+extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
+}
 
 #include "c3qo/block.hpp"
 #include "c3qo/logger.hpp"
@@ -33,17 +35,17 @@ static void goodbye_ctrl(enum bk_cmd cmd, void *arg)
 
         switch (cmd)
         {
-        case BK_INIT:
+        case BK_CMD_INIT:
         {
                 goodbye_init();
                 break;
         }
-        case BK_START:
+        case BK_CMD_START:
         {
                 goodbye_start();
                 break;
         }
-        case BK_STOP:
+        case BK_CMD_STOP:
         {
                 goodbye_stop();
                 break;

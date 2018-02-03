@@ -3,7 +3,9 @@
 //
 
 
+extern "C" {
 #include <stdlib.h>
+}
 
 #include "c3qo/block.hpp"
 #include "c3qo/logger.hpp"
@@ -34,8 +36,8 @@ void tu_hello::TearDown()
 
 TEST_F(tu_hello, hello)
 {
-        hello_entry.ctrl(BK_INIT, NULL);
-        hello_entry.ctrl(BK_START, NULL);
+        hello_entry.ctrl(BK_CMD_INIT, NULL);
+        hello_entry.ctrl(BK_CMD_START, NULL);
 }
 
 

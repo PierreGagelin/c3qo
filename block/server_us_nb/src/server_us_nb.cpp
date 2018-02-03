@@ -7,12 +7,14 @@
 //
 
 
+extern "C" {
 #include <unistd.h>     // close, unlink
 #include <stdio.h>      // snprintf
 #include <string.h>     // memset
 #include <sys/types.h>  // listen
 #include <sys/un.h>     // sockaddr_un
 #include <sys/socket.h> // socket, listen
+}
 
 #include "c3qo/block.hpp"
 #include "c3qo/logger.hpp"
@@ -317,17 +319,17 @@ static void server_us_nb_ctrl(enum bk_cmd cmd, void *arg)
 
         switch (cmd)
         {
-        case BK_INIT:
+        case BK_CMD_INIT:
         {
                 server_us_nb_init();
                 break;
         }
-        case BK_START:
+        case BK_CMD_START:
         {
                 server_us_nb_start();
                 break;
         }
-        case BK_STOP:
+        case BK_CMD_STOP:
         {
                 server_us_nb_stop();
                 break;

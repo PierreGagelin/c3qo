@@ -2,55 +2,58 @@
 #define C3QO_BLOCK_H
 
 //
-// @brief : Identifier for block type
-//          BK_TYPE_MAX should be the maximum value
+// @brief Identifier for block type
+//        BK_TYPE_MAX should be the maximum value
 //
-// @note : Values are used by configuration file
-//         any change has an impact on it
+// @note Values are used by configuration file
+//       any change has an impact on it
 //
 enum bk_type
 {
-        BK_NONE = 0,         // Default value
-        BK_HELLO = 1,        // Block that says hello
-        BK_GOODBYE = 2,      // Block that says goodbye
-        BK_CLIENT_US_NB = 3, // Unix stream non-block client
-        BK_SERVER_US_NB = 4, // Unix stream non-block server
-        BK_TYPE_MAX = 4,     // Maximum value
+        BK_TYPE_NONE = 0,         // Default value
+        BK_TYPE_HELLO = 1,        // Block that says hello
+        BK_TYPE_GOODBYE = 2,      // Block that says goodbye
+        BK_TYPE_CLIENT_US_NB = 3, // Unix stream non-block client
+        BK_TYPE_SERVER_US_NB = 4, // Unix stream non-block server
+        BK_TYPE_MAX = 4,          // Maximum value
 };
 
 //
-// @brief : Identifier for events
-//          BK_CMD_MAX should be the maximum value
+// @brief Identifier for events
+//        BK_CMD_MAX should be the maximum value
 //
-// @note : Values are used by configuration file
-//         any change has an impact on it
+// @note Values are used by configuration file
+//       any change has an impact on it
 //
 enum bk_cmd
 {
-        BK_NOOP = 0,      // Default value
-        BK_ADD = 1,       // Create a block
-        BK_INIT = 2,      // Initialize a block
-        BK_CONFIGURE = 3, // Configure a block
-        BK_BIND = 4,      // Bind a block to another
-        BK_START = 5,     // Ask the block to start
-        BK_STOP = 6,      // Ask the block to stop
-        BK_STATS = 7,     // Ask the block to stop
+        BK_CMD_NONE = 0,  // Default value
+        BK_CMD_ADD = 1,   // Create a block
+        BK_CMD_INIT = 2,  // Initialize a block
+        BK_CMD_CONF = 3,  // Configure a block
+        BK_CMD_BIND = 4,  // Bind a block to another
+        BK_CMD_START = 5, // Ask the block to start
+        BK_CMD_STOP = 6,  // Ask the block to stop
+        BK_CMD_STATS = 7, // Ask the block to stop
         BK_CMD_MAX = 7,   // Maximum value
 };
 
 //
-// @brief : State of the block
+// @brief State of the block
+//
+// @note NONE and MAX values not required as
+//       it doesn't come from user input
 //
 enum bk_state
 {
-        BK_STOPPED = 0,
-        BK_INITIALIZED = 1,
-        BK_CONFIGURED = 2,
-        BK_STARTED = 3,
+        BK_STATE_STOP = 0,
+        BK_STATE_INIT = 1,
+        BK_STATE_CONF = 2,
+        BK_STATE_START = 3,
 };
 
 //
-// @brief : Different type of block data
+// @brief Different type of block data
 //
 enum bk_data_type
 {
@@ -59,7 +62,7 @@ enum bk_data_type
 };
 
 //
-// @brief : Data that travel through blocks
+// @brief Data that travels through blocks
 //
 struct bk_data
 {
@@ -68,7 +71,7 @@ struct bk_data
 };
 
 //
-// @brief : Data corresponding to BK_DATA_TYPE_BUF
+// @brief Data corresponding to BK_DATA_TYPE_BUF
 //
 struct bk_buf
 {
@@ -77,7 +80,7 @@ struct bk_buf
 };
 
 //
-// @brief : Declare the interface to manage blocks
+// @brief Declare the interface to manage blocks
 //
 struct bk_if
 {

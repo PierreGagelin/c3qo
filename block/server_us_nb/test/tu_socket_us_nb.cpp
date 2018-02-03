@@ -5,7 +5,7 @@
 
 #include "gtest/gtest.h"
 
-#include "c3qo/block.hpp"      // BK_INIT, BK_START...
+#include "c3qo/block.hpp"      // BK_CMD_INIT, BK_CMD_START...
 #include "c3qo/logger.hpp"     // LOGGER_OPEN, LOGGER_DEBUG...
 #include "c3qo/manager_fd.hpp" // manager_fd::init
 
@@ -49,11 +49,11 @@ TEST_F(tu_socket_us_nb, connection)
 {
         int fd_count; // count of file descriptor handled by the server
 
-        server_us_nb_entry.ctrl(BK_INIT, NULL);
-        client_us_nb_entry.ctrl(BK_INIT, NULL);
+        server_us_nb_entry.ctrl(BK_CMD_INIT, NULL);
+        client_us_nb_entry.ctrl(BK_CMD_INIT, NULL);
 
-        server_us_nb_entry.ctrl(BK_START, NULL);
-        client_us_nb_entry.ctrl(BK_START, NULL);
+        server_us_nb_entry.ctrl(BK_CMD_START, NULL);
+        client_us_nb_entry.ctrl(BK_CMD_START, NULL);
 
         do
         {
@@ -66,8 +66,8 @@ TEST_F(tu_socket_us_nb, connection)
         }
         while (fd_count < 2);
 
-        server_us_nb_entry.ctrl(BK_STOP, NULL);
-        client_us_nb_entry.ctrl(BK_STOP, NULL);
+        server_us_nb_entry.ctrl(BK_CMD_STOP, NULL);
+        client_us_nb_entry.ctrl(BK_CMD_STOP, NULL);
 }
 
 

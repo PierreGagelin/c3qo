@@ -35,7 +35,7 @@ struct bk_info
 };
 
 // Map of blocks
-std::unordered_map<int, struct bk_info> bk_map;
+std::unordered_map<int, struct bk_info> bk_map_;
 
 //
 // @struct command
@@ -67,22 +67,22 @@ void block_add(int id, enum bk_type type)
 
         switch (type)
         {
-        case BK_HELLO:
+        case BK_TYPE_HELLO:
         {
                 block.bk = hello_entry;
                 break;
         }
-        case BK_GOODBYE:
+        case BK_TYPE_GOODBYE:
         {
                 block.bk = goodbye_entry;
                 break;
         }
-        case BK_CLIENT_US_NB:
+        case BK_TYPE_CLIENT_US_NB:
         {
                 block.bk = client_us_nb_entry;
                 break;
         }
-        case BK_SERVER_US_NB:
+        case BK_TYPE_SERVER_US_NB:
         {
                 block.bk = server_us_nb_entry;
                 break;
@@ -95,9 +95,9 @@ void block_add(int id, enum bk_type type)
         }
 
         block.type = type;
-        block.state = BK_STOPPED;
+        block.state = BK_STATE_STOP;
 
-        manager_bk::bk_map[id] = block;
+        manager_bk::bk_map_[id] = block;
 }
 
 //
@@ -108,7 +108,7 @@ void exec_cmd()
 {
         switch (manager_bk::cmd_.cmd)
         {
-        case BK_ADD:
+        case BK_CMD_ADD:
         {
                 unsigned long bk_type;
 
@@ -118,16 +118,16 @@ void exec_cmd()
 
                 break;
         }
-        case BK_INIT:
-        case BK_CONFIGURE:
-        case BK_BIND:
-        case BK_START:
-        case BK_STOP:
+        case BK_CMD_INIT:
+        case BK_CMD_CONF:
+        case BK_CMD_BIND:
+        case BK_CMD_START:
+        case BK_CMD_STOP:
         {
                 std::unordered_map<int, struct bk_info>::const_iterator it;
 
-                it = manager_bk::bk_map.find(manager_bk::cmd_.id);
-                if (it == manager_bk::bk_map.end())
+                it = manager_bk::bk_map_.find(manager_bk::cmd_.id);
+                if (it == manager_bk::bk_map_.end())
                 {
                         LOGGER_WARNING("Cannot stop unknown block [bk_id=%d ; bk_cmd=%d]", manager_bk::cmd_.id, manager_bk::cmd_.cmd);
                         break;
@@ -176,7 +176,7 @@ int conf_parse_line(FILE *file)
         }
 
         // Check values (shouldn't stop the configuration)
-        if ((cmd > BK_CMD_MAX) || (cmd <= BK_NOOP))
+        if ((cmd > BK_CMD_MAX) || (cmd <= BK_CMD_NONE))
         {
                 LOGGER_WARNING("Block command doesn't exist [bk_id=%d, bk_cmd=%d]", id, cmd);
                 return -1;
@@ -193,7 +193,7 @@ int conf_parse_line(FILE *file)
 //
 void block_clean()
 {
-        manager_bk::bk_map.clear();
+        manager_bk::bk_map_.clear();
 }
 
 //
@@ -215,8 +215,8 @@ size_t conf_get(char *buf, size_t len)
         LOGGER_DEBUG("Getting blocks information")
 
         w = 0;
-        i = manager_bk::bk_map.begin();
-        e = manager_bk::bk_map.end();
+        i = manager_bk::bk_map_.begin();
+        e = manager_bk::bk_map_.end();
         while (i != e)
         {
                 int ret;

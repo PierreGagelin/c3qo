@@ -2,14 +2,17 @@
 // @brief Test file for the block manager
 //
 
+
 #include <fstream> // open, close
 #include <sstream> // stringstream
 
+extern "C" {
 #include <unistd.h> // sleep
 #include <stdio.h>  // fopen, fileno
 #include <string.h> // memcmp, strlen, strncpy
+}
 
-#include "c3qo/block.hpp"      // BK_ADD, BK_HELLO, BK_GOODBYE...
+#include "c3qo/block.hpp"      // BK_CMD_ADD, BK_TYPE_HELLO, BK_TYPE_GOODBYE...
 #include "c3qo/logger.hpp"     // LOGGER_OPEN, LOGGER_CLOSE
 #include "c3qo/manager_bk.hpp" // manager_bk::conf_parse
 #include "c3qo/manager_fd.hpp" // manager_fd::init/clean/add/remove/select
@@ -72,13 +75,13 @@ TEST_F(tu_manager, manager_bk)
 
         // Add 2 blocks
         //   - format : "<bk_cmd> <bk_id> <bk_type>\n"
-        file << BK_ADD << " 0 " << BK_HELLO << std::endl;
-        file << BK_ADD << " 1 " << BK_GOODBYE << std::endl;
+        file << BK_CMD_ADD << " 0 " << BK_TYPE_HELLO << std::endl;
+        file << BK_CMD_ADD << " 1 " << BK_TYPE_GOODBYE << std::endl;
 
         // Add tons of block
         for (int i = 2; i < 5000; i++)
         {
-                file << BK_ADD << " " << i << " " << BK_HELLO << std::endl;
+                file << BK_CMD_ADD << " " << i << " " << BK_TYPE_HELLO << std::endl;
         }
 
         file.close();
@@ -88,11 +91,11 @@ TEST_F(tu_manager, manager_bk)
 
         // Prepare expected configuration dump for the blocks
         //   - format : "<bk_id> <bk_type> <bk_state>;"
-        ss << "0 " << BK_HELLO << " " << BK_STOPPED << ";";
-        ss << "1 " << BK_GOODBYE << " " << BK_STOPPED << ";";
+        ss << "0 " << BK_TYPE_HELLO << " " << BK_STATE_STOP << ";";
+        ss << "1 " << BK_TYPE_GOODBYE << " " << BK_STATE_STOP << ";";
         for (int i = 2; i < 5000; i++)
         {
-                ss << i << " " << BK_HELLO << " " << BK_STOPPED << ";";
+                ss << i << " " << BK_TYPE_HELLO << " " << BK_STATE_STOP << ";";
         }
         buf_exp = ss.str();
 

@@ -6,12 +6,15 @@
 // @note us_asnb stand for unix stream non-block
 //
 
+
+extern "C" {
 #include <unistd.h>     // close
 #include <stdio.h>      // snprintf
 #include <string.h>     // memset
 #include <sys/types.h>  // getsockopt
 #include <sys/un.h>     // sockaddr_un
 #include <sys/socket.h> // socket, getsockopt
+}
 
 #include "c3qo/block.hpp"      // bk_cmd, bk_data...
 #include "c3qo/logger.hpp"     // LOGGER_INFO, LOGGER_ERR...
@@ -202,17 +205,17 @@ static void client_us_nb_ctrl(enum bk_cmd cmd, void *arg)
 
         switch (cmd)
         {
-        case BK_INIT:
+        case BK_CMD_INIT:
         {
                 client_us_nb_init();
                 break;
         }
-        case BK_START:
+        case BK_CMD_START:
         {
                 client_us_nb_start();
                 break;
         }
-        case BK_STOP:
+        case BK_CMD_STOP:
         {
                 client_us_nb_stop();
                 break;
