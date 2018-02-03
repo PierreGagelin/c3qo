@@ -4,6 +4,9 @@ cmake_minimum_required(VERSION 3.0)
 project(c3q0)
 
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+
 # Compile with DEBUG level
 set(CMAKE_BUILD_TYPE Debug)
 
