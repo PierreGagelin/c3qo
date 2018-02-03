@@ -2,14 +2,14 @@
 #define C3QO_LOGGER_H
 
 
-#include <syslog.h> /* syslog */
+#include <syslog.h> // syslog
 
 
-/* Open and close connection to syslog */
+// Open and close connection to syslog
 #define LOGGER_OPEN()  openlog("c3qo", 0, 0);
 #define LOGGER_CLOSE() closelog();
 
-/* Differents levels of log */
+// Differents levels of log
 enum logger_level
 {
         LOGGER_LEVEL_NONE    = 0,
@@ -24,25 +24,25 @@ enum logger_level
         LOGGER_LEVEL_MAX     = 8,
 };
 
-/* Current level of log. Only log with lower level will be displayed */
+// Current level of log. Only log with lower level will be displayed
 extern enum logger_level logger_level;
 
-/* Setting logger level */
+// Setting logger level
 void logger_set_level(enum logger_level l);
 
-/**
- * MAN SYSLOG :
- *   - LOG_EMERG   : system is unusable
- *   - LOG_ALERT   : action must be taken immediately
- *   - LOG_CRIT    : critical conditions
- *   - LOG_ERR     : error conditions
- *   - LOG_WARNING : warning conditions
- *   - LOG_NOTICE  : normal, but significant, condition
- *   - LOG_INFO    : informational message
- *   - LOG_DEBUG   : debug-level message
- */
+//
+// MAN SYSLOG :
+//   - LOG_EMERG   : system is unusable
+//   - LOG_ALERT   : action must be taken immediately
+//   - LOG_CRIT    : critical conditions
+//   - LOG_ERR     : error conditions
+//   - LOG_WARNING : warning conditions
+//   - LOG_NOTICE  : normal, but significant, condition
+//   - LOG_INFO    : informational message
+//   - LOG_DEBUG   : debug-level message
+//
 
-/* Format a log entry with function name, line and level */
+// Format a log entry with function name, line and level
 #define LOGGER_EMERG(msg, ...)   if (logger_level >= LOGGER_LEVEL_EMERG)   { syslog(LOG_EMERG,   "[EMERG] "   msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); }
 #define LOGGER_ALERT(msg, ...)   if (logger_level >= LOGGER_LEVEL_ALERT)   { syslog(LOG_ALERT,   "[ALERT] "   msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); }
 #define LOGGER_CRIT(msg, ...)    if (logger_level >= LOGGER_LEVEL_CRIT)    { syslog(LOG_CRIT,    "[CRIT] "    msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); }
@@ -52,6 +52,6 @@ void logger_set_level(enum logger_level l);
 #define LOGGER_INFO(msg, ...)    if (logger_level >= LOGGER_LEVEL_INFO)    { syslog(LOG_INFO,    "[INFO] "    msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); }
 #define LOGGER_DEBUG(msg, ...)   if (logger_level >= LOGGER_LEVEL_DEBUG)   { syslog(LOG_DEBUG,   "[DEBUG] "   msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); }
 
-#endif /* C3QO_LOGGER_H */
+#endif // C3QO_LOGGER_H
 
 

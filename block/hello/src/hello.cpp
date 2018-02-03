@@ -59,9 +59,9 @@ static void hello_ctrl(enum bk_cmd cmd, void *arg)
 }
 
 
-/**
- * @brief Exported structure of the block
- */
+//
+// @brief Exported structure of the block
+//
 struct bk_if hello_entry =
 {
         .ctx = NULL,

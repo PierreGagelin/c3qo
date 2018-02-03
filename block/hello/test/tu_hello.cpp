@@ -1,6 +1,6 @@
-/**
- * @brief Test file for the hello block
- */
+//
+// @brief Test file for the hello block
+//
 
 
 #include <stdlib.h>

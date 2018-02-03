@@ -1,6 +1,6 @@
-/**
- * @brief Test file for the block manager
- */
+//
+// @brief Test file for the block manager
+//
 
 
 #include <fstream> // open, close
@@ -31,7 +31,7 @@ static void fd_callback(int fd)
 static char zozo_l_asticot[8] = "hello";
 static void tm_callback(void *arg)
 {
-        /* We need strlen + 1 bytes to write it */
+        // We need strlen + 1 bytes to write it
         EXPECT_TRUE(strlen((char *) arg) < sizeof(zozo_l_asticot));
 
         strncpy(zozo_l_asticot, (char *) arg, sizeof(zozo_l_asticot));
@@ -60,9 +60,9 @@ void tu_manager::TearDown()
 }
 
 
-/**
- * @brief Test the block manager
- */
+//
+// @brief Test the block manager
+//
 TEST_F(tu_manager, manager_bk)
 {
         const char        *filename = "/tmp/tu_manager_config.txt";
@@ -111,9 +111,9 @@ TEST_F(tu_manager, manager_bk)
 }
 
 
-/**
- * @brief Test the file descriptor manager
- */
+//
+// @brief Test the file descriptor manager
+//
 TEST_F(tu_manager, manager_fd)
 {
         const char *filename = "/tmp/tu_manager_fd.txt";
@@ -141,9 +141,9 @@ TEST_F(tu_manager, manager_fd)
 }
 
 
-/**
- * @brief Test the timer manager
- */
+//
+// @brief Test the timer manager
+//
 TEST_F(tu_manager, manager_tm)
 {
         timer_t           tid;
@@ -152,10 +152,10 @@ TEST_F(tu_manager, manager_tm)
 
         EXPECT_TRUE(manager_tm_init() == true);
 
-        /* Register a timer */
+        // Register a timer
         manager_tm_create(&tid, arg, &tm_callback);
 
-        /* Set the timer to trigger each 1ms */
+        // Set the timer to trigger each 1ms
         its.it_value.tv_sec  = 0;
         its.it_value.tv_nsec = 1000000;
 
@@ -164,10 +164,10 @@ TEST_F(tu_manager, manager_tm)
 
         manager_tm_set(tid, &its);
 
-        /* Should be awaken by timer */
+        // Should be awaken by timer
         sleep(1);
 
-        /* Verify callback was called */
+        // Verify callback was called
         EXPECT_TRUE(memcmp(zozo_l_asticot, arg, strlen(arg) + 1) == 0);
         
         manager_tm_clean();

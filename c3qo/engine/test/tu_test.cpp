@@ -1,6 +1,6 @@
-/**
- * @brief Test file
- */
+//
+// @brief Test file
+//
 
 
 #include <unistd.h> // sleep
@@ -13,7 +13,7 @@
 static char zozo_l_asticot[8] = "hello";
 static void tm_callback(void *arg)
 {
-        /* We need strlen + 1 bytes to write it */
+        // We need strlen + 1 bytes to write it
         if (strlen((char *) arg) >= sizeof(zozo_l_asticot))
         {
                 exit(1);
@@ -22,9 +22,9 @@ static void tm_callback(void *arg)
         strncpy(zozo_l_asticot, (char *) arg, sizeof(zozo_l_asticot));
 }
 
-/**
- * @brief Test the timer manager
- */
+//
+// @brief Test the timer manager
+//
 int main(int argc, char **argv)
 {
         timer_t           tid;
@@ -36,10 +36,10 @@ int main(int argc, char **argv)
 
         manager_tm_init();
 
-        /* Register a timer */
+        // Register a timer
         manager_tm_create(&tid, arg, &tm_callback);
 
-        /* Set the timer to trigger each 1ms */
+        // Set the timer to trigger each 1ms
         its.it_value.tv_sec  = 0;
         its.it_value.tv_nsec = 1000000;
 
@@ -48,10 +48,10 @@ int main(int argc, char **argv)
 
         manager_tm_set(tid, &its);
 
-        /* Should be awaken by timer */
+        // Should be awaken by timer
         sleep(1);
 
-        /* Verify callback was called */
+        // Verify callback was called
         if (memcmp(zozo_l_asticot, arg, strlen(arg) + 1) != 0)
         {
                 exit(1);

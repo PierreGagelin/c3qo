@@ -1,6 +1,6 @@
-/**
- * @brief Test unit for the unix-stream non-blocking sockets
- */
+//
+// @brief Test unit for the unix-stream non-blocking sockets
+//
 
 
 #include "gtest/gtest.h"
@@ -25,26 +25,26 @@ void tu_socket_us_nb::SetUp()
 {
         LOGGER_OPEN();
         logger_set_level(LOGGER_LEVEL_MAX);
-        LOGGER_DEBUG("/**** BEGIN TEST CASE ****/");
+        LOGGER_DEBUG("//** BEGIN TEST CASE ****/");
 
         manager_fd::init();
 }
 
 void tu_socket_us_nb::TearDown()
 {
-        LOGGER_DEBUG("/**** END TEST CASE ****/");
+        LOGGER_DEBUG("//** END TEST CASE ****/");
         LOGGER_CLOSE();
         logger_set_level(LOGGER_LEVEL_NONE);
 }
 
 
-/**
- * @brief Establish a connection between server and client
- *          - start server then client
- *          - wait for connection to be acknowledged
- *
- * @note Next step : reconnection when client is started first
- */
+//
+// @brief Establish a connection between server and client
+//          - start server then client
+//          - wait for connection to be acknowledged
+//
+// @note Next step : reconnection when client is started first
+//
 TEST_F(tu_socket_us_nb, connection)
 {
         int fd_count; // count of file descriptor handled by the server

@@ -1,37 +1,37 @@
-/**
- * @brief Implement a AF_UNIX NON-BLOCKING client socket
- *          - AF_UNIX      : socket domain and SOCK_STREAM type
- *          - NON-BLOCKING : return error code instead of blocking
- *
- * @note us_asnb stand for unix stream non-block
- */
+//
+// @brief Implement a AF_UNIX NON-BLOCKING client socket
+//          - AF_UNIX      : socket domain and SOCK_STREAM type
+//          - NON-BLOCKING : return error code instead of blocking
+//
+// @note us_asnb stand for unix stream non-block
+//
 
-#include <unistd.h>     /* close */
-#include <stdio.h>      /* snprintf */
-#include <string.h>     /* memset */
-#include <sys/types.h>  /* getsockopt */
-#include <sys/un.h>     /* sockaddr_un */
-#include <sys/socket.h> /* socket, getsockopt */
+#include <unistd.h>     // close
+#include <stdio.h>      // snprintf
+#include <string.h>     // memset
+#include <sys/types.h>  // getsockopt
+#include <sys/un.h>     // sockaddr_un
+#include <sys/socket.h> // socket, getsockopt
 
-#include "c3qo/block.hpp"      /* bk_cmd, bk_data... */
-#include "c3qo/logger.hpp"     /* LOGGER_INFO, LOGGER_ERR... */
-#include "c3qo/manager_fd.hpp" /* manager_fd::add */
-#include "c3qo/socket.hpp"     /* c3qo_socket_set_nb */
+#include "c3qo/block.hpp"      // bk_cmd, bk_data...
+#include "c3qo/logger.hpp"     // LOGGER_INFO, LOGGER_ERR...
+#include "c3qo/manager_fd.hpp" // manager_fd::add
+#include "c3qo/socket.hpp"     // c3qo_socket_set_nb
 
 #define SOCKET_NAME "/tmp/server_us_nb"
 
-/**
- * @brief Context of the block
- */
+//
+// @brief Context of the block
+//
 struct client_us_nb_ctx
 {
         int fd;
 };
 struct client_us_nb_ctx ctx_c;
 
-/**
- * @brief Remove a managed file descriptor and close it
- */
+//
+// @brief Remove a managed file descriptor and close it
+//
 static inline void client_us_nb_clean()
 {
         manager_fd::remove(ctx_c.fd, true);
@@ -40,9 +40,9 @@ static inline void client_us_nb_clean()
         ctx_c.fd = -1;
 }
 
-/**
- * @brief Callback function when data is received
- */
+//
+// @brief Callback function when data is received
+//
 static void client_us_nb_callback(int fd)
 {
         if (fd != ctx_c.fd)
@@ -54,9 +54,9 @@ static void client_us_nb_callback(int fd)
         LOGGER_DEBUG("Received data on socket. Not implemented yet [fd=%d]", fd);
 }
 
-/**
- * @brief Check that the socket is connected
- */
+//
+// @brief Check that the socket is connected
+//
 static void client_us_nb_connect_check(int fd)
 {
         socklen_t lon;
@@ -68,7 +68,7 @@ static void client_us_nb_connect_check(int fd)
                 return;
         }
 
-        /* Verify connection status */
+        // Verify connection status
         lon = sizeof(optval);
         if (getsockopt(ctx_c.fd, SOL_SOCKET, SO_ERROR, (void *)(&optval), &lon) != 0)
         {
@@ -88,9 +88,9 @@ static void client_us_nb_connect_check(int fd)
         manager_fd::add(ctx_c.fd, &client_us_nb_callback, true);
 }
 
-/**
- * @brief Connect to a server
- */
+//
+// @brief Connect to a server
+//
 static int client_us_nb_connect(int fd)
 {
         struct sockaddr_un clt_addr;
@@ -113,28 +113,28 @@ static int client_us_nb_connect(int fd)
         return c3qo_socket_connect_nb(fd, (struct sockaddr *)&clt_addr, sizeof(clt_addr));
 }
 
-/**
- * @brief Initialize the block
- */
+//
+// @brief Initialize the block
+//
 static void client_us_nb_init()
 {
         LOGGER_INFO("Initialize block client_us_nb");
 
-        /* Initialize context */
+        // Initialize context
         memset(&ctx_c, -1, sizeof(ctx_c));
         ctx_c.fd = -1;
 }
 
-/**
- * @brief Start the block
- */
+//
+// @brief Start the block
+//
 static void client_us_nb_start()
 {
         int ret;
 
         LOGGER_INFO("Start block client_us_nb");
 
-        /* Create the client socket */
+        // Create the client socket
         ctx_c.fd = socket(AF_UNIX, SOCK_STREAM, 0);
         if (ctx_c.fd == -1)
         {
@@ -142,10 +142,10 @@ static void client_us_nb_start()
                 return;
         }
 
-        /* Set the socket to be non-blocking */
+        // Set the socket to be non-blocking
         c3qo_socket_set_nb(ctx_c.fd);
 
-        /* Connect the socket to the server */
+        // Connect the socket to the server
         ret = client_us_nb_connect(ctx_c.fd);
         if (ret == -1)
         {
@@ -167,7 +167,7 @@ static void client_us_nb_start()
         }
         else
         {
-                /* Success: register the file descriptor with a callback for data reception */
+                // Success: register the file descriptor with a callback for data reception
                 if (manager_fd::add(ctx_c.fd, &client_us_nb_callback, true) == false)
                 {
                         LOGGER_ERR("Failed to register callback on client socket [fd=%d ; callback=%p]", ctx_c.fd, &client_us_nb_callback);
@@ -181,9 +181,9 @@ static void client_us_nb_start()
         }
 }
 
-/**
- * @brief Stop the block
- */
+//
+// @brief Stop the block
+//
 static void client_us_nb_stop()
 {
         LOGGER_INFO("Stop block client_us_nb");
@@ -225,7 +225,7 @@ static void client_us_nb_ctrl(enum bk_cmd cmd, void *arg)
         }
 }
 
-/* Declare the interface for this block */
+// Declare the interface for this block
 struct bk_if client_us_nb_entry =
     {
         .ctx = NULL,

@@ -1,7 +1,7 @@
 
 
 #include <stdlib.h>
-#include <unistd.h> /* getopt */
+#include <unistd.h> // getopt
 
 #include "c3qo/logger.hpp"
 #include "c3qo/manager_bk.hpp"
@@ -54,7 +54,7 @@ int main(int argc, char ** argv)
                 }
         }
 
-        /* Parse configuration file */
+        // Parse configuration file
         conf = manager_conf_parse(filename);
         if (conf == false)
         {

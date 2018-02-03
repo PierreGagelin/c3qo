@@ -1,19 +1,19 @@
-/**
- * @brief Test file for the vector library
- */
+//
+// @brief Test file for the vector library
+//
 
 
 #include <vector>
 #include <queue>
 
-#include <stdlib.h> /* NULL */
+#include <stdlib.h> // NULL 
 
-#include "utils/vector.hpp" /* vector */
+#include "utils/vector.hpp" // vector 
 
 #include "gtest/gtest.h"
 
 
-/* Structure to be held by the vector */
+// Structure to be held by the vector 
 struct elem
 {
         int a;
@@ -42,7 +42,7 @@ TEST_F(tu_vector, append_remove)
         struct elem    e1;
         struct elem    e2;
 
-        /* Prepare 2 elements */
+        // Prepare 2 elements 
         e1.a = 1;
         e1.b = 1;
         e1.a = 2;
@@ -52,7 +52,7 @@ TEST_F(tu_vector, append_remove)
         ASSERT_TRUE(v != NULL);
         ASSERT_TRUE(v->size == sizeof(struct elem));
 
-        /* Add two elements */
+        // Add two elements 
         ASSERT_TRUE(vector_append(v, &e1) == true);
         ASSERT_TRUE(v->tail == 1u);
         ASSERT_TRUE(v->nb   == 1u);
@@ -61,17 +61,17 @@ TEST_F(tu_vector, append_remove)
         ASSERT_TRUE(v->tail == 2u);
         ASSERT_TRUE(v->nb   == 2u);
 
-        /* Remove last element */
+        // Remove last element 
         vector_remove(v, 1);
         ASSERT_TRUE(v->tail == 1u);
         ASSERT_TRUE(v->nb   == 1u);
 
-        /* Add one element */
+        // Add one element 
         ASSERT_TRUE(vector_append(v, &e2) == true);
         ASSERT_TRUE(v->tail == 2u);
         ASSERT_TRUE(v->nb   == 2u);
 
-        /* Remove first element */
+        // Remove first element 
         vector_remove(v, 0);
         ASSERT_TRUE(v->tail == 2u);
         ASSERT_TRUE(v->nb   == 1u);

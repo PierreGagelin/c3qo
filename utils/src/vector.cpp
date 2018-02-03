@@ -1,18 +1,18 @@
 
 
-#include <stdlib.h> /* malloc, free, NULL */
-#include <string.h> /* memset, memcpy */
+#include <stdlib.h> // malloc, free, NULL 
+#include <string.h> // memset, memcpy 
 
 #include "utils/vector.hpp"
 
 
-/* Default number of entries allocated must be a power of 2 minus 1 */
+// Default number of entries allocated must be a power of 2 minus 1 
 #define VECTOR_DEFAULT_ENTRY 15u
 
 
-/**
- * @brief Checks vector state
- */
+//
+// @brief Checks vector state
+//
 static inline bool vector_check(struct vector *vec)
 {
         bool ok;
@@ -34,9 +34,9 @@ static inline bool vector_check(struct vector *vec)
 }
 
 
-/**
- * @brief Update the value of the tail
- */
+//
+// @brief Update the value of the tail
+//
 static inline void vector_update_tail(struct vector *vec)
 {
         uint16_t i;
@@ -46,7 +46,7 @@ static inline void vector_update_tail(struct vector *vec)
                 return;
         }
 
-        /* Look for a non-empty element */
+        // Look for a non-empty element 
         i = vec->tail - 1;
         while (i != UINT16_MAX)
         {
@@ -63,29 +63,29 @@ static inline void vector_update_tail(struct vector *vec)
                 return;
         }
 
-        /* Vector is empty */
+        // Vector is empty 
         vec->tail = 0;
         return;
 }
 
 
-/**
- * @brief Reserve space for a specified number of elements
- *
- * @param elem_max : Maximum number of elements desired
- *
- * @return true on success, false on failure
- */
+//
+// @brief Reserve space for a specified number of elements
+//
+// @param elem_max : Maximum number of elements desired
+//
+// @return true on success, false on failure
+//
 static inline bool vector_realloc(struct vector *vec, uint32_t elem_max)
 {
         char *array;
 
-        /**
-         * Refuse to realloc if:
-         *   - vector is inconsistent
-         *   - too much entries asked
-         *   - tail is beyond last new element
-         */
+        //
+        // Refuse to realloc if:
+        //   - vector is inconsistent
+        //   - too much entries asked
+        //   - tail is beyond last new element
+        //
         if ((vector_check(vec) == false)   ||
             (elem_max  > UINT16_MAX) ||
             (vec->tail > elem_max))
@@ -95,7 +95,7 @@ static inline bool vector_realloc(struct vector *vec, uint32_t elem_max)
 
         if (elem_max == vec->max)
         {
-                /* Nothing to do */
+                // Nothing to do 
                 return true;
         }
 
@@ -107,7 +107,7 @@ static inline bool vector_realloc(struct vector *vec, uint32_t elem_max)
 
         if (vec->max < elem_max)
         {
-                /* Fill the new area with empty value */
+                // Fill the new area with empty value 
                 memset(array + vec->max * vec->size, *((char *) vec->empty), (elem_max - vec->max) * vec->size);
         }
 
@@ -118,12 +118,12 @@ static inline bool vector_realloc(struct vector *vec, uint32_t elem_max)
 }
 
 
-/**
- * @brief Creates a vector
- *
- * @param size  : Size of each element of the vector
- * @param empty : Value that defines empty element
- */
+//
+// @brief Creates a vector
+//
+// @param size  : Size of each element of the vector
+// @param empty : Value that defines empty element
+//
 struct vector * vector_create(size_t size, char empty)
 {
         struct vector *vec;
@@ -139,7 +139,7 @@ struct vector * vector_create(size_t size, char empty)
                 return NULL;
         }
 
-        /* Allocate the empty element */
+        // Allocate the empty element 
         vec->empty = malloc(size);
         if (vec->empty == NULL)
         {
@@ -147,7 +147,7 @@ struct vector * vector_create(size_t size, char empty)
                 return NULL;
         }
 
-        /* Allocate by default VECTOR_DEFAULT_ENTRY entries */
+        // Allocate by default VECTOR_DEFAULT_ENTRY entries 
         vec->array = malloc(VECTOR_DEFAULT_ENTRY * size);
         if (vec->array == NULL)
         {
@@ -167,9 +167,9 @@ struct vector * vector_create(size_t size, char empty)
 }
 
 
-/**
- * @brief Delete a vector
- */
+//
+// @brief Delete a vector
+//
 void vector_delete(struct vector *vec)
 {
         if (vec == NULL)
@@ -191,21 +191,21 @@ void vector_delete(struct vector *vec)
 }
 
 
-/**
- * @brief Insert an element at a given index
- *
- * @return true on success, false on failure
- */
+//
+// @brief Insert an element at a given index
+//
+// @return true on success, false on failure
+//
 bool vector_insert(struct vector *vec, void *elem, uint16_t i)
 {
         char *begin;
 
         if (vector_check(vec) == false || (i == UINT16_MAX))
         {
-                /**
-                 * Vector inconsistent or index too high (we lose
-                 * 1 element because of the tail and nb value being on 16 bits)
-                 */
+                //
+                // Vector inconsistent or index too high (we lose
+                // 1 element because of the tail and nb value being on 16 bits)
+                //
                 return false;
         }
 
@@ -213,7 +213,7 @@ bool vector_insert(struct vector *vec, void *elem, uint16_t i)
         {
                 uint32_t p;
 
-                /* Round up to a power of two minus 1 and realloc */
+                // Round up to a power of two minus 1 and realloc 
                 p = (vec->max + 1) << 1;
                 while (p < i)
                 {
@@ -240,9 +240,9 @@ bool vector_insert(struct vector *vec, void *elem, uint16_t i)
 }
 
 
-/**
- * @brief Remove an element at a given index
- */
+//
+// @brief Remove an element at a given index
+//
 void vector_remove(struct vector *vec, uint16_t i)
 {
         char *begin;
@@ -263,11 +263,11 @@ void vector_remove(struct vector *vec, uint16_t i)
 }
 
 
-/**
- * @brief Find a given element in the vector
- *
- * @return Index of the element on success, -1 on failure
- */
+//
+// @brief Find a given element in the vector
+//
+// @return Index of the element on success, -1 on failure
+//
 uint16_t vector_find(struct vector *vec, void* elem)
 {
         uint16_t i;
@@ -287,11 +287,11 @@ uint16_t vector_find(struct vector *vec, void* elem)
                         continue;
                 }
 
-                /* Found */
+                // Found 
                 return i;
         }
 
-        /* Not found */
+        // Not found 
         return -1;
 }
 

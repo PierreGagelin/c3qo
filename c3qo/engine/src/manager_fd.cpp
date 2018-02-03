@@ -12,13 +12,13 @@
 //
 
 extern "C" {
-#include <stdbool.h>    /* bool */
-#include <stdlib.h>     /* NULL */
-#include <string.h>     /* memset */
-#include <sys/select.h> /* select and associated definitions */
+#include <stdbool.h>    // bool
+#include <stdlib.h>     // NULL
+#include <string.h>     // memset
+#include <sys/select.h> // select and associated definitions
 }
 
-#include "c3qo/logger.hpp" /* LOGGER */
+#include "c3qo/logger.hpp" // LOGGER
 
 namespace manager_fd
 {
@@ -38,9 +38,9 @@ int set_max;
 struct fd_call list_r[FD_SETSIZE];
 struct fd_call list_w[FD_SETSIZE];
 
-/**
- * @brief Initialize the file descriptor manager
- */
+//
+// @brief Initialize the file descriptor manager
+//
 void init()
 {
         LOGGER_INFO("Initialize manager_fd");
@@ -50,9 +50,9 @@ void init()
         manager_fd::set_max = -1;
 }
 
-/**
- * @brief Update the maximum fd value in the list
- */
+//
+// @brief Update the maximum fd value in the list
+//
 void update_max()
 {
         // Find previous file descriptor managed
@@ -70,15 +70,15 @@ void update_max()
         return;
 }
 
-/**
- * @brief Add a file descriptor
- *
- * @param fd       : file descriptor
- * @param callback : function to call when fd is ready
- * @param read     : register into reading list
- *
- * @return true on success, false on failure
- */
+//
+// @brief Add a file descriptor
+//
+// @param fd       : file descriptor
+// @param callback : function to call when fd is ready
+// @param read     : register into reading list
+//
+// @return true on success, false on failure
+//
 bool add(int fd, void (*callback)(int fd), bool read)
 {
         struct fd_call *list;
@@ -130,9 +130,9 @@ bool add(int fd, void (*callback)(int fd), bool read)
         return true;
 }
 
-/**
- * @brief Remove a file descriptor from the reading list
- */
+//
+// @brief Remove a file descriptor from the reading list
+//
 void remove(int fd, bool read)
 {
         struct fd_call *list;
@@ -158,24 +158,24 @@ void remove(int fd, bool read)
 
         if (list[fd].callback == NULL)
         {
-                /* Unknown file descriptor, do nothing */
+                // Unknown file descriptor, do nothing
                 return;
         }
 
-        /* Remove from list and set */
+        // Remove from list and set
         list[fd].callback = NULL;
         FD_CLR(fd, set);
 
-        /* If this value was the maximum fd value, we need to refresh it */
+        // If this value was the maximum fd value, we need to refresh it
         if (fd == manager_fd::set_max)
         {
                 update_max();
         }
 }
 
-/**
- * @brief Clean the file descriptor set
- */
+//
+// @brief Clean the file descriptor set
+//
 void clean()
 {
         LOGGER_INFO("Clear file descriptor list");
@@ -189,24 +189,24 @@ void clean()
         manager_fd::set_max = -1;
 }
 
-/**
- * @brief Verify if a file descriptor is ready for reading
- *
- * @return Return code of select
- */
+//
+// @brief Verify if a file descriptor is ready for reading
+//
+// @return Return code of select
+//
 int select()
 {
         struct timeval tv;
         int ret;
 
-        /* Wait up to 10ms */
+        // Wait up to 10ms
         tv.tv_sec = 0;
         tv.tv_usec = 10000;
 
         ret = select(manager_fd::set_max + 1, &manager_fd::set_r, &manager_fd::set_w, NULL, &tv);
         if (ret == 0)
         {
-                /* Nothing to read, select timed out */
+                // Nothing to read, select timed out
         }
         else if (ret == -1)
         {
@@ -214,29 +214,29 @@ int select()
         }
         else if (ret > 0)
         {
-                int j; /* Number of executed callbacks */
+                int j; // Number of executed callbacks
 
-                /* There are 'ret' fd ready for reading */
+                // There are 'ret' fd ready for reading
 
                 j = 0;
                 for (int fd = 0; fd <= manager_fd::set_max; fd++)
                 {
                         if ((manager_fd::list_r[fd].callback != NULL) && (FD_ISSET(fd, &manager_fd::set_r) != 0))
                         {
-                                /* Data ready for reading */
+                                // Data ready for reading
                                 manager_fd::list_r[fd].callback(fd);
                                 j++;
                         }
                         if ((manager_fd::list_w[fd].callback != NULL) && (FD_ISSET(fd, &manager_fd::set_w) != 0))
                         {
-                                /* Data ready for writing */
+                                // Data ready for writing
                                 manager_fd::list_w[fd].callback(fd);
                                 j++;
                         }
 
                         if (j >= ret)
                         {
-                                /* Finished to read */
+                                // Finished to read
                                 break;
                         }
                 }

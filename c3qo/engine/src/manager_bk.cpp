@@ -1,22 +1,22 @@
 
 
-#include <stdio.h>  /* fopen, fgets, sscanf */
-#include <stdlib.h> /* malloc, free, strtoul */
-#include <unistd.h> /* sysconf */
-#include <stdint.h> /* fixed-size data types */
+#include <stdio.h>  // fopen, fgets, sscanf
+#include <stdlib.h> // malloc, free, strtoul
+#include <unistd.h> // sysconf
+#include <stdint.h> // fixed-size data types
 
 #include "c3qo/block.hpp"
 #include "c3qo/logger.hpp"
 #include "c3qo/manager_bk.hpp"
 
 
-/* Each block shall be linked */
+// Each block shall be linked
 extern struct bk_if hello_entry;
 extern struct bk_if goodbye_entry;
 extern struct bk_if client_us_nb_entry;
 extern struct bk_if server_us_nb_entry;
 
-/* List of pointers to block interfaces */
+// List of pointers to block interfaces
 struct bk_info
 {
         struct bk_if  bk;
@@ -26,7 +26,7 @@ struct bk_info
 struct bk_info *bk_list[UINT16_MAX];
 uint16_t       bk_list_count;
 
-/* Generic command to manage a block */
+// Generic command to manage a block
 struct manager_cmd 
 {
         enum bk_cmd cmd;
@@ -35,16 +35,16 @@ struct manager_cmd
 
 };
 
-/* Using the same instance to minimize stack pression */
+// Using the same instance to minimize stack pression
 struct manager_cmd cmd;
 
 
-/**
- * @brief : Create a block interface
- *
- * @param id   : Identifier in the block list
- * @param type : Type of interface to implement
- */
+//
+// @brief : Create a block interface
+//
+// @param id   : Identifier in the block list
+// @param type : Type of interface to implement
+//
 static void manager_block_add(uint16_t id, enum bk_type type)
 {
         if (type > BK_TYPE_MAX)
@@ -90,7 +90,7 @@ static void manager_block_add(uint16_t id, enum bk_type type)
         }
         default:
         {
-                /* This case mean all values in enum bk_type aren't used */
+                // This case mean all values in enum bk_type aren't used
                 LOGGER_CRIT("Block type enumerate incomplete");
                 free(bk_list[id]);
                 bk_list[id] = NULL;
@@ -101,10 +101,10 @@ static void manager_block_add(uint16_t id, enum bk_type type)
 }
 
 
-/**
- * @brief : Execute the global manager command
- *          Some of them are directly executed by a block
- */
+//
+// @brief : Execute the global manager command
+//          Some of them are directly executed by a block
+//
 static void manager_exec_cmd()
 {
         switch (cmd.cmd)
@@ -142,29 +142,29 @@ static void manager_exec_cmd()
         }
         default:
         {
-                /* Ignore this entry */
+                // Ignore this entry
                 LOGGER_WARNING("Unknown block command %u", cmd.cmd);
         }
         }
 }
 
 
-/**
- * @brief : Get a configuration line and fill the global manager command
- *
- * @param file : configuration file
- *
- * @return : Several values
- *             - -2 on bad parsing
- *             - -1 on bad values
- *             -  0 if there are no more lines
- *             -  1 on success
- */
+//
+// @brief : Get a configuration line and fill the global manager command
+//
+// @param file : configuration file
+//
+// @return : Several values
+//             - -2 on bad parsing
+//             - -1 on bad values
+//             -  0 if there are no more lines
+//             -  1 on success
+//
 static int manager_conf_parse_line(FILE *file)
 {
         int          nb_arg;
-        unsigned int u_cmd; /* uint16_t is too short for %u */
-        unsigned int u_id;  /* uint16_t is too short for %u */
+        unsigned int u_cmd; // uint16_t is too short for %u
+        unsigned int u_id;  // uint16_t is too short for %u
 
         if (feof(file) != 0)
         {
@@ -179,7 +179,7 @@ static int manager_conf_parse_line(FILE *file)
                 return -2;
         }
 
-        /* Check values (shouldn't stop the configuration) */
+        // Check values (shouldn't stop the configuration)
         if (u_cmd > BK_CMD_MAX)
         {
                 LOGGER_WARNING("bk_cmd=%u does not exist", u_cmd);
@@ -198,9 +198,9 @@ static int manager_conf_parse_line(FILE *file)
 }
 
 
-/**
- * @brief : Clean all blocks
- */
+//
+// @brief : Clean all blocks
+//
 void manager_block_clean()
 {
         uint16_t id;
@@ -217,7 +217,7 @@ void manager_block_clean()
                 bk_list[id] = NULL;
                 bk_list_count--;
 
-                /* Stop if all blocks are already deallocated */
+                // Stop if all blocks are already deallocated
                 if (bk_list_count == 0)
                 {
                         break;
@@ -226,21 +226,21 @@ void manager_block_clean()
 }
 
 
-/**
- * @brief : Fill a string representing existing blocks
- *          Format for each entry follows :
- *            - <bk_id> <bk_type> <bk_state>;
- *
- * @param buf : string to fill
- * @param len : maximum length to write
- *
- * @return : actual length written
- */
+//
+// @brief : Fill a string representing existing blocks
+//          Format for each entry follows :
+//            - <bk_id> <bk_type> <bk_state>;
+//
+// @param buf : string to fill
+// @param len : maximum length to write
+//
+// @return : actual length written
+//
 size_t manager_conf_get(char *buf, size_t len)
 {
         size_t   w = 0;
         uint16_t i;
-        uint16_t c = 0; /* Count of block information dumped */
+        uint16_t c = 0; // Count of block information dumped
 
         LOGGER_DEBUG("Getting blocks information")
 
@@ -265,13 +265,13 @@ size_t manager_conf_get(char *buf, size_t len)
                         w += (size_t) ret;
                 }
 
-                /* Stop if all blocks are already dumped */
+                // Stop if all blocks are already dumped
                 if (c == bk_list_count)
                 {
                         break;
                 }
 
-                /* Stop if there's no more room in buf */
+                // Stop if there's no more room in buf
                 if (w >= len)
                 {
                         LOGGER_WARNING("Not enough space to dump blocks information");
@@ -284,13 +284,13 @@ size_t manager_conf_get(char *buf, size_t len)
 }
 
 
-/**
- * @brief : Parse a configuration file to retrieve block configuration
- *
- * @param filename : configuration file name
- *
- * @note : See header file for description
- */
+//
+// @brief : Parse a configuration file to retrieve block configuration
+//
+// @param filename : configuration file name
+//
+// @note : See header file for description
+//
 bool manager_conf_parse(const char *filename)
 {
         FILE *file;
@@ -305,7 +305,7 @@ bool manager_conf_parse(const char *filename)
                 return false;
         }
 
-        /* Read one line at a time */
+        // Read one line at a time
         while (true)
         {
                 int rc;
@@ -313,13 +313,13 @@ bool manager_conf_parse(const char *filename)
                 rc = manager_conf_parse_line(file);
                 if (rc == -2)
                 {
-                        /* Shouldn't read anymore */
+                        // Shouldn't read anymore
                         ret = false;
                         break;
                 }
                 else if (rc == -1)
                 {
-                        /* Should not use values */
+                        // Should not use values
                         continue;
                 }
                 else if (rc == 0)
