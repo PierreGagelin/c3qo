@@ -1,5 +1,5 @@
-#ifndef C3QO_BLOCK_H
-#define C3QO_BLOCK_H
+#ifndef C3QO_BLOCK_HPP
+#define C3QO_BLOCK_HPP
 
 //
 // @brief Identifier for block type
@@ -96,4 +96,4 @@ struct bk_if
     void (*ctrl)(enum bk_cmd cmd, void *arg);
 };
 
-#endif // C3QO_BLOCK_H
+#endif // C3QO_BLOCK_HPP

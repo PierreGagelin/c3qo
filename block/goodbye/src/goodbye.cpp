@@ -1,10 +1,10 @@
 
 
-extern "C" {
-#include <stdio.h>
-#include <stdlib.h>
-}
+// C++ library headers
+#include <cstdio>
+#include <cstdlib>
 
+// Project headers
 #include "c3qo/block.hpp"
 #include "c3qo/logger.hpp"
 

@@ -1,5 +1,3 @@
-
-
 //
 // @brief Library to manage file descriptors
 //
@@ -11,12 +9,16 @@
 // Is meant to be a static management of every fd of the process
 //
 
+// C++ library headers
+#include <cstdlib> // NULL
+#include <cstring> // memset
+
+// System library headers
 extern "C" {
-#include <stdlib.h>     // NULL
-#include <string.h>     // memset
 #include <sys/select.h> // select and associated definitions
 }
 
+// Project headers
 #include "c3qo/logger.hpp" // LOGGER
 
 namespace manager_fd

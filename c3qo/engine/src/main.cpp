@@ -1,12 +1,18 @@
 
 
-#include <stdlib.h>
-#include <unistd.h> // getopt
+// C++ library headers
+#include <cstdlib>
 
+// System library headers
+extern "C" {
+#include <unistd.h> // getopt
+}
+
+// Project headers
 #include "c3qo/logger.hpp"
 #include "c3qo/manager_bk.hpp"
 
-extern char *optarg;
+extern char *optarg; // Comes with getopt
 
 int main(int argc, char **argv)
 {

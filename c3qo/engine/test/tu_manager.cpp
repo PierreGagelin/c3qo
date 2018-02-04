@@ -2,15 +2,18 @@
 // @brief Test file for the block manager
 //
 
-#include <fstream> // open, close
-#include <sstream> // stringstream
-
-extern "C" {
-#include <unistd.h> // sleep
+// C++ library headers
+#include <fstream>  // open, close
+#include <sstream>  // stringstream
 #include <stdio.h>  // fopen, fileno
 #include <string.h> // memcmp, strlen, strncpy
+
+// System library headers
+extern "C" {
+#include <unistd.h> // sleep
 }
 
+// Project headers
 #include "c3qo/block.hpp"      // BK_CMD_ADD, BK_TYPE_HELLO, BK_TYPE_GOODBYE...
 #include "c3qo/logger.hpp"     // LOGGER_OPEN, LOGGER_CLOSE
 #include "c3qo/manager_bk.hpp" // manager_bk::conf_parse
@@ -292,7 +295,7 @@ TEST_F(tu_manager, manager_tm_id)
     t.time.tv_sec = 0;
     t.time.tv_usec = 300000;
     EXPECT_TRUE(manager_tm::add(t) == true);
-    
+
     // Verify only the 300ms is kept
     for (int i = 0; i < 6; i++)
     {

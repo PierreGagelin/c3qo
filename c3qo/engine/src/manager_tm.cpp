@@ -5,12 +5,11 @@
 //        Is meant to be statically used
 //
 
-#include <forward_list>
+// C++ library headers
+#include <forward_list> // forward_list container
+#include <cstdlib>      // NULL
 
-extern "C" {
-#include <stdlib.h> // NULL (usefull in gettimeofday)
-}
-
+// Project headers
 #include "c3qo/logger.hpp"
 #include "c3qo/manager_tm.hpp"
 

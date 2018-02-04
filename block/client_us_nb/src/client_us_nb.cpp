@@ -6,15 +6,19 @@
 // @note us_asnb stand for unix stream non-block
 //
 
+// C++ library headers
+#include <cstdio>  // snprintf
+#include <cstring> // memset
+
+// System library headers
 extern "C" {
 #include <unistd.h>     // close
-#include <stdio.h>      // snprintf
-#include <string.h>     // memset
 #include <sys/types.h>  // getsockopt
 #include <sys/un.h>     // sockaddr_un
 #include <sys/socket.h> // socket, getsockopt
 }
 
+// Project headers
 #include "c3qo/block.hpp"      // bk_cmd, bk_data...
 #include "c3qo/logger.hpp"     // LOGGER_INFO, LOGGER_ERR...
 #include "c3qo/manager_fd.hpp" // manager_fd::add

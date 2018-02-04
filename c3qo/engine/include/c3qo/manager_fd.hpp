@@ -1,6 +1,5 @@
-#ifndef C3QO_MANAGER_FD_H
-#define C3QO_MANAGER_FD_H
-
+#ifndef C3QO_MANAGER_FD_HPP
+#define C3QO_MANAGER_FD_HPP
 
 namespace manager_fd
 {
@@ -18,4 +17,4 @@ int select();
 
 } // END namespace manager_fd
 
-#endif // C3QO_MANAGER_FD_H
+#endif // C3QO_MANAGER_FD_HPP

@@ -1,14 +1,12 @@
 
 
-#include <unordered_map>
+// C++ library headers
+#include <unordered_map> // unordered_map container
+#include <cstdio>        // fopen, fgets, sscanf
+#include <cstdlib>       // malloc, free, strtoul
+#include <cstdint>       // fixed-size data types
 
-extern "C" {
-#include <stdio.h>  // fopen, fgets, sscanf
-#include <stdlib.h> // malloc, free, strtoul
-#include <unistd.h> // sysconf
-#include <stdint.h> // fixed-size data types
-}
-
+// Project headers
 #include "c3qo/block.hpp"
 #include "c3qo/logger.hpp"
 #include "c3qo/manager_bk.hpp"

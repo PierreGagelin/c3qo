@@ -1,6 +1,7 @@
-#ifndef C3QO_MANAGER_TM_H
-#define C3QO_MANAGER_TM_H
+#ifndef C3QO_MANAGER_TM_HPP
+#define C3QO_MANAGER_TM_HPP
 
+// System library headers
 extern "C" {
 #include <sys/time.h> // gettimeofday, timeval
 }
@@ -32,4 +33,4 @@ bool operator<(const struct timer &a, const struct timer &b);
 
 } // END namespace manager_tm
 
-#endif // C3QO_MANAGER_TM_H
+#endif // C3QO_MANAGER_TM_HPP

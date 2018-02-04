@@ -1,7 +1,8 @@
-#ifndef UTILS_VECTOR_H
-#define UTILS_VECTOR_H
+#ifndef UTILS_VECTOR_HPP
+#define UTILS_VECTOR_HPP
 
-#include <stdint.h> // uint16_t
+// C++ library headers
+#include <cstdint> // uint16_t
 
 //
 // @struct vector
@@ -33,4 +34,4 @@ inline bool vector_append(struct vector *vec, void *elem)
     return vector_insert(vec, elem, vec->tail);
 }
 
-#endif
+#endif // UTILS_VECTOR_HPP

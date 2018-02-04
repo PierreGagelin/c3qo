@@ -2,10 +2,10 @@
 // @brief Test file for the hello block
 //
 
-extern "C" {
-#include <stdlib.h>
-}
+// C++ library headers
+#include <cstdlib>
 
+//Project headers
 #include "c3qo/block.hpp"
 #include "c3qo/logger.hpp"
 

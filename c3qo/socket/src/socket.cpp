@@ -2,12 +2,16 @@
 // @brief API to manage socket
 //
 
+// C++ library headers
+#include <cerrno>
+
+// System library headers
 extern "C" {
-#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 }
 
+// Project headers
 #include "c3qo/socket.hpp"
 #include "c3qo/logger.hpp"
 
