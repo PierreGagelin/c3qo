@@ -10,12 +10,12 @@
 //
 enum bk_type
 {
-        BK_TYPE_NONE = 0,         // Default value
-        BK_TYPE_HELLO = 1,        // Block that says hello
-        BK_TYPE_GOODBYE = 2,      // Block that says goodbye
-        BK_TYPE_CLIENT_US_NB = 3, // Unix stream non-block client
-        BK_TYPE_SERVER_US_NB = 4, // Unix stream non-block server
-        BK_TYPE_MAX = 4,          // Maximum value
+    BK_TYPE_NONE = 0,         // Default value
+    BK_TYPE_HELLO = 1,        // Block that says hello
+    BK_TYPE_GOODBYE = 2,      // Block that says goodbye
+    BK_TYPE_CLIENT_US_NB = 3, // Unix stream non-block client
+    BK_TYPE_SERVER_US_NB = 4, // Unix stream non-block server
+    BK_TYPE_MAX = 4,          // Maximum value
 };
 
 //
@@ -27,15 +27,15 @@ enum bk_type
 //
 enum bk_cmd
 {
-        BK_CMD_NONE = 0,  // Default value
-        BK_CMD_ADD = 1,   // Create a block
-        BK_CMD_INIT = 2,  // Initialize a block
-        BK_CMD_CONF = 3,  // Configure a block
-        BK_CMD_BIND = 4,  // Bind a block to another
-        BK_CMD_START = 5, // Ask the block to start
-        BK_CMD_STOP = 6,  // Ask the block to stop
-        BK_CMD_STATS = 7, // Ask the block to stop
-        BK_CMD_MAX = 7,   // Maximum value
+    BK_CMD_NONE = 0,  // Default value
+    BK_CMD_ADD = 1,   // Create a block
+    BK_CMD_INIT = 2,  // Initialize a block
+    BK_CMD_CONF = 3,  // Configure a block
+    BK_CMD_BIND = 4,  // Bind a block to another
+    BK_CMD_START = 5, // Ask the block to start
+    BK_CMD_STOP = 6,  // Ask the block to stop
+    BK_CMD_STATS = 7, // Ask the block to stop
+    BK_CMD_MAX = 7,   // Maximum value
 };
 
 //
@@ -46,10 +46,10 @@ enum bk_cmd
 //
 enum bk_state
 {
-        BK_STATE_STOP = 0,
-        BK_STATE_INIT = 1,
-        BK_STATE_CONF = 2,
-        BK_STATE_START = 3,
+    BK_STATE_STOP = 0,
+    BK_STATE_INIT = 1,
+    BK_STATE_CONF = 2,
+    BK_STATE_START = 3,
 };
 
 //
@@ -57,8 +57,8 @@ enum bk_state
 //
 enum bk_data_type
 {
-        BK_DATA_TYPE_NONE = 0, // The data is unknown
-        BK_DATA_TYPE_BUF = 1,  // The data is a buffer
+    BK_DATA_TYPE_NONE = 0, // The data is unknown
+    BK_DATA_TYPE_BUF = 1,  // The data is a buffer
 };
 
 //
@@ -66,8 +66,8 @@ enum bk_data_type
 //
 struct bk_data
 {
-        enum bk_data_type type; // Type of data
-        void *data;             // data
+    enum bk_data_type type; // Type of data
+    void *data;             // data
 };
 
 //
@@ -75,8 +75,8 @@ struct bk_data
 //
 struct bk_buf
 {
-        size_t len; // size of the buffer
-        void *buf;  // buffer
+    size_t len; // size of the buffer
+    void *buf;  // buffer
 };
 
 //
@@ -84,16 +84,16 @@ struct bk_buf
 //
 struct bk_if
 {
-        // Context
-        void *ctx;
+    // Context
+    void *ctx;
 
-        // Get Statistics
-        size_t (*stats)(char *buf, size_t len);
+    // Get Statistics
+    size_t (*stats)(char *buf, size_t len);
 
-        // Data processing
-        void (*rx)(struct bk_data *data);
-        void (*tx)(struct bk_data *data);
-        void (*ctrl)(enum bk_cmd cmd, void *arg);
+    // Data processing
+    void (*rx)(struct bk_data *data);
+    void (*tx)(struct bk_data *data);
+    void (*ctrl)(enum bk_cmd cmd, void *arg);
 };
 
 #endif // C3QO_BLOCK_H

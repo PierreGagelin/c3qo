@@ -6,7 +6,6 @@
 // @note us_asnb stand for unix stream non-block
 //
 
-
 extern "C" {
 #include <unistd.h>     // close
 #include <stdio.h>      // snprintf
@@ -28,7 +27,7 @@ extern "C" {
 //
 struct client_us_nb_ctx
 {
-        int fd;
+    int fd;
 };
 struct client_us_nb_ctx ctx_c;
 
@@ -37,10 +36,10 @@ struct client_us_nb_ctx ctx_c;
 //
 static inline void client_us_nb_clean()
 {
-        manager_fd::remove(ctx_c.fd, true);
-        manager_fd::remove(ctx_c.fd, false);
-        close(ctx_c.fd);
-        ctx_c.fd = -1;
+    manager_fd::remove(ctx_c.fd, true);
+    manager_fd::remove(ctx_c.fd, false);
+    close(ctx_c.fd);
+    ctx_c.fd = -1;
 }
 
 //
@@ -48,13 +47,13 @@ static inline void client_us_nb_clean()
 //
 static void client_us_nb_callback(int fd)
 {
-        if (fd != ctx_c.fd)
-        {
-                LOGGER_ERR("Unexpected file descriptor [fd_expected=%d ; fd_received=%d]", ctx_c.fd, fd);
-                return;
-        }
+    if (fd != ctx_c.fd)
+    {
+        LOGGER_ERR("Unexpected file descriptor [fd_expected=%d ; fd_received=%d]", ctx_c.fd, fd);
+        return;
+    }
 
-        LOGGER_DEBUG("Received data on socket. Not implemented yet [fd=%d]", fd);
+    LOGGER_DEBUG("Received data on socket. Not implemented yet [fd=%d]", fd);
 }
 
 //
@@ -62,33 +61,33 @@ static void client_us_nb_callback(int fd)
 //
 static void client_us_nb_connect_check(int fd)
 {
-        socklen_t lon;
-        int optval;
+    socklen_t lon;
+    int optval;
 
-        if (fd != ctx_c.fd)
-        {
-                LOGGER_ERR("Unexpected file descriptor [fd_expected=%d ; fd_received=%d]", ctx_c.fd, fd);
-                return;
-        }
+    if (fd != ctx_c.fd)
+    {
+        LOGGER_ERR("Unexpected file descriptor [fd_expected=%d ; fd_received=%d]", ctx_c.fd, fd);
+        return;
+    }
 
-        // Verify connection status
-        lon = sizeof(optval);
-        if (getsockopt(ctx_c.fd, SOL_SOCKET, SO_ERROR, (void *)(&optval), &lon) != 0)
-        {
-                LOGGER_ERR("getsockopt failed on socket [fd=%d]", ctx_c.fd);
-                return;
-        }
+    // Verify connection status
+    lon = sizeof(optval);
+    if (getsockopt(ctx_c.fd, SOL_SOCKET, SO_ERROR, (void *)(&optval), &lon) != 0)
+    {
+        LOGGER_ERR("getsockopt failed on socket [fd=%d]", ctx_c.fd);
+        return;
+    }
 
-        if (optval != 0)
-        {
-                LOGGER_ERR("SO_ERROR still not clear on socket [fd=%d]", ctx_c.fd);
-                return;
-        }
+    if (optval != 0)
+    {
+        LOGGER_ERR("SO_ERROR still not clear on socket [fd=%d]", ctx_c.fd);
+        return;
+    }
 
-        LOGGER_DEBUG("Connection to server available on socket [fd=%d]", ctx_c.fd);
+    LOGGER_DEBUG("Connection to server available on socket [fd=%d]", ctx_c.fd);
 
-        manager_fd::remove(ctx_c.fd, false);
-        manager_fd::add(ctx_c.fd, &client_us_nb_callback, true);
+    manager_fd::remove(ctx_c.fd, false);
+    manager_fd::add(ctx_c.fd, &client_us_nb_callback, true);
 }
 
 //
@@ -96,24 +95,24 @@ static void client_us_nb_connect_check(int fd)
 //
 static int client_us_nb_connect(int fd)
 {
-        struct sockaddr_un clt_addr;
-        int ret;
+    struct sockaddr_un clt_addr;
+    int ret;
 
-        memset(&clt_addr, 0, sizeof(clt_addr));
-        clt_addr.sun_family = AF_UNIX;
-        ret = snprintf(clt_addr.sun_path, sizeof(clt_addr.sun_path), SOCKET_NAME);
-        if (ret < 0)
-        {
-                LOGGER_ERR("Failed snprintf [buf=%p ; size=%lu ; string=%s]", clt_addr.sun_path, sizeof(clt_addr.sun_path), SOCKET_NAME);
-                return -1;
-        }
-        else if (((size_t)ret) > sizeof(clt_addr.sun_path))
-        {
-                LOGGER_ERR("Failed to write socket name, it's too large [sun_path=%s ; max_size=%lu]", SOCKET_NAME, sizeof(clt_addr.sun_path));
-                return -1;
-        }
+    memset(&clt_addr, 0, sizeof(clt_addr));
+    clt_addr.sun_family = AF_UNIX;
+    ret = snprintf(clt_addr.sun_path, sizeof(clt_addr.sun_path), SOCKET_NAME);
+    if (ret < 0)
+    {
+        LOGGER_ERR("Failed snprintf [buf=%p ; size=%lu ; string=%s]", clt_addr.sun_path, sizeof(clt_addr.sun_path), SOCKET_NAME);
+        return -1;
+    }
+    else if (((size_t)ret) > sizeof(clt_addr.sun_path))
+    {
+        LOGGER_ERR("Failed to write socket name, it's too large [sun_path=%s ; max_size=%lu]", SOCKET_NAME, sizeof(clt_addr.sun_path));
+        return -1;
+    }
 
-        return c3qo_socket_connect_nb(fd, (struct sockaddr *)&clt_addr, sizeof(clt_addr));
+    return c3qo_socket_connect_nb(fd, (struct sockaddr *)&clt_addr, sizeof(clt_addr));
 }
 
 //
@@ -121,11 +120,11 @@ static int client_us_nb_connect(int fd)
 //
 static void client_us_nb_init()
 {
-        LOGGER_INFO("Initialize block client_us_nb");
+    LOGGER_INFO("Initialize block client_us_nb");
 
-        // Initialize context
-        memset(&ctx_c, -1, sizeof(ctx_c));
-        ctx_c.fd = -1;
+    // Initialize context
+    memset(&ctx_c, -1, sizeof(ctx_c));
+    ctx_c.fd = -1;
 }
 
 //
@@ -133,55 +132,55 @@ static void client_us_nb_init()
 //
 static void client_us_nb_start()
 {
-        int ret;
+    int ret;
 
-        LOGGER_INFO("Start block client_us_nb");
+    LOGGER_INFO("Start block client_us_nb");
 
-        // Create the client socket
-        ctx_c.fd = socket(AF_UNIX, SOCK_STREAM, 0);
-        if (ctx_c.fd == -1)
+    // Create the client socket
+    ctx_c.fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (ctx_c.fd == -1)
+    {
+        LOGGER_ERR("Failed to open client socket [fd=%d]", ctx_c.fd);
+        return;
+    }
+
+    // Set the socket to be non-blocking
+    c3qo_socket_set_nb(ctx_c.fd);
+
+    // Connect the socket to the server
+    ret = client_us_nb_connect(ctx_c.fd);
+    if (ret == -1)
+    {
+        LOGGER_ERR("Failed to connect to server [fd=%d]", ctx_c.fd);
+        client_us_nb_clean();
+        return;
+    }
+    else if (ret == 1)
+    {
+        LOGGER_DEBUG("Connection sent but not acknowledged, will check later [fd=%d]", ctx_c.fd);
+        manager_fd::add(ctx_c.fd, &client_us_nb_connect_check, false);
+        return;
+    }
+    else if (ret == 2)
+    {
+        LOGGER_ERR("Failed to find someone listening, launch timer for reconnection [fd=%d]", ctx_c.fd);
+
+        return;
+    }
+    else
+    {
+        // Success: register the file descriptor with a callback for data reception
+        if (manager_fd::add(ctx_c.fd, &client_us_nb_callback, true) == false)
         {
-                LOGGER_ERR("Failed to open client socket [fd=%d]", ctx_c.fd);
-                return;
-        }
-
-        // Set the socket to be non-blocking
-        c3qo_socket_set_nb(ctx_c.fd);
-
-        // Connect the socket to the server
-        ret = client_us_nb_connect(ctx_c.fd);
-        if (ret == -1)
-        {
-                LOGGER_ERR("Failed to connect to server [fd=%d]", ctx_c.fd);
-                client_us_nb_clean();
-                return;
-        }
-        else if (ret == 1)
-        {
-                LOGGER_DEBUG("Connection sent but not acknowledged, will check later [fd=%d]", ctx_c.fd);
-                manager_fd::add(ctx_c.fd, &client_us_nb_connect_check, false);
-                return;
-        }
-        else if (ret == 2)
-        {
-                LOGGER_ERR("Failed to find someone listening, launch timer for reconnection [fd=%d]", ctx_c.fd);
-
-                return;
+            LOGGER_ERR("Failed to register callback on client socket [fd=%d ; callback=%p]", ctx_c.fd, &client_us_nb_callback);
+            client_us_nb_clean();
+            return;
         }
         else
         {
-                // Success: register the file descriptor with a callback for data reception
-                if (manager_fd::add(ctx_c.fd, &client_us_nb_callback, true) == false)
-                {
-                        LOGGER_ERR("Failed to register callback on client socket [fd=%d ; callback=%p]", ctx_c.fd, &client_us_nb_callback);
-                        client_us_nb_clean();
-                        return;
-                }
-                else
-                {
-                        LOGGER_DEBUG("Registered callback on client socket [fd=%d ; callback=%p]", ctx_c.fd, &client_us_nb_callback);
-                }
+            LOGGER_DEBUG("Registered callback on client socket [fd=%d ; callback=%p]", ctx_c.fd, &client_us_nb_callback);
         }
+    }
 }
 
 //
@@ -189,43 +188,43 @@ static void client_us_nb_start()
 //
 static void client_us_nb_stop()
 {
-        LOGGER_INFO("Stop block client_us_nb");
+    LOGGER_INFO("Stop block client_us_nb");
 
-        if (ctx_c.fd == -1)
-        {
-                return;
-        }
+    if (ctx_c.fd == -1)
+    {
+        return;
+    }
 
-        client_us_nb_clean();
+    client_us_nb_clean();
 }
 
 static void client_us_nb_ctrl(enum bk_cmd cmd, void *arg)
 {
-        (void)arg;
+    (void)arg;
 
-        switch (cmd)
-        {
-        case BK_CMD_INIT:
-        {
-                client_us_nb_init();
-                break;
-        }
-        case BK_CMD_START:
-        {
-                client_us_nb_start();
-                break;
-        }
-        case BK_CMD_STOP:
-        {
-                client_us_nb_stop();
-                break;
-        }
-        default:
-        {
-                LOGGER_ERR("Unknown command called [bk_cmd=%d]", cmd);
-                break;
-        }
-        }
+    switch (cmd)
+    {
+    case BK_CMD_INIT:
+    {
+        client_us_nb_init();
+        break;
+    }
+    case BK_CMD_START:
+    {
+        client_us_nb_start();
+        break;
+    }
+    case BK_CMD_STOP:
+    {
+        client_us_nb_stop();
+        break;
+    }
+    default:
+    {
+        LOGGER_ERR("Unknown command called [bk_cmd=%d]", cmd);
+        break;
+    }
+    }
 }
 
 // Declare the interface for this block
