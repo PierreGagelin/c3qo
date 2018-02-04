@@ -1,5 +1,5 @@
-#ifndef C3QO_LOGGER_H
-#define C3QO_LOGGER_H
+#ifndef C3QO_LOGGER_HPP
+#define C3QO_LOGGER_HPP
 
 #include <syslog.h> // syslog
 
@@ -40,6 +40,7 @@ void logger_set_level(enum logger_level l);
 //   - LOG_DEBUG   : debug-level message
 //
 
+#if 1
 // Format a log entry with function name, line and level
 #define LOGGER_EMERG(msg, ...)                                                           \
     if (logger_level >= LOGGER_LEVEL_EMERG)                                              \
@@ -81,5 +82,38 @@ void logger_set_level(enum logger_level l);
     {                                                                                    \
         syslog(LOG_DEBUG, "[DEBUG] " msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
     }
+#else
 
-#endif // C3QO_LOGGER_H
+//
+// @brief Trick:
+//          - removes call to log facility
+//          - free space used by msg as it's useless (=8KB at the moment)
+//          - does not trigger compilation -Werror (mainly unused variables)
+//
+#include <tuple>
+
+#define LOGGER_EMERG(msg, ...)                                            \
+    (void)std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value; \
+    (void)msg;
+#define LOGGER_ALERT(msg, ...)                                            \
+    (void)std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value; \
+    (void)msg;
+#define LOGGER_CRIT(msg, ...)                                             \
+    (void)std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value; \
+    (void)msg;
+#define LOGGER_ERR(msg, ...)                                              \
+    (void)std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value; \
+    (void)msg;
+#define LOGGER_WARNING(msg, ...)                                          \
+    (void)std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value; \
+    (void)msg;
+#define LOGGER_INFO(msg, ...)                                             \
+    (void)std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value; \
+    (void)msg;
+#define LOGGER_DEBUG(msg, ...)                                            \
+    (void)std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value; \
+    (void)msg;
+
+#endif
+
+#endif // C3QO_LOGGER_HPP
