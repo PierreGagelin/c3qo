@@ -10,8 +10,8 @@
 #include <cstdlib>      // NULL
 
 // Project headers
-#include "c3qo/logger.hpp"
 #include "c3qo/manager_tm.hpp"
+#include "utils/logger.hpp"
 
 #define USEC_MAX 1000000 // Maximum number of usec
 

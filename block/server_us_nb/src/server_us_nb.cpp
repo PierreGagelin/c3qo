@@ -20,9 +20,9 @@ extern "C" {
 
 // Project headers
 #include "c3qo/block.hpp"
-#include "c3qo/logger.hpp"
 #include "c3qo/manager_fd.hpp"
-#include "c3qo/socket.hpp"
+#include "utils/logger.hpp"
+#include "utils/socket.hpp"
 
 #define SOCKET_FD_MAX 64 // Maximum number of file descriptors
 #define SOCKET_READ_SIZE 256

@@ -8,8 +8,8 @@
 
 // Project headers
 #include "c3qo/block.hpp"
-#include "c3qo/logger.hpp"
 #include "c3qo/manager_bk.hpp"
+#include "utils/logger.hpp"
 
 // Each block shall be linked
 extern struct bk_if hello_entry;

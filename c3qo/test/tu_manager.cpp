@@ -14,11 +14,11 @@ extern "C" {
 }
 
 // Project headers
-#include "c3qo/block.hpp"      // BK_CMD_ADD, BK_TYPE_HELLO, BK_TYPE_GOODBYE...
-#include "c3qo/logger.hpp"     // LOGGER_OPEN, LOGGER_CLOSE
-#include "c3qo/manager_bk.hpp" // manager_bk::conf_parse
-#include "c3qo/manager_fd.hpp" // manager_fd::init/clean/add/remove/select
-#include "c3qo/manager_tm.hpp" // manager_tm::init
+#include "c3qo/block.hpp"
+#include "c3qo/manager_bk.hpp"
+#include "c3qo/manager_fd.hpp"
+#include "c3qo/manager_tm.hpp"
+#include "utils/logger.hpp"
 
 #include "gtest/gtest.h"
 

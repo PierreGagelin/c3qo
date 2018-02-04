@@ -19,10 +19,10 @@ extern "C" {
 }
 
 // Project headers
-#include "c3qo/block.hpp"      // bk_cmd, bk_data...
-#include "c3qo/logger.hpp"     // LOGGER_INFO, LOGGER_ERR...
-#include "c3qo/manager_fd.hpp" // manager_fd::add
-#include "c3qo/socket.hpp"     // c3qo_socket_set_nb
+#include "c3qo/block.hpp"
+#include "c3qo/manager_fd.hpp"
+#include "utils/logger.hpp"
+#include "utils/socket.hpp"
 
 #define SOCKET_NAME "/tmp/server_us_nb"
 

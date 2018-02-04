@@ -4,9 +4,9 @@
 
 #include "gtest/gtest.h"
 
-#include "c3qo/block.hpp"      // BK_CMD_INIT, BK_CMD_START...
-#include "c3qo/logger.hpp"     // LOGGER_OPEN, LOGGER_DEBUG...
-#include "c3qo/manager_fd.hpp" // manager_fd::init
+#include "c3qo/block.hpp"
+#include "c3qo/manager_fd.hpp"
+#include "utils/logger.hpp"
 
 // TU should be linked with the block
 extern struct bk_if client_us_nb_entry;

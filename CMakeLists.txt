@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.0)
 project(c3q0)
 
 
+# Generate a JSON file with compilation commands (used with Visual Studio Code)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
@@ -12,29 +13,22 @@ set(CMAKE_BUILD_TYPE Debug)
 
 
 # Compilation flags
-set(CMAKE_C_FLAGS_DEBUG   "-g -O0")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
-
-set(CMAKE_C_FLAGS_RELEASE   "-O2")
+set(CMAKE_CXX_FLAGS_DEBUG   "-g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2")
-
-set(CMAKE_C_FLAGS   "-Wall -Wextra -Werror")
-set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Werror")
+set(CMAKE_CXX_FLAGS         "-std=c++11 -Wall -Wextra -Werror")
 
 
-# Allow to run "make test"
+# Generate tests executables
 enable_testing()
 
 
-# Engine include directories
-set(C3QO_BLOCK_INCLUDE_DIR   ${CMAKE_SOURCE_DIR}/c3qo/block/include)
-set(C3QO_LOGGER_INCLUDE_DIR  ${CMAKE_SOURCE_DIR}/c3qo/logger/include)
-set(C3QO_MANAGER_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/c3qo/engine/include)
-set(C3QO_SOCKET_INCLUDE_DIR  ${CMAKE_SOURCE_DIR}/c3qo/socket/include)
+# Include directories for c3qo engine
+set(C3QO_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/c3qo/include)
 
 
-# Utils include directory
-set(UTILS_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/utils/include)
+# Include directories for utils
+set(UTILS_INCLUDE_DIR                      ${CMAKE_SOURCE_DIR}/utils/logger/include)
+set(UTILS_INCLUDE_DIR ${UTILS_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/utils/socket/include)
 
 
 add_subdirectory(c3qo)

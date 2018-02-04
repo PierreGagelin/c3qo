@@ -6,7 +6,7 @@
 
 // Project headers
 #include "c3qo/block.hpp"
-#include "c3qo/logger.hpp"
+#include "utils/logger.hpp"
 
 static inline void hello_init()
 {

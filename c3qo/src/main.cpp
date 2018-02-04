@@ -9,8 +9,8 @@ extern "C" {
 }
 
 // Project headers
-#include "c3qo/logger.hpp"
 #include "c3qo/manager_bk.hpp"
+#include "utils/logger.hpp"
 
 extern char *optarg; // Comes with getopt
 

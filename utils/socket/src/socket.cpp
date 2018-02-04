@@ -12,8 +12,8 @@ extern "C" {
 }
 
 // Project headers
-#include "c3qo/socket.hpp"
-#include "c3qo/logger.hpp"
+#include "utils/socket.hpp"
+#include "utils/logger.hpp"
 
 //
 // @brief Set the file descriptor to be NON-BLOCKING

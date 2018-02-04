@@ -7,7 +7,7 @@
 
 //Project headers
 #include "c3qo/block.hpp"
-#include "c3qo/logger.hpp"
+#include "utils/logger.hpp"
 
 #include "gtest/gtest.h"
 
