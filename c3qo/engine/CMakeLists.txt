@@ -53,27 +53,3 @@ target_link_libraries(tu_manager gtest)
 target_link_libraries(tu_manager gtest_main)
 
 
-# Need a special link for timer management
-set_target_properties(tu_manager PROPERTIES LINK_FLAGS -lrt)
-
-
-# Build special TU for a bug happening with (gtest, valgrind, signal)
-set(SOURCES_TU_TEST test/tu_test.cpp)
-
-
-add_executable(tu_test ${SOURCES_TU_TEST})
-add_test(NAME tu_test COMMAND tu_test)
-
-
-target_include_directories(tu_test PUBLIC ${C3QO_MANAGER_INCLUDE_DIR})
-
-
-target_link_libraries(tu_test manager)
-target_link_libraries(tu_test gtest)
-target_link_libraries(tu_test gtest_main)
-
-
-# Need a special link for timer management
-set_target_properties(tu_test PROPERTIES LINK_FLAGS -lrt)
-
-

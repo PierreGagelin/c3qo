@@ -1,263 +1,157 @@
-
-
-#include <signal.h>  // timer_create, sigevent, sigaction
-#include <string.h>  // memset, memcpy
-
-#include "c3qo/logger.hpp"     // LOGGER
-#include "c3qo/manager_tm.hpp" // bool, timer_t, itimerspec
-
-
-// Signal and clock used by timers
-#define MANAGER_TM_SIGNAL SIGRTMIN
-#define MANAGER_TM_CLOCK  CLOCK_REALTIME
-
-// Maximum number of timer handled at a time
-#define MANAGER_TM_MAX 256
-
-
-struct manager_tm_entry
-{
-        timer_t  tid;                   // Timer ID
-        void     *arg;                  // Argument to give to the callback
-        void    (*callback)(void *arg); // Function to call when timer expires
-};
-struct manager_tm_entry tm_list[MANAGER_TM_MAX];
-
-
 //
-// @brief Find a timer ID in the list of timer entries
+// @brief Synchronous timer management
+//          - add timer with callback and argument
+//          - remove timer
+//        Is meant to be statically used
 //
-// @return index in the list on success, -1 on failure
-//
-static inline int manager_tm_find(timer_t tid)
-{
-        int i;
 
-        for (i = 0; i < MANAGER_TM_MAX; i++)
-        {
-                if (tm_list[i].tid != tid)
-                {
-                        continue;
-                }
+#include <forward_list>
 
-                // Found
-                return i;
-        }
-
-        // Not found
-        return -1;
+extern "C" {
+#include <stdlib.h> // NULL (usefull in gettimeofday)
 }
 
+#include "c3qo/logger.hpp"
+#include "c3qo/manager_tm.hpp"
 
-//
-// @brief Add a new entry in the timer list
-//
-static bool manager_tm_add(struct manager_tm_entry *entry)
+#define USEC_MAX 1000000 // Maximum number of usec
+
+namespace manager_tm
 {
-        int idx;
 
-        // Find an empty entry
-        idx = manager_tm_find(NULL);
-        if (idx == -1)
-        {
-                LOGGER_ERR("Failed to find room to add timer [timer_id=%p ; arg=%p ; callback=%p]", entry->tid, entry->arg, entry->callback);
-                return false;
-        }
+// Singly-linked list of timers sorted by expiration
+std::forward_list<struct timer> tm_list_;
 
-        // Register the entry
-        memcpy(&tm_list[idx], entry, sizeof(tm_list[idx]));
-
+// Operators for struct timeval
+bool operator==(const struct timeval &a, const struct timeval &b)
+{
+    if ((a.tv_sec == b.tv_sec) && (a.tv_sec == b.tv_sec))
+    {
         return true;
+    }
+    else
+    {
+        return false;
+    }
 }
-
-
-//
-// @brief Delete a timer entry
-//
-static void manager_tm_del(timer_t tid)
+bool operator<(const struct timeval &a, const struct timeval &b)
 {
-        int idx;
-
-        if (tid == NULL)
-        {
-                // Nothing to do
-                return;
-        }
-
-        // Find the entry
-        idx = manager_tm_find(tid);
-        if (idx == -1)
-        {
-                // Nothing to do
-                return;
-        }
-
-        // Delete the timer
-        if (timer_delete(tm_list[idx].tid) == -1)
-        {
-                LOGGER_CRIT("Failed call to timer_delete [timer_id=%p]", tm_list[idx].tid);
-        }
-        
-        // Delete the entry from the list
-        memset(&tm_list[idx], 0, sizeof(tm_list[idx]));
-}
-
-
-//
-// @brief Retrieve registered callback from signal
-//
-static void manager_tm_handler(int sig, siginfo_t *si, void *uc)
-{
-        timer_t *tid;
-        int     idx;
-
-        (void) uc; // Unused
-
-        // Verify the signal
-        if (sig != MANAGER_TM_SIGNAL)
-        {
-                // Nothing to do
-                return;
-        }
-
-        // Find the timer entry
-        tid = (timer_t *) si->si_value.sival_ptr;
-        idx = manager_tm_find(*tid);
-        if (idx == -1)
-        {
-                LOGGER_ERR("Failed to find context associated to expired timer [timer_id=%p]", *tid);
-        }
-
-        // Call the callback
-        tm_list[idx].callback(tm_list[idx].arg);
-}
-
-
-//
-// @brief Create a timer for a callback
-//
-// @param tid      : Timer ID
-// @param arg      : Argument to give to the callback
-// @param callback : Function to call on timer signal
-//
-void manager_tm_create(timer_t *tid, void *arg, void (*callback)(void *arg))
-{
-        struct manager_tm_entry timer;
-        struct sigevent         sev;
-
-        // Verify user input
-        if (tid == NULL)
-        {
-                LOGGER_WARNING("Cannot add timer with this ID [timer_id=%p]", tid);
-                return;
-        }
-        if (callback == NULL)
-        {
-                LOGGER_WARNING("Cannot add timer with this callback [callback=%p]", callback);
-                return;
-        }
-
-        // Verify timer does not exist
-        if (manager_tm_find(tid) != -1)
-        {
-                LOGGER_WARNING("Cannot add timer with an already used ID [timer_id=%p]", tid);
-                return;
-        }
-
-        // Get an ID for the timer
-        sev.sigev_notify          = SIGEV_SIGNAL;
-        sev.sigev_signo           = MANAGER_TM_SIGNAL;
-        sev.sigev_value.sival_ptr = tid;
-        if (timer_create(MANAGER_TM_CLOCK, &sev, tid) == -1)
-        {
-                LOGGER_ERR("Failed call to timer_create");
-                return;
-        }
-
-        // Register an entry
-        timer.tid      = *tid;
-        timer.arg      = arg;
-        timer.callback = callback;
-        manager_tm_add(&timer);
-}
-
-
-//
-// @brief Set a time interval for the timer
-//
-// @param its : time specification
-//
-void manager_tm_set(timer_t tid, const struct itimerspec *its)
-{
-        struct timespec zero;
-        int             idx;
-
-        // Verify user input
-        if (tid == NULL)
-        {
-                // Nothing to do
-                return;
-        }
-
-        // Find the timer
-        idx = manager_tm_find(tid);
-        if (idx == -1)
-        {
-                // Nothing to do
-                return;
-        }
-
-        // Verify if it's an unset
-        memset(&zero, 0, sizeof(zero));
-        if(memcmp(&its->it_value, &zero, sizeof(zero)) == 0)
-        {
-                manager_tm_del(tm_list[idx].tid);
-                return;
-        }
-
-        // Set a time specificaion
-        if (timer_settime(tm_list[idx].tid, 0, its, NULL) == -1)
-        {
-                LOGGER_ERR("Failed call to timer_settime [timer_id=%p]", tm_list[idx].tid);
-                return;
-        }
-}
-
-
-//
-// @brief Initialize the timer management
-//
-bool manager_tm_init()
-{
-        struct sigaction sa;
-
-        LOGGER_INFO("Initialize timer manager");
-
-        // Initialize list
-        memset(tm_list, 0, sizeof(tm_list));
-
-        // Register a callback to deal with a signal that will be triggered by timers
-        sa.sa_flags     = SA_SIGINFO;
-        sa.sa_sigaction = manager_tm_handler;
-        sigemptyset(&sa.sa_mask);
-        if (sigaction(MANAGER_TM_SIGNAL, &sa, NULL) == -1)
-        {
-                LOGGER_ERR("Failed call to sigaction");
-                return false;
-        }
-
+    if (a.tv_sec < b.tv_sec)
+    {
         return true;
+    }
+    else if (a.tv_sec == b.tv_sec)
+    {
+        return (a.tv_usec < b.tv_usec);
+    }
+    else
+    {
+        return false;
+    }
 }
 
-
-void manager_tm_clean()
+// Operator for struct timer (necessary for the remove method)
+bool operator==(const struct timer &a, const struct timer &b)
 {
-        int i;
-
-        for (i = 0; i < MANAGER_TM_MAX; i++)
-        {
-                manager_tm_del(tm_list[i].tid);
-        }
+    return (a.tid == b.tid);
+}
+// Operator for struct timer (necessary for the sort method)
+bool operator<(const struct timer &a, const struct timer &b)
+{
+    return (a.time < b.time);
 }
 
+//
+// @brief Add or replace an entry in the timer list
+//
+bool add(struct timer &tm)
+{
+    struct timeval t;
 
+    // Verify user input
+    if (tm.callback == NULL)
+    {
+        LOGGER_WARNING("Cannot add timer without a callback [tid=%d ; sec=%ld ; usec=%ld]", tm.tid, tm.time.tv_sec, tm.time.tv_usec);
+        return false;
+    }
+
+    // Convert relative time to absolute time
+    if (gettimeofday(&t, NULL) == -1)
+    {
+        LOGGER_ERR("Failed call to gettimeofday for timer [tid=%d ; sec=%ld ; usec=%ld]", tm.tid, tm.time.tv_sec, tm.time.tv_usec);
+        return false;
+    }
+    tm.time.tv_sec += t.tv_sec;
+    tm.time.tv_usec += t.tv_usec;
+    if (tm.time.tv_usec >= USEC_MAX)
+    {
+        // Convert usec to sec
+        tm.time.tv_sec += tm.time.tv_usec / USEC_MAX;
+        tm.time.tv_usec = tm.time.tv_usec % USEC_MAX;
+    }
+
+    // Remove potentially existing timer and push new one
+    manager_tm::tm_list_.remove(tm);
+    manager_tm::tm_list_.push_front(tm);
+
+    // Keep the list ordered by expiration date
+    // XXX: could be optimized in the case of a new timer because
+    //      we known that the list is already sorted
+    manager_tm::tm_list_.sort();
+
+    return true;
+}
+
+//
+// @brief Delete a timer
+//
+void del(struct timer &tm)
+{
+    manager_tm::tm_list_.remove(tm);
+}
+
+//
+// @brief Check timers expiration and execute callbacks
+//
+void check_exp()
+{
+    struct timer timer;
+    struct timeval time;
+
+    if (gettimeofday(&time, NULL) == -1)
+    {
+        LOGGER_WARNING("Couldn't retrieve time of day, will try it next time [sec=%ld ; usec=%ld]", time.tv_sec, time.tv_usec);
+        return;
+    }
+
+    while (true)
+    {
+        if (manager_tm::tm_list_.empty() == true)
+        {
+            break;
+        }
+
+        timer = manager_tm::tm_list_.front();
+        if (timer.time < time)
+        {
+            // Timer has expired
+            timer.callback(timer.arg);
+            manager_tm::tm_list_.pop_front();
+        }
+        else
+        {
+            // Most recent timer not yet expired
+            break;
+        }
+    }
+}
+
+//
+// @brief Clear every timer
+//
+void clear()
+{
+    manager_tm::tm_list_.clear();
+}
+
+} // END namespace manager_tm
