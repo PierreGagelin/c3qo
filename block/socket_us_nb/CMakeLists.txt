@@ -1,19 +1,33 @@
 
 
 # Build server_us_nb as a static library
-set(SOURCES src/server_us_nb.cpp)
+set(SOURCES_SERVER src/server_us_nb.cpp)
 
 
-add_library(server_us_nb STATIC ${SOURCES})
+add_library(server_us_nb STATIC ${SOURCES_SERVER})
 
 
 target_include_directories(server_us_nb PUBLIC ${C3QO_INCLUDE_DIR})
-target_include_directories(server_us_nb PUBLIC ${UTILS_INCLUDE_DIR})
 target_include_directories(server_us_nb PUBLIC ${UTILS_INCLUDE_DIR})
 
 
 target_link_libraries(server_us_nb manager)
 target_link_libraries(server_us_nb socket)
+
+
+# Build client_us_nb as a static library
+set(SOURCES_CLIENT src/client_us_nb.cpp)
+
+
+add_library(client_us_nb STATIC ${SOURCES_CLIENT})
+
+
+target_include_directories(client_us_nb PUBLIC ${C3QO_INCLUDE_DIR})
+target_include_directories(client_us_nb PUBLIC ${UTILS_INCLUDE_DIR})
+
+
+target_link_libraries(client_us_nb manager)
+target_link_libraries(client_us_nb socket)
 
 
 # Build TU for socket_us_nb
