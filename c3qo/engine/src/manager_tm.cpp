@@ -71,14 +71,14 @@ bool add(struct timer &tm)
     // Verify user input
     if (tm.callback == NULL)
     {
-        LOGGER_WARNING("Cannot add timer without a callback [tid=%d ; sec=%ld ; usec=%ld]", tm.tid, tm.time.tv_sec, tm.time.tv_usec);
+        LOGGER_WARNING("Cannot add timer without a callback [tid=%d ; sec=%ld ; usec=%ld]", tm.tid, (long)tm.time.tv_sec, (long)tm.time.tv_usec);
         return false;
     }
 
     // Convert relative time to absolute time
     if (gettimeofday(&t, NULL) == -1)
     {
-        LOGGER_ERR("Failed call to gettimeofday for timer [tid=%d ; sec=%ld ; usec=%ld]", tm.tid, tm.time.tv_sec, tm.time.tv_usec);
+        LOGGER_ERR("Failed call to gettimeofday for timer [tid=%d ; sec=%ld ; usec=%ld]", tm.tid, (long)tm.time.tv_sec, (long)tm.time.tv_usec);
         return false;
     }
     tm.time.tv_sec += t.tv_sec;
@@ -120,7 +120,7 @@ void check_exp()
 
     if (gettimeofday(&time, NULL) == -1)
     {
-        LOGGER_WARNING("Couldn't retrieve time of day, will try it next time [sec=%ld ; usec=%ld]", time.tv_sec, time.tv_usec);
+        LOGGER_WARNING("Couldn't retrieve time of day, will try it next time [sec=%ld ; usec=%ld]", (long)time.tv_sec, (long)time.tv_usec);
         return;
     }
 

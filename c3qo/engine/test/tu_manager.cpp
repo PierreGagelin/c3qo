@@ -150,12 +150,12 @@ TEST_F(tu_manager, manager_tm_expiration)
     manager_tm::clear();
     tm_callback(def);
 
-    // Register a 20 ms timer
+    // Register a 200 ms timer
     t.tid = 0;
     t.callback = &tm_callback;
     t.arg = arg;
     t.time.tv_sec = 0;
-    t.time.tv_usec = 20000;
+    t.time.tv_usec = 200000;
     EXPECT_TRUE(manager_tm::add(t) == true);
 
     // Verify timer expiration
@@ -164,9 +164,9 @@ TEST_F(tu_manager, manager_tm_expiration)
     {
         struct timeval sleep;
 
-        // Sleep 5 ms
+        // Sleep 50 ms
         sleep.tv_sec = 0;
-        sleep.tv_usec = 5000;
+        sleep.tv_usec = 50000;
         EXPECT_TRUE(select(0, NULL, NULL, NULL, &sleep) == 0);
         i++;
 
@@ -201,24 +201,24 @@ TEST_F(tu_manager, manager_tm_order)
     tm_callback(def);
 
     // Register three timers:
-    //   - 20ms
-    //   - 30ms
-    //   - 10ms
+    //   - 200ms
+    //   - 300ms
+    //   - 100ms
     t.callback = &tm_callback;
     t.tid = 0;
     t.arg = arg[0];
     t.time.tv_sec = 0;
-    t.time.tv_usec = 20000;
+    t.time.tv_usec = 200000;
     EXPECT_TRUE(manager_tm::add(t) == true);
     t.tid = 1;
     t.arg = arg[1];
     t.time.tv_sec = 0;
-    t.time.tv_usec = 30000;
+    t.time.tv_usec = 300000;
     EXPECT_TRUE(manager_tm::add(t) == true);
     t.tid = 2;
     t.arg = arg[2];
     t.time.tv_sec = 0;
-    t.time.tv_usec = 10000;
+    t.time.tv_usec = 100000;
     EXPECT_TRUE(manager_tm::add(t) == true);
 
     // Verify the order of expiration
@@ -227,9 +227,9 @@ TEST_F(tu_manager, manager_tm_order)
         struct timeval sleep;
         char *exp;
 
-        // Sleep 5 ms
+        // Sleep 50 ms
         sleep.tv_sec = 0;
-        sleep.tv_usec = 5000;
+        sleep.tv_usec = 50000;
         EXPECT_TRUE(select(0, NULL, NULL, NULL, &sleep) == 0);
 
         // Check timer expiration
@@ -281,27 +281,27 @@ TEST_F(tu_manager, manager_tm_id)
     tm_callback(def);
 
     // Register two timers with the same ID:
-    //   - 20ms
-    //   - 30ms
+    //   - 200ms
+    //   - 300ms
     t.callback = &tm_callback;
     t.tid = 0;
     t.arg = arg;
     t.time.tv_sec = 0;
-    t.time.tv_usec = 20000;
+    t.time.tv_usec = 200000;
     EXPECT_TRUE(manager_tm::add(t) == true);
     t.time.tv_sec = 0;
-    t.time.tv_usec = 30000;
+    t.time.tv_usec = 300000;
     EXPECT_TRUE(manager_tm::add(t) == true);
     
-    // Verify only the 30ms is kept
+    // Verify only the 300ms is kept
     for (int i = 0; i < 6; i++)
     {
         struct timeval sleep;
         char *exp;
 
-        // Sleep 5 ms
+        // Sleep 50 ms
         sleep.tv_sec = 0;
-        sleep.tv_usec = 5000;
+        sleep.tv_usec = 50000;
         EXPECT_TRUE(select(0, NULL, NULL, NULL, &sleep) == 0);
 
         // Check timer expiration
