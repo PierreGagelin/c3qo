@@ -9,7 +9,7 @@ void init();
 void clean();
 
 // Add or remove a file descriptor
-bool add(int fd, void (*callback)(int fd), bool read);
+bool add(void *ctx, int fd, void (*callback)(void *ctx, int fd), bool read);
 void remove(int fd, bool read);
 
 // Lookup fd ready

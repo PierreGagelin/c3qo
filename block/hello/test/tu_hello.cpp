@@ -3,12 +3,13 @@
 //
 
 // C++ library headers
-#include <cstdlib>
+#include <cstdlib> // NULL
 
 //Project headers
 #include "c3qo/block.hpp"
 #include "utils/logger.hpp"
 
+// Gtest library
 #include "gtest/gtest.h"
 
 // TU should be linked with the block
@@ -33,6 +34,12 @@ void tu_hello::TearDown()
 
 TEST_F(tu_hello, hello)
 {
-    hello_entry.ctrl(BK_CMD_INIT, NULL);
-    hello_entry.ctrl(BK_CMD_START, NULL);
+    // Normal behavior
+    EXPECT_TRUE(hello_entry.init() == NULL);
+    hello_entry.start(NULL);
+    hello_entry.stop(NULL);
+
+    // Unexpected behavior
+    hello_entry.start((void *)42);
+    hello_entry.stop((void *)42);
 }

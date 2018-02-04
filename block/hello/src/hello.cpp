@@ -1,71 +1,67 @@
 
 
 // C++ library headers
-#include <cstdio>
 #include <cstdlib>
 
 // Project headers
 #include "c3qo/block.hpp"
 #include "utils/logger.hpp"
 
-static inline void hello_init()
+void *hello_init()
 {
-    LOGGER_INFO("Block hello is being initialized");
+    // Because... why not?
+    LOGGER_INFO("Initialize block hello, he has no context to identify him");
+
+    return NULL;
 }
 
-static inline void hello_start()
+void hello_start(void *ctx)
 {
-    LOGGER_INFO("Block hello is being started");
+    if (ctx != NULL)
+    {
+        LOGGER_ERR("Failed to start block hello, he should have a NULL context [ctx=%p]", ctx);
+        return;
+    }
+
+    LOGGER_INFO("Start block [ctx=%p]", ctx);
 
     LOGGER_DEBUG("Hello world");
 }
 
-static inline void hello_stop()
+void hello_stop(void *ctx)
 {
-    LOGGER_INFO("Block hello is being stopped");
+    if (ctx != NULL)
+    {
+        LOGGER_ERR("Failed to stop block hello, he should have a NULL context [ctx=%p]", ctx);
+        return;
+    }
+
+    LOGGER_INFO("Stop block [ctx=%p]", ctx);
 }
 
-static void hello_ctrl(enum bk_cmd cmd, void *arg)
+void hello_ctrl(void *ctx, void *notif)
 {
-    (void)arg;
+    if (ctx != NULL)
+    {
+        LOGGER_ERR("Failed to notify block hello, he should have a NULL context [ctx=%p]", ctx);
+        return;
+    }
 
-    LOGGER_DEBUG("Block command bk_cmd=%d called with argument arg=%p", cmd, arg);
-
-    switch (cmd)
-    {
-    case BK_CMD_INIT:
-    {
-        hello_init();
-        break;
-    }
-    case BK_CMD_START:
-    {
-        hello_start();
-        break;
-    }
-    case BK_CMD_STOP:
-    {
-        hello_stop();
-        break;
-    }
-    default:
-    {
-        LOGGER_ERR("Unknown bk_cmd=%d called", cmd);
-        break;
-    }
-    }
+    LOGGER_DEBUG("Block received notification [notif=%p ; ctx=%p]", notif, ctx);
 }
 
 //
 // @brief Exported structure of the block
 //
-struct bk_if hello_entry =
-    {
-        .ctx = NULL,
+struct bk_if hello_entry = {
+    .init = hello_init,
+    .conf = NULL,
+    .start = hello_start,
+    .stop = hello_stop,
 
-        .stats = NULL,
+    .get_stats = NULL,
 
-        .rx = NULL,
-        .tx = NULL,
-        .ctrl = hello_ctrl,
+    .rx = NULL,
+    .tx = NULL,
+    .ctrl = &hello_ctrl,
 };

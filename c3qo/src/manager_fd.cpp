@@ -19,7 +19,7 @@ extern "C" {
 }
 
 // Project headers
-#include "utils/logger.hpp" // LOGGER
+#include "utils/logger.hpp"
 
 namespace manager_fd
 {
@@ -27,7 +27,8 @@ namespace manager_fd
 // Routine to call on a fd
 struct fd_call
 {
-    void (*callback)(int fd);
+    void *ctx;
+    void (*callback)(void *ctx, int fd);
 };
 
 // Sets of file descriptors managed for read and write
@@ -80,7 +81,7 @@ void update_max()
 //
 // @return true on success, false on failure
 //
-bool add(int fd, void (*callback)(int fd), bool read)
+bool add(void *ctx, int fd, void (*callback)(void *ctx, int fd), bool read)
 {
     struct fd_call *list;
     static fd_set *set;
@@ -127,6 +128,7 @@ bool add(int fd, void (*callback)(int fd), bool read)
     }
 
     list[fd].callback = callback;
+    list[fd].ctx = ctx;
 
     return true;
 }
@@ -165,6 +167,7 @@ void remove(int fd, bool read)
 
     // Remove from list and set
     list[fd].callback = NULL;
+    list[fd].ctx = NULL;
     FD_CLR(fd, set);
 
     // If this value was the maximum fd value, we need to refresh it
@@ -225,13 +228,13 @@ int select()
             if ((manager_fd::list_r[fd].callback != NULL) && (FD_ISSET(fd, &manager_fd::set_r) != 0))
             {
                 // Data ready for reading
-                manager_fd::list_r[fd].callback(fd);
+                manager_fd::list_r[fd].callback(manager_fd::list_r[fd].ctx, fd);
                 j++;
             }
             if ((manager_fd::list_w[fd].callback != NULL) && (FD_ISSET(fd, &manager_fd::set_w) != 0))
             {
                 // Data ready for writing
-                manager_fd::list_w[fd].callback(fd);
+                manager_fd::list_w[fd].callback(manager_fd::list_r[fd].ctx, fd);
                 j++;
             }
 

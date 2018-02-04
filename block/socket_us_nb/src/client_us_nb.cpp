@@ -8,6 +8,7 @@
 
 // C++ library headers
 #include <cstdio>  // snprintf
+#include <cstdlib> // malloc
 #include <cstring> // memset
 
 // System library headers
@@ -31,31 +32,45 @@ extern "C" {
 //
 struct client_us_nb_ctx
 {
-    int fd;
+    int fd; // Socket file descriptor
+
+    size_t rx_pkt_count; // RX: Number of packets read
+    size_t rx_pkt_bytes; // RX: Total size read
+    size_t tx_pkt_count; // TX: Number of packets sent
+    size_t tx_pkt_bytes; // TX: Total size sent
 };
-struct client_us_nb_ctx ctx_c;
 
 //
 // @brief Remove a managed file descriptor and close it
 //
-static inline void client_us_nb_clean()
+static void client_us_nb_clean(struct client_us_nb_ctx *ctx)
 {
-    manager_fd::remove(ctx_c.fd, true);
-    manager_fd::remove(ctx_c.fd, false);
-    close(ctx_c.fd);
-    ctx_c.fd = -1;
+    manager_fd::remove(ctx->fd, true);
+    manager_fd::remove(ctx->fd, false);
+    close(ctx->fd);
+    ctx->fd = -1;
 }
 
 //
 // @brief Callback function when data is received
 //
-static void client_us_nb_callback(int fd)
+void client_us_nb_callback(void *vctx, int fd)
 {
-    if (fd != ctx_c.fd)
+    struct client_us_nb_ctx *ctx;
+
+    // Verify input
+    if (vctx == NULL)
     {
-        LOGGER_ERR("Unexpected file descriptor [fd_expected=%d ; fd_received=%d]", ctx_c.fd, fd);
+        LOGGER_ERR("Failed to handle file descriptor callback [fd=%d]", fd);
         return;
     }
+    ctx = (struct client_us_nb_ctx *)vctx;
+    if (fd != ctx->fd)
+    {
+        LOGGER_ERR("Failed to retrieve file descriptor from context [ctx=%p ; fd=%d]", ctx, fd);
+    }
+
+    LOGGER_DEBUG("Handle file descriptor callback [ctx=%p ; fd=%d]", ctx, fd);
 
     LOGGER_DEBUG("Received data on socket. Not implemented yet [fd=%d]", fd);
 }
@@ -63,35 +78,44 @@ static void client_us_nb_callback(int fd)
 //
 // @brief Check that the socket is connected
 //
-static void client_us_nb_connect_check(int fd)
+void client_us_nb_connect_check(void *vctx, int fd)
 {
-    socklen_t lon;
+    struct client_us_nb_ctx *ctx;
+    socklen_t len;
     int optval;
 
-    if (fd != ctx_c.fd)
+    // Verify input
+    if (vctx == NULL)
     {
-        LOGGER_ERR("Unexpected file descriptor [fd_expected=%d ; fd_received=%d]", ctx_c.fd, fd);
+        LOGGER_ERR("Failed to check connection status [fd=%d]", fd);
         return;
     }
+    ctx = (struct client_us_nb_ctx *)vctx;
+    if (fd != ctx->fd)
+    {
+        LOGGER_ERR("Failed to retrieve file descriptor from context [ctx=%p ; fd=%d]", ctx, fd);
+    }
+
+    LOGGER_DEBUG("Check connection status [ctx=%p ; fd=%d]", ctx, ctx->fd);
 
     // Verify connection status
-    lon = sizeof(optval);
-    if (getsockopt(ctx_c.fd, SOL_SOCKET, SO_ERROR, (void *)(&optval), &lon) != 0)
+    len = sizeof(optval);
+    if (getsockopt(ctx->fd, SOL_SOCKET, SO_ERROR, (void *)(&optval), &len) != 0)
     {
-        LOGGER_ERR("getsockopt failed on socket [fd=%d]", ctx_c.fd);
+        LOGGER_ERR("getsockopt failed on socket [fd=%d]", ctx->fd);
         return;
     }
 
     if (optval != 0)
     {
-        LOGGER_ERR("SO_ERROR still not clear on socket [fd=%d]", ctx_c.fd);
+        LOGGER_ERR("SO_ERROR still not clear on socket [fd=%d]", ctx->fd);
         return;
     }
 
-    LOGGER_DEBUG("Connection to server available on socket [fd=%d]", ctx_c.fd);
+    LOGGER_DEBUG("Client socket connected to server [ctx=%p ; fd=%d]", ctx, ctx->fd);
 
-    manager_fd::remove(ctx_c.fd, false);
-    manager_fd::add(ctx_c.fd, &client_us_nb_callback, true);
+    manager_fd::remove(ctx->fd, false);
+    manager_fd::add(ctx, ctx->fd, &client_us_nb_callback, true);
 }
 
 //
@@ -122,67 +146,89 @@ static int client_us_nb_connect(int fd)
 //
 // @brief Initialize the block
 //
-static void client_us_nb_init()
+void *client_us_nb_init()
 {
-    LOGGER_INFO("Initialize block client_us_nb");
+    struct client_us_nb_ctx *ctx;
 
-    // Initialize context
-    memset(&ctx_c, -1, sizeof(ctx_c));
-    ctx_c.fd = -1;
+    // Reserve memory for the context
+    ctx = (struct client_us_nb_ctx *)malloc(sizeof(*ctx));
+    if (ctx == NULL)
+    {
+        LOGGER_ERR("Failed to initialize block");
+        return ctx;
+    }
+
+    ctx->fd = -1;
+    ctx->rx_pkt_count = 0;
+    ctx->rx_pkt_bytes = 0;
+    ctx->tx_pkt_count = 0;
+    ctx->tx_pkt_bytes = 0;
+
+    LOGGER_INFO("Initialize block [ctx=%p]", ctx);
+
+    return ctx;
 }
 
 //
 // @brief Start the block
 //
-static void client_us_nb_start()
+void client_us_nb_start(void *vctx)
 {
+    struct client_us_nb_ctx *ctx;
     int ret;
 
-    LOGGER_INFO("Start block client_us_nb");
+    if (vctx == NULL)
+    {
+        LOGGER_ERR("Failed to start block");
+        return;
+    }
+    ctx = (struct client_us_nb_ctx *)vctx;
+
+    LOGGER_INFO("Start block [ctx=%p]", ctx);
 
     // Create the client socket
-    ctx_c.fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (ctx_c.fd == -1)
+    ctx->fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (ctx->fd == -1)
     {
-        LOGGER_ERR("Failed to open client socket [fd=%d]", ctx_c.fd);
+        LOGGER_ERR("Failed to open client socket [fd=%d]", ctx->fd);
         return;
     }
 
     // Set the socket to be non-blocking
-    c3qo_socket_set_nb(ctx_c.fd);
+    c3qo_socket_set_nb(ctx->fd);
 
     // Connect the socket to the server
-    ret = client_us_nb_connect(ctx_c.fd);
+    ret = client_us_nb_connect(ctx->fd);
     if (ret == -1)
     {
-        LOGGER_ERR("Failed to connect to server [fd=%d]", ctx_c.fd);
-        client_us_nb_clean();
+        LOGGER_ERR("Failed to connect to server [fd=%d]", ctx->fd);
+        client_us_nb_clean(ctx);
         return;
     }
     else if (ret == 1)
     {
-        LOGGER_DEBUG("Connection sent but not acknowledged, will check later [fd=%d]", ctx_c.fd);
-        manager_fd::add(ctx_c.fd, &client_us_nb_connect_check, false);
+        LOGGER_DEBUG("Connection sent but not acknowledged, will check later [fd=%d]", ctx->fd);
+        manager_fd::add(ctx, ctx->fd, &client_us_nb_connect_check, false);
         return;
     }
     else if (ret == 2)
     {
-        LOGGER_ERR("Failed to find someone listening, launch timer for reconnection [fd=%d]", ctx_c.fd);
+        LOGGER_ERR("Failed to find someone listening, launch timer for reconnection [fd=%d]", ctx->fd);
 
         return;
     }
     else
     {
         // Success: register the file descriptor with a callback for data reception
-        if (manager_fd::add(ctx_c.fd, &client_us_nb_callback, true) == false)
+        if (manager_fd::add(ctx, ctx->fd, &client_us_nb_callback, true) == false)
         {
-            LOGGER_ERR("Failed to register callback on client socket [fd=%d ; callback=%p]", ctx_c.fd, &client_us_nb_callback);
-            client_us_nb_clean();
+            LOGGER_ERR("Failed to register callback on client socket [fd=%d ; callback=%p]", ctx->fd, &client_us_nb_callback);
+            client_us_nb_clean(ctx);
             return;
         }
         else
         {
-            LOGGER_DEBUG("Registered callback on client socket [fd=%d ; callback=%p]", ctx_c.fd, &client_us_nb_callback);
+            LOGGER_DEBUG("Registered callback on client socket [fd=%d ; callback=%p]", ctx->fd, &client_us_nb_callback);
         }
     }
 }
@@ -190,55 +236,37 @@ static void client_us_nb_start()
 //
 // @brief Stop the block
 //
-static void client_us_nb_stop()
+void client_us_nb_stop(void *vctx)
 {
-    LOGGER_INFO("Stop block client_us_nb");
+    struct client_us_nb_ctx *ctx;
 
-    if (ctx_c.fd == -1)
+    if (vctx == NULL)
+    {
+        LOGGER_ERR("Failed to stop block");
+        return;
+    }
+    ctx = (struct client_us_nb_ctx *)vctx;
+
+    LOGGER_INFO("Stop block [ctx=%p]", ctx);
+
+    if (ctx->fd == -1)
     {
         return;
     }
 
-    client_us_nb_clean();
-}
-
-static void client_us_nb_ctrl(enum bk_cmd cmd, void *arg)
-{
-    (void)arg;
-
-    switch (cmd)
-    {
-    case BK_CMD_INIT:
-    {
-        client_us_nb_init();
-        break;
-    }
-    case BK_CMD_START:
-    {
-        client_us_nb_start();
-        break;
-    }
-    case BK_CMD_STOP:
-    {
-        client_us_nb_stop();
-        break;
-    }
-    default:
-    {
-        LOGGER_ERR("Unknown command called [bk_cmd=%d]", cmd);
-        break;
-    }
-    }
+    client_us_nb_clean(ctx);
 }
 
 // Declare the interface for this block
-struct bk_if client_us_nb_entry =
-    {
-        .ctx = NULL,
+struct bk_if client_us_nb_entry = {
+    .init = client_us_nb_init,
+    .conf = NULL,
+    .start = client_us_nb_start,
+    .stop = client_us_nb_stop,
 
-        .stats = NULL,
+    .get_stats = NULL,
 
-        .rx = NULL,
-        .tx = NULL,
-        .ctrl = client_us_nb_ctrl,
+    .rx = NULL,
+    .tx = NULL,
+    .ctrl = NULL,
 };

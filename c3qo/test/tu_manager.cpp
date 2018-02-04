@@ -20,12 +20,14 @@ extern "C" {
 #include "c3qo/manager_tm.hpp"
 #include "utils/logger.hpp"
 
+// Gtest library
 #include "gtest/gtest.h"
 
 bool fd_called;
-void fd_callback(int fd)
+void fd_callback(void *ctx, int fd)
 {
     (void)fd;
+    (void)ctx;
 
     fd_called = true;
 }
@@ -127,7 +129,7 @@ TEST_F(tu_manager, manager_fd)
 
     // Add and write to the file
     manager_fd::init();
-    EXPECT_TRUE(manager_fd::add(fd, &fd_callback, true) == true);
+    EXPECT_TRUE(manager_fd::add(NULL, fd, &fd_callback, true) == true);
     fprintf(file, "hello world!");
 
     // Verify something is ready to be read and callback is called

@@ -26,9 +26,10 @@ namespace manager_bk
 //
 struct bk_info
 {
-    struct bk_if bk;     // block interface
-    enum bk_type type;   // type of the block
-    enum bk_state state; // state of the block
+    struct bk_if bk;     // Block interface
+    void *ctx;           // Block context
+    enum bk_type type;   // Block type
+    enum bk_state state; // Block state
 };
 
 // Map of blocks
@@ -57,7 +58,6 @@ struct command cmd_;
 //
 void block_add(int id, enum bk_type type)
 {
-    std::pair<std::unordered_map<int, struct bk_info>::iterator, bool> ret;
     struct bk_info block;
 
     LOGGER_DEBUG("Add block [bk_id=%d ; bk_type=%d]", id, type);
@@ -125,7 +125,7 @@ void exec_cmd()
             break;
         }
 
-        it->second.bk.ctrl(manager_bk::cmd_.cmd, manager_bk::cmd_.arg);
+        it->second.bk.stop(it->second.ctx);
         break;
     }
     default:

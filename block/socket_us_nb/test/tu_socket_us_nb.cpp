@@ -2,11 +2,13 @@
 // @brief Test unit for the unix-stream non-blocking sockets
 //
 
-#include "gtest/gtest.h"
-
+// Project libraries
 #include "c3qo/block.hpp"
 #include "c3qo/manager_fd.hpp"
 #include "utils/logger.hpp"
+
+// Gtest library
+#include "gtest/gtest.h"
 
 // TU should be linked with the block
 extern struct bk_if client_us_nb_entry;
@@ -21,15 +23,13 @@ class tu_socket_us_nb : public testing::Test
 void tu_socket_us_nb::SetUp()
 {
     LOGGER_OPEN();
-    logger_set_level(LOGGER_LEVEL_MAX);
-    LOGGER_DEBUG("//** BEGIN TEST CASE ****/");
+    logger_set_level(LOGGER_LEVEL_DEBUG);
 
     manager_fd::init();
 }
 
 void tu_socket_us_nb::TearDown()
 {
-    LOGGER_DEBUG("//** END TEST CASE ****/");
     LOGGER_CLOSE();
     logger_set_level(LOGGER_LEVEL_NONE);
 }
@@ -43,13 +43,15 @@ void tu_socket_us_nb::TearDown()
 //
 TEST_F(tu_socket_us_nb, connection)
 {
-    int fd_count; // count of file descriptor handled by the server
+    struct server_us_nb_ctx *ctx_s; // server context
+    struct client_us_nb_ctx *ctx_c; // client context
+    int fd_count;                   // count of file descriptor handled by the server
 
-    server_us_nb_entry.ctrl(BK_CMD_INIT, NULL);
-    client_us_nb_entry.ctrl(BK_CMD_INIT, NULL);
+    ctx_s = (struct server_us_nb_ctx *)server_us_nb_entry.init();
+    ctx_c = (struct client_us_nb_ctx *)client_us_nb_entry.init();
 
-    server_us_nb_entry.ctrl(BK_CMD_START, NULL);
-    client_us_nb_entry.ctrl(BK_CMD_START, NULL);
+    server_us_nb_entry.start(ctx_s);
+    client_us_nb_entry.start(ctx_c);
 
     do
     {
@@ -57,10 +59,10 @@ TEST_F(tu_socket_us_nb, connection)
 
         manager_fd::select();
 
-        server_us_nb_entry.stats(buf, 16);
+        server_us_nb_entry.get_stats(ctx_s, buf, 16);
         fd_count = atoi(buf);
     } while (fd_count < 2);
 
-    server_us_nb_entry.ctrl(BK_CMD_STOP, NULL);
-    client_us_nb_entry.ctrl(BK_CMD_STOP, NULL);
+    server_us_nb_entry.stop(ctx_s);
+    client_us_nb_entry.stop(ctx_c);
 }
