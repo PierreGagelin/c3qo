@@ -78,8 +78,8 @@ TEST_F(tu_manager, manager_bk)
 
     // Add 2 blocks
     //   - format : "<bk_cmd> <bk_id> <bk_type>\n"
-    file << BK_CMD_ADD << " 0 " << BK_TYPE_HELLO << std::endl;
-    file << BK_CMD_ADD << " 1 " << BK_TYPE_GOODBYE << std::endl;
+    file << BK_CMD_ADD << " 0 " << BK_TYPE_CLIENT_US_NB << std::endl;
+    file << BK_CMD_ADD << " 1 " << BK_TYPE_SERVER_US_NB << std::endl;
 
     // Add tons of block
     for (int i = 2; i < 5000; i++)
@@ -94,8 +94,8 @@ TEST_F(tu_manager, manager_bk)
 
     // Prepare expected configuration dump for the blocks
     //   - format : "<bk_id> <bk_type> <bk_state>;"
-    ss << "0 " << BK_TYPE_HELLO << " " << BK_STATE_STOP << ";";
-    ss << "1 " << BK_TYPE_GOODBYE << " " << BK_STATE_STOP << ";";
+    ss << "0 " << BK_TYPE_CLIENT_US_NB << " " << BK_STATE_STOP << ";";
+    ss << "1 " << BK_TYPE_SERVER_US_NB << " " << BK_STATE_STOP << ";";
     for (int i = 2; i < 5000; i++)
     {
         ss << i << " " << BK_TYPE_HELLO << " " << BK_STATE_STOP << ";";

@@ -13,7 +13,6 @@
 
 // Each block shall be linked
 extern struct bk_if hello_entry;
-extern struct bk_if goodbye_entry;
 extern struct bk_if client_us_nb_entry;
 extern struct bk_if server_us_nb_entry;
 
@@ -68,11 +67,6 @@ void block_add(int id, enum bk_type type)
     case BK_TYPE_HELLO:
     {
         block.bk = hello_entry;
-        break;
-    }
-    case BK_TYPE_GOODBYE:
-    {
-        block.bk = goodbye_entry;
         break;
     }
     case BK_TYPE_CLIENT_US_NB:

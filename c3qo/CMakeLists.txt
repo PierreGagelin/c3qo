@@ -14,7 +14,6 @@ target_include_directories(manager PUBLIC ${UTILS_INCLUDE_DIR})
 
 
 target_link_libraries(manager hello)
-target_link_libraries(manager goodbye)
 target_link_libraries(manager client_us_nb)
 target_link_libraries(manager server_us_nb)
 target_link_libraries(manager logger)

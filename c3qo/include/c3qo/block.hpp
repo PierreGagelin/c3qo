@@ -12,10 +12,9 @@ enum bk_type
 {
     BK_TYPE_NONE = 0,         // Default value
     BK_TYPE_HELLO = 1,        // Block that says hello
-    BK_TYPE_GOODBYE = 2,      // Block that says goodbye
-    BK_TYPE_CLIENT_US_NB = 3, // Unix stream non-block client
-    BK_TYPE_SERVER_US_NB = 4, // Unix stream non-block server
-    BK_TYPE_MAX = 4,          // Maximum value
+    BK_TYPE_CLIENT_US_NB = 2, // Unix stream non-block client
+    BK_TYPE_SERVER_US_NB = 3, // Unix stream non-block server
+    BK_TYPE_MAX = 3,          // Maximum value
 };
 
 //
