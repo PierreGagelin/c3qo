@@ -14,6 +14,11 @@ set(CMAKE_CXX_FLAGS_DEBUG   "-g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 set(CMAKE_CXX_FLAGS         "-std=c++11 -Wall -Wextra -Werror")
 
+# Add a flag to disable logs on Release
+IF (${CMAKE_BUILD_TYPE} STREQUAL Release)
+    add_definitions(-DLOGGER_DISABLE)
+ENDIF()
+
 # Generate tests executables
 enable_testing()
 

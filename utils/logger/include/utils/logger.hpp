@@ -40,7 +40,8 @@ void logger_set_level(enum logger_level l);
 //   - LOG_DEBUG   : debug-level message
 //
 
-#if 1
+#ifndef LOGGER_DISABLE
+
 // Format a log entry with function name, line and level
 #define LOGGER_EMERG(msg, ...)                                                           \
     if (logger_level >= LOGGER_LEVEL_EMERG)                                              \
@@ -82,6 +83,7 @@ void logger_set_level(enum logger_level l);
     {                                                                                    \
         syslog(LOG_DEBUG, "[DEBUG] " msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
     }
+
 #else
 
 //
