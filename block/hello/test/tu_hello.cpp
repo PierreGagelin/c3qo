@@ -34,12 +34,49 @@ void tu_hello::TearDown()
 
 TEST_F(tu_hello, hello)
 {
-    // Normal behavior
-    EXPECT_TRUE(hello_entry.init() == NULL);
-    hello_entry.start(NULL);
-    hello_entry.stop(NULL);
+    void *ctx;
+    char conf[] = "hello from TU";
 
-    // Unexpected behavior
-    hello_entry.start((void *)42);
-    hello_entry.stop((void *)42);
+    // Should return a context
+    ctx = hello_entry.init();
+    EXPECT_TRUE(ctx != NULL);
+
+    // Configure block name
+    hello_entry.conf(ctx, conf);
+    hello_entry.conf(NULL, NULL);
+
+    // Start with good and bad value
+    hello_entry.start(ctx);
+    hello_entry.start(NULL);
+
+    // Block not binded (or called without context) should return 0 to drop
+    for (int i = 0; i < 8; i++)
+    {
+        EXPECT_TRUE(hello_entry.rx(ctx, NULL) == 0);
+        EXPECT_TRUE(hello_entry.rx(NULL, NULL) == 0);
+
+        EXPECT_TRUE(hello_entry.tx(ctx, NULL) == 0);
+        EXPECT_TRUE(hello_entry.tx(NULL, NULL) == 0);
+    }
+
+    // Bind block (0 -> 0, 1 -> 1... 7 -> 7)
+    for (int i = 0; i < 8; i++)
+    {
+        hello_entry.bind(NULL, 0, 0); // Should do nothing
+        hello_entry.bind(ctx, i, i);  // Should do a bind
+    }
+
+    // Verify binding (block hello only increment port output)
+    for (int i = 0; i < 8; i++)
+    {
+        EXPECT_TRUE(hello_entry.rx(ctx, NULL) == i);
+    }
+    for (int i = 0; i < 8; i++)
+    {
+        EXPECT_TRUE(hello_entry.tx(ctx, NULL) == i);
+    }
+
+    // Stop with good and bad value
+    hello_entry.stop(ctx);
+    hello_entry.stop(NULL);
 }

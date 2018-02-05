@@ -390,6 +390,7 @@ size_t server_us_nb_get_stats(void *vctx, char *buf, size_t len)
 struct bk_if server_us_nb_entry = {
     .init = server_us_nb_init,
     .conf = NULL,
+    .bind = NULL,
     .start = server_us_nb_start,
     .stop = server_us_nb_stop,
 

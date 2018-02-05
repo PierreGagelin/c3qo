@@ -64,17 +64,18 @@ struct bk_if
 {
     // State commands
     void *(*init)();
-    void (*conf)(void *ctx, char *conf);
-    void (*start)(void *ctx);
-    void (*stop)(void *ctx);
+    void (*conf)(void *vctx, char *conf);
+    void (*bind)(void *vctx, int port, int bk_id);
+    void (*start)(void *vctx);
+    void (*stop)(void *vctx);
 
     // Get Statistics
-    size_t (*get_stats)(void *ctx, char *buf, size_t len);
+    size_t (*get_stats)(void *vctx, char *buf, size_t len);
 
     // Data and control
-    int (*rx)(void *ctx, void *data);
-    int (*tx)(void *ctx, void *data);
-    void (*ctrl)(void *ctx, void *notif);
+    int (*rx)(void *vctx, void *vdata);
+    int (*tx)(void *vctx, void *vdata);
+    void (*ctrl)(void *vctx, void *vnotif);
 };
 
 #endif // C3QO_BLOCK_HPP

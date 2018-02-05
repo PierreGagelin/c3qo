@@ -261,6 +261,7 @@ void client_us_nb_stop(void *vctx)
 struct bk_if client_us_nb_entry = {
     .init = client_us_nb_init,
     .conf = NULL,
+    .bind = NULL,
     .start = client_us_nb_start,
     .stop = client_us_nb_stop,
 
