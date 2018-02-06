@@ -38,7 +38,7 @@ TEST_F(tu_hello, hello)
     char conf[] = "hello from TU";
 
     // Should return a context
-    ctx = hello_entry.init();
+    ctx = hello_entry.init(1);
     EXPECT_TRUE(ctx != NULL);
 
     // Configure block name

@@ -32,8 +32,13 @@ extern "C" {
 //
 struct client_us_nb_ctx
 {
+    // Configuration
+    int bk_id; // Block ID
+
+    // Context
     int fd; // Socket file descriptor
 
+    // Statistics
     size_t rx_pkt_count; // RX: Number of packets read
     size_t rx_pkt_bytes; // RX: Total size read
     size_t tx_pkt_count; // TX: Number of packets sent
@@ -146,7 +151,7 @@ static int client_us_nb_connect(int fd)
 //
 // @brief Initialize the block
 //
-void *client_us_nb_init()
+void *client_us_nb_init(int bk_id)
 {
     struct client_us_nb_ctx *ctx;
 
@@ -158,6 +163,7 @@ void *client_us_nb_init()
         return ctx;
     }
 
+    ctx->bk_id = bk_id;
     ctx->fd = -1;
     ctx->rx_pkt_count = 0;
     ctx->rx_pkt_bytes = 0;

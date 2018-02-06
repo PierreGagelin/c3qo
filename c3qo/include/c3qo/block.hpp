@@ -63,7 +63,7 @@ enum bk_state
 struct bk_if
 {
     // State commands
-    void *(*init)();
+    void *(*init)(int bk_id);
     void (*conf)(void *vctx, char *conf);
     void (*bind)(void *vctx, int port, int bk_id);
     void (*start)(void *vctx);

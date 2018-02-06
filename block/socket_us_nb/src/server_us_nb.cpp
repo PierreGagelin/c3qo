@@ -34,10 +34,15 @@ extern "C" {
 //
 struct server_us_nb_ctx
 {
+    // Configuration
+    int bk_id;
+
+    // Context
     // TODO: replace this shit with a real container
     int fd[SOCKET_FD_MAX]; // File descriptors of the socket
     int fd_count;          // Number of fd in use
 
+    // Statistics
     size_t rx_pkt_count; // RX: Number of packets read
     size_t rx_pkt_bytes; // RX: Total size read
     size_t tx_pkt_count; // TX: Number of packets sent
@@ -219,7 +224,7 @@ void server_us_nb_handler(void *vctx, int fd)
 //
 // @brief Initialize the block
 //
-void *server_us_nb_init()
+void *server_us_nb_init(int bk_id)
 {
     struct server_us_nb_ctx *ctx;
 
@@ -231,6 +236,7 @@ void *server_us_nb_init()
     }
 
     memset(ctx->fd, -1, sizeof(ctx->fd));
+    ctx->bk_id = bk_id;
     ctx->fd_count = 0;
     ctx->rx_pkt_count = 0;
     ctx->rx_pkt_bytes = 0;

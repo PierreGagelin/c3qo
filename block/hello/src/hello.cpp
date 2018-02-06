@@ -28,7 +28,8 @@ struct hello_bind
 //
 struct hello_conf
 {
-    char name[64]; // Name of the block
+    int bk_id;     // Block ID
+    char name[64]; // Block name
 };
 
 //
@@ -47,7 +48,7 @@ struct hello_ctx
     int count; // Number of packets processed
 };
 
-void *hello_init()
+void *hello_init(int bk_id)
 {
     struct hello_ctx *ctx;
 
@@ -60,13 +61,15 @@ void *hello_init()
 
     // Default values :
     //   - bind ID to zero (dropped by engine)
+    //   - register the block ID
     //   - no name
     //   - no packet processed
     memset(ctx->bind.id, 0, sizeof(ctx->bind.id));
+    ctx->conf.bk_id = bk_id;
     ctx->conf.name[0] = '\0';
     ctx->count = 0;
 
-    LOGGER_INFO("Initialize block [ctx=%p]", ctx);
+    LOGGER_INFO("Initialize block [bk_id=%d]", ctx->conf.bk_id);
 
     return ctx;
 }
@@ -86,9 +89,11 @@ void hello_conf(void *vctx, char *conf)
     len = strnlen(conf, sizeof(ctx->conf.name));
     if (len == sizeof(ctx->conf.name))
     {
-        LOGGER_ERR("Failed to configure block: name too long [ctx=%p ; name=%s]", ctx, conf);
+        LOGGER_ERR("Failed to configure block: name too long [bk_id=%d ; name=%s]", ctx->conf.bk_id, conf);
         return;
     }
+
+    LOGGER_INFO("Configure block [bk_id=%d ; name=%s]", ctx->conf.bk_id, conf);
 
     // Write name given by configuration
     memcpy(ctx->conf.name, conf, len + 1);
@@ -109,7 +114,7 @@ void hello_bind(void *vctx, int port, int bk_id)
     // Bind a port to a block
     ctx->bind.id[port] = bk_id;
 
-    LOGGER_INFO("Bind block [port=%d ; bk_id=%d ; ctx=%p]", port, bk_id, ctx);
+    LOGGER_INFO("Bind block [bk_id=%d ; port=%d ; bk_id_dest=%d]", ctx->conf.bk_id, port, bk_id);
 }
 
 void hello_start(void *vctx)
@@ -123,7 +128,7 @@ void hello_start(void *vctx)
     }
     ctx = (struct hello_ctx *)vctx;
 
-    LOGGER_INFO("Start block [ctx=%p]", ctx);
+    LOGGER_INFO("Start block [bk_id=%d]", ctx->conf.bk_id);
 
     LOGGER_DEBUG("Hello world");
 }
@@ -141,7 +146,7 @@ void hello_stop(void *vctx)
 
     free(ctx);
 
-    LOGGER_INFO("Stop block [ctx=%p]", ctx);
+    LOGGER_INFO("Stop block [bk_id=%d]", ctx->conf.bk_id);
 }
 
 int hello_rx(void *vctx, void *vdata)
@@ -151,12 +156,12 @@ int hello_rx(void *vctx, void *vdata)
 
     if (vctx == NULL)
     {
-        LOGGER_ERR("Failed to stop block");
+        LOGGER_ERR("Failed to process RX data");
         return 0;
     }
     ctx = (struct hello_ctx *)vctx;
 
-    LOGGER_DEBUG("Block received RX data [data=%p ; ctx=%p]", vdata, ctx);
+    LOGGER_DEBUG("Process RX data [bk_id=%d ; data=%p]", ctx->conf.bk_id, vdata);
 
     // Get bind index to return
     ret = ctx->bind.id[ctx->count % 8];
@@ -174,12 +179,12 @@ int hello_tx(void *vctx, void *vdata)
 
     if (vctx == NULL)
     {
-        LOGGER_ERR("Failed to stop block");
+        LOGGER_ERR("Failed to process TX data");
         return 0;
     }
     ctx = (struct hello_ctx *)vctx;
 
-    LOGGER_DEBUG("Block received TX data [data=%p ; ctx=%p]", vdata, ctx);
+    LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", ctx->conf.bk_id, vdata);
 
     // Get bind index to return
     ret = ctx->bind.id[ctx->count % 8];
@@ -190,15 +195,18 @@ int hello_tx(void *vctx, void *vdata)
     return ret;
 }
 
-void hello_ctrl(void *ctx, void *vnotif)
+void hello_ctrl(void *vctx, void *vnotif)
 {
-    if (ctx != NULL)
+    struct hello_ctx *ctx;
+
+    if (vctx == NULL)
     {
-        LOGGER_ERR("Failed to notify block hello, he should have a NULL context [ctx=%p]", ctx);
+        LOGGER_ERR("Failed to notify block");
         return;
     }
+    ctx = (struct hello_ctx *)vctx;
 
-    LOGGER_DEBUG("Block received notification [notif=%p ; ctx=%p]", vnotif, ctx);
+    LOGGER_DEBUG("Notify block [bk_id=%d ; notif=%p]", ctx->conf.bk_id, vnotif);
 }
 
 //

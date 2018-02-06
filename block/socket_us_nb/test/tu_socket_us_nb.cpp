@@ -47,8 +47,8 @@ TEST_F(tu_socket_us_nb, connection)
     struct client_us_nb_ctx *ctx_c; // client context
     int fd_count;                   // count of file descriptor handled by the server
 
-    ctx_s = (struct server_us_nb_ctx *)server_us_nb_entry.init();
-    ctx_c = (struct client_us_nb_ctx *)client_us_nb_entry.init();
+    ctx_s = (struct server_us_nb_ctx *)server_us_nb_entry.init(1);
+    ctx_c = (struct client_us_nb_ctx *)client_us_nb_entry.init(2);
 
     server_us_nb_entry.start(ctx_s);
     client_us_nb_entry.start(ctx_c);
