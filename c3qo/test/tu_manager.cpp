@@ -51,7 +51,7 @@ class tu_manager : public testing::Test
 void tu_manager::SetUp()
 {
     LOGGER_OPEN();
-    logger_set_level(LOGGER_LEVEL_WARNING);
+    logger_set_level(LOGGER_LEVEL_DEBUG);
 
     fd_called = false;
     strncpy(zozo_l_asticot, "hello", sizeof("hello"));
@@ -66,7 +66,7 @@ void tu_manager::TearDown()
 //
 // @brief Test the block manager
 //
-TEST_F(tu_manager, manager_bk)
+TEST_F(tu_manager, manager_bk_add)
 {
     const char *filename = "/tmp/tu_manager_config.txt";
     std::fstream file;
@@ -74,6 +74,9 @@ TEST_F(tu_manager, manager_bk)
     std::string buf_exp;
     std::stringstream ss;
     size_t len;
+
+    // This test generates a lot of output
+    logger_set_level(LOGGER_LEVEL_WARNING);
 
     file.open(filename, std::ios::out | std::ios::trunc);
     ASSERT_EQ(file.is_open(), true);
@@ -102,6 +105,61 @@ TEST_F(tu_manager, manager_bk)
     {
         ss << i << " " << BK_TYPE_HELLO << " " << BK_STATE_STOP << ";";
     }
+    buf_exp = ss.str();
+
+    // Verify the configuration dump
+    len = manager_bk::conf_get(buf, sizeof(buf));
+    EXPECT_EQ(len, buf_exp.length());
+
+    // Clean blocks
+    manager_bk::block_clean();
+}
+
+//
+// @brief Test the bindings of blocks
+//
+TEST_F(tu_manager, manager_bk_bind)
+{
+    const char *filename = "/tmp/tu_manager_config_bind.txt";
+    std::fstream file;
+    char buf[65536];
+    std::string buf_exp;
+    std::stringstream ss;
+    size_t len;
+
+    file.open(filename, std::ios::out | std::ios::trunc);
+    ASSERT_EQ(file.is_open(), true);
+
+    // Add, initialize, configure and start 2 blocks hello
+    // Spaces should not matter, but 3 values are mandatory
+    file << BK_CMD_ADD << "   1          " << BK_TYPE_HELLO << std::endl;
+    file << BK_CMD_ADD << "   2          " << BK_TYPE_HELLO << std::endl;
+    file << BK_CMD_INIT << "  1  no_arg  " << std::endl;
+    file << BK_CMD_INIT << "  2  no_arg  " << std::endl;
+    file << BK_CMD_CONF << "  1  hello_1 " << std::endl;
+    file << BK_CMD_CONF << "  2  hello_2 " << std::endl;
+    file << BK_CMD_START << " 1  no_arg  " << std::endl;
+    file << BK_CMD_START << " 2  no_arg  " << std::endl;
+
+    // Bindings for block 1:
+    //   - port=0 ; bk_id=2
+    //   - port=2 ; bk_id=2
+    //   - port=4 ; bk_id=2
+    //   - port=6 ; bk_id=2
+    file << BK_CMD_BIND << " 1  0:2 " << std::endl;
+    file << BK_CMD_BIND << " 1  2:2 " << std::endl;
+    file << BK_CMD_BIND << " 1  4:2 " << std::endl;
+    file << BK_CMD_BIND << " 1  6:2 " << std::endl;
+
+    file.close();
+
+    // Parsing configuration
+    EXPECT_EQ(manager_bk::conf_parse(filename), true);
+
+    // Prepare expected configuration dump for the blocks
+    //   - format : "<bk_id> <bk_type> <bk_state>;"
+    ss << "1 " << BK_TYPE_HELLO << " " << BK_STATE_STOP << ";";
+    ss << "0 " << BK_TYPE_HELLO << " " << BK_STATE_STOP << ";";
     buf_exp = ss.str();
 
     // Verify the configuration dump

@@ -98,9 +98,10 @@ void block_add(int id, enum bk_type type)
 //
 void exec_cmd()
 {
-    switch (manager_bk::cmd_.cmd)
-    {
-    case BK_CMD_ADD:
+    std::unordered_map<int, struct bk_info>::iterator it;
+
+    // Add a new block, the only command that does not require to find the block
+    if (manager_bk::cmd_.cmd == BK_CMD_ADD)
     {
         unsigned long bk_type;
 
@@ -108,23 +109,53 @@ void exec_cmd()
 
         block_add(manager_bk::cmd_.id, (enum bk_type)bk_type);
 
+        return;
+    }
+
+    // Find the block concerned by the command
+    it = manager_bk::bk_map_.find(manager_bk::cmd_.id);
+    if (it == manager_bk::bk_map_.end())
+    {
+        LOGGER_WARNING("Cannot stop unknown block [bk_id=%d ; bk_cmd=%d]", manager_bk::cmd_.id, manager_bk::cmd_.cmd);
+        return;
+    }
+
+    switch (manager_bk::cmd_.cmd)
+    {
+    case BK_CMD_INIT:
+    {
+        it->second.ctx = it->second.bk.init(it->first);
         break;
     }
-    case BK_CMD_INIT:
     case BK_CMD_CONF:
-    case BK_CMD_BIND:
-    case BK_CMD_START:
-    case BK_CMD_STOP:
     {
-        std::unordered_map<int, struct bk_info>::const_iterator it;
+        it->second.bk.conf(it->second.ctx, manager_bk::cmd_.arg);
+        break;
+    }
+    case BK_CMD_BIND:
+    {
+        int port;
+        int bk_id;
+        int nb_arg;
 
-        it = manager_bk::bk_map_.find(manager_bk::cmd_.id);
-        if (it == manager_bk::bk_map_.end())
+        // Retrieve bindings parameters from command argument
+        nb_arg = sscanf(manager_bk::cmd_.arg, "%d:%d", &port, &bk_id);
+        if (nb_arg != 2)
         {
-            LOGGER_WARNING("Cannot stop unknown block [bk_id=%d ; bk_cmd=%d]", manager_bk::cmd_.id, manager_bk::cmd_.cmd);
+            LOGGER_WARNING("Cannot find bindings parameters [bk_id=%d ; bk_cmd=%d]", it->first, manager_bk::cmd_.cmd)
             break;
         }
 
+        it->second.bk.bind(it->second.ctx, port, bk_id);
+        break;
+    }
+    case BK_CMD_START:
+    {
+        it->second.bk.start(it->second.ctx);
+        break;
+    }
+    case BK_CMD_STOP:
+    {
         it->second.bk.stop(it->second.ctx);
         break;
     }
@@ -132,6 +163,7 @@ void exec_cmd()
     {
         // Ignore this entry
         LOGGER_WARNING("Unknown block command [bk_cmd=%d]", manager_bk::cmd_.cmd);
+        break;
     }
     }
 }
