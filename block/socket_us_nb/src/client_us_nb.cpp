@@ -264,7 +264,7 @@ void client_us_nb_stop(void *vctx)
 }
 
 // Declare the interface for this block
-struct bk_if client_us_nb_entry = {
+struct bk_if client_us_nb_if = {
     .init = client_us_nb_init,
     .conf = NULL,
     .bind = NULL,

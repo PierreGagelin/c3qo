@@ -393,7 +393,7 @@ size_t server_us_nb_get_stats(void *vctx, char *buf, size_t len)
 }
 
 // Declare the interface for this block
-struct bk_if server_us_nb_entry = {
+struct bk_if server_us_nb_if = {
     .init = server_us_nb_init,
     .conf = NULL,
     .bind = NULL,

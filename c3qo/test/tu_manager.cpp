@@ -83,13 +83,13 @@ TEST_F(tu_manager, manager_bk_add)
 
     // Add 2 blocks
     //   - format : "<bk_cmd> <bk_id> <bk_type>\n"
-    file << BK_CMD_ADD << " 0 " << BK_TYPE_CLIENT_US_NB << std::endl;
-    file << BK_CMD_ADD << " 1 " << BK_TYPE_SERVER_US_NB << std::endl;
+    file << CMD_ADD << " 0 " << TYPE_CLIENT_US_NB << std::endl;
+    file << CMD_ADD << " 1 " << TYPE_SERVER_US_NB << std::endl;
 
     // Add tons of block
     for (int i = 2; i < 5000; i++)
     {
-        file << BK_CMD_ADD << " " << i << " " << BK_TYPE_HELLO << std::endl;
+        file << CMD_ADD << " " << i << " " << TYPE_HELLO << std::endl;
     }
 
     file.close();
@@ -99,11 +99,11 @@ TEST_F(tu_manager, manager_bk_add)
 
     // Prepare expected configuration dump for the blocks
     //   - format : "<bk_id> <bk_type> <bk_state>;"
-    ss << "0 " << BK_TYPE_CLIENT_US_NB << " " << BK_STATE_STOP << ";";
-    ss << "1 " << BK_TYPE_SERVER_US_NB << " " << BK_STATE_STOP << ";";
+    ss << "0 " << TYPE_CLIENT_US_NB << " " << STATE_STOP << ";";
+    ss << "1 " << TYPE_SERVER_US_NB << " " << STATE_STOP << ";";
     for (int i = 2; i < 5000; i++)
     {
-        ss << i << " " << BK_TYPE_HELLO << " " << BK_STATE_STOP << ";";
+        ss << i << " " << TYPE_HELLO << " " << STATE_STOP << ";";
     }
     buf_exp = ss.str();
 
@@ -132,24 +132,24 @@ TEST_F(tu_manager, manager_bk_bind)
 
     // Add, initialize, configure and start 2 blocks hello
     // Spaces should not matter, but 3 values are mandatory
-    file << BK_CMD_ADD << "   1          " << BK_TYPE_HELLO << std::endl;
-    file << BK_CMD_ADD << "   2          " << BK_TYPE_HELLO << std::endl;
-    file << BK_CMD_INIT << "  1  no_arg  " << std::endl;
-    file << BK_CMD_INIT << "  2  no_arg  " << std::endl;
-    file << BK_CMD_CONF << "  1  hello_1 " << std::endl;
-    file << BK_CMD_CONF << "  2  hello_2 " << std::endl;
-    file << BK_CMD_START << " 1  no_arg  " << std::endl;
-    file << BK_CMD_START << " 2  no_arg  " << std::endl;
+    file << CMD_ADD << "   1          " << TYPE_HELLO << std::endl;
+    file << CMD_ADD << "   2          " << TYPE_HELLO << std::endl;
+    file << CMD_INIT << "  1  no_arg  " << std::endl;
+    file << CMD_INIT << "  2  no_arg  " << std::endl;
+    file << CMD_CONF << "  1  hello_1 " << std::endl;
+    file << CMD_CONF << "  2  hello_2 " << std::endl;
+    file << CMD_START << " 1  no_arg  " << std::endl;
+    file << CMD_START << " 2  no_arg  " << std::endl;
 
     // Bindings for block 1:
     //   - port=0 ; bk_id=2
     //   - port=2 ; bk_id=2
     //   - port=4 ; bk_id=2
     //   - port=6 ; bk_id=2
-    file << BK_CMD_BIND << " 1  0:2 " << std::endl;
-    file << BK_CMD_BIND << " 1  2:2 " << std::endl;
-    file << BK_CMD_BIND << " 1  4:2 " << std::endl;
-    file << BK_CMD_BIND << " 1  6:2 " << std::endl;
+    file << CMD_BIND << " 1  0:2 " << std::endl;
+    file << CMD_BIND << " 1  2:2 " << std::endl;
+    file << CMD_BIND << " 1  4:2 " << std::endl;
+    file << CMD_BIND << " 1  6:2 " << std::endl;
 
     file.close();
 
@@ -158,8 +158,8 @@ TEST_F(tu_manager, manager_bk_bind)
 
     // Prepare expected configuration dump for the blocks
     //   - format : "<bk_id> <bk_type> <bk_state>;"
-    ss << "1 " << BK_TYPE_HELLO << " " << BK_STATE_STOP << ";";
-    ss << "0 " << BK_TYPE_HELLO << " " << BK_STATE_STOP << ";";
+    ss << "1 " << TYPE_HELLO << " " << STATE_STOP << ";";
+    ss << "0 " << TYPE_HELLO << " " << STATE_STOP << ";";
     buf_exp = ss.str();
 
     // Verify the configuration dump

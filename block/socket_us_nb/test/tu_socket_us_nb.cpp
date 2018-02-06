@@ -11,8 +11,8 @@
 #include "gtest/gtest.h"
 
 // TU should be linked with the block
-extern struct bk_if client_us_nb_entry;
-extern struct bk_if server_us_nb_entry;
+extern struct bk_if client_us_nb_if;
+extern struct bk_if server_us_nb_if;
 
 class tu_socket_us_nb : public testing::Test
 {
@@ -47,11 +47,11 @@ TEST_F(tu_socket_us_nb, connection)
     struct client_us_nb_ctx *ctx_c; // client context
     int fd_count;                   // count of file descriptor handled by the server
 
-    ctx_s = (struct server_us_nb_ctx *)server_us_nb_entry.init(1);
-    ctx_c = (struct client_us_nb_ctx *)client_us_nb_entry.init(2);
+    ctx_s = (struct server_us_nb_ctx *)server_us_nb_if.init(1);
+    ctx_c = (struct client_us_nb_ctx *)client_us_nb_if.init(2);
 
-    server_us_nb_entry.start(ctx_s);
-    client_us_nb_entry.start(ctx_c);
+    server_us_nb_if.start(ctx_s);
+    client_us_nb_if.start(ctx_c);
 
     do
     {
@@ -59,10 +59,10 @@ TEST_F(tu_socket_us_nb, connection)
 
         manager_fd::select();
 
-        server_us_nb_entry.get_stats(ctx_s, buf, 16);
+        server_us_nb_if.get_stats(ctx_s, buf, 16);
         fd_count = atoi(buf);
     } while (fd_count < 2);
 
-    server_us_nb_entry.stop(ctx_s);
-    client_us_nb_entry.stop(ctx_c);
+    server_us_nb_if.stop(ctx_s);
+    client_us_nb_if.stop(ctx_c);
 }
