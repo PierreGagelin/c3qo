@@ -212,7 +212,7 @@ void hello_ctrl(void *vctx, void *vnotif)
 //
 // @brief Exported structure of the block
 //
-struct bk_if hello_entry = {
+struct bk_if hello_if = {
     .init = hello_init,
     .conf = hello_conf,
     .bind = hello_bind,

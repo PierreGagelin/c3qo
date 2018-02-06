@@ -12,9 +12,9 @@
 #include "utils/logger.hpp"
 
 // Each block shall be linked
-extern struct bk_if hello_entry;
-extern struct bk_if client_us_nb_entry;
-extern struct bk_if server_us_nb_entry;
+extern struct bk_if hello_if;
+extern struct bk_if client_us_nb_if;
+extern struct bk_if server_us_nb_if;
 
 namespace manager_bk
 {
@@ -64,19 +64,19 @@ void block_add(int id, enum bk_type type)
 
     switch (type)
     {
-    case BK_TYPE_HELLO:
+    case TYPE_HELLO:
     {
-        block.bk = hello_entry;
+        block.bk = hello_if;
         break;
     }
-    case BK_TYPE_CLIENT_US_NB:
+    case TYPE_CLIENT_US_NB:
     {
-        block.bk = client_us_nb_entry;
+        block.bk = client_us_nb_if;
         break;
     }
-    case BK_TYPE_SERVER_US_NB:
+    case TYPE_SERVER_US_NB:
     {
-        block.bk = server_us_nb_entry;
+        block.bk = server_us_nb_if;
         break;
     }
     default:
@@ -87,7 +87,7 @@ void block_add(int id, enum bk_type type)
     }
 
     block.type = type;
-    block.state = BK_STATE_STOP;
+    block.state = STATE_STOP;
 
     manager_bk::bk_map_[id] = block;
 }
@@ -101,7 +101,7 @@ void exec_cmd()
     std::unordered_map<int, struct bk_info>::iterator it;
 
     // Add a new block, the only command that does not require to find the block
-    if (manager_bk::cmd_.cmd == BK_CMD_ADD)
+    if (manager_bk::cmd_.cmd == CMD_ADD)
     {
         unsigned long bk_type;
 
@@ -122,17 +122,17 @@ void exec_cmd()
 
     switch (manager_bk::cmd_.cmd)
     {
-    case BK_CMD_INIT:
+    case CMD_INIT:
     {
         it->second.ctx = it->second.bk.init(it->first);
         break;
     }
-    case BK_CMD_CONF:
+    case CMD_CONF:
     {
         it->second.bk.conf(it->second.ctx, manager_bk::cmd_.arg);
         break;
     }
-    case BK_CMD_BIND:
+    case CMD_BIND:
     {
         int port;
         int bk_id;
@@ -149,12 +149,12 @@ void exec_cmd()
         it->second.bk.bind(it->second.ctx, port, bk_id);
         break;
     }
-    case BK_CMD_START:
+    case CMD_START:
     {
         it->second.bk.start(it->second.ctx);
         break;
     }
-    case BK_CMD_STOP:
+    case CMD_STOP:
     {
         it->second.bk.stop(it->second.ctx);
         break;
@@ -200,7 +200,7 @@ int conf_parse_line(FILE *file)
     }
 
     // Check values (shouldn't stop the configuration)
-    if ((cmd > BK_CMD_MAX) || (cmd <= BK_CMD_NONE))
+    if ((cmd > CMD_MAX) || (cmd <= CMD_NONE))
     {
         LOGGER_WARNING("Block command doesn't exist [bk_id=%d, bk_cmd=%d]", id, cmd);
         return -1;
