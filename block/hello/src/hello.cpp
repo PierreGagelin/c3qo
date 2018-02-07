@@ -207,6 +207,42 @@ int hello_ctrl(void *vctx, void *vnotif)
     return 0;
 }
 
+size_t hello_get_stats(void *vctx, char *buf, size_t len)
+{
+    int ret;
+    size_t count;
+    struct hello_ctx *ctx;
+
+    if (vctx == NULL)
+    {
+        LOGGER_ERR("Failed to get block statistics: NULL context");
+        return 0;
+    }
+    ctx = (struct hello_ctx *)vctx;
+
+    LOGGER_DEBUG("Get block statistics [ctx=%p ; buf=%p ; len=%lu]", ctx, buf, len);
+
+    ret = snprintf(buf, len, "%d", ctx->count);
+    if (ret < 0)
+    {
+        LOGGER_ERR("Failed snprintf [ctx=%p ; buf=%p ; len=%lu]", ctx, buf, len);
+        return 0;
+    }
+    else
+    {
+        count = (size_t)ret;
+    }
+
+    if (count > len)
+    {
+        return len;
+    }
+    else
+    {
+        return count;
+    }
+}
+
 //
 // @brief Exported structure of the block
 //
@@ -217,7 +253,7 @@ struct bk_if hello_if = {
     .start = hello_start,
     .stop = hello_stop,
 
-    .get_stats = NULL,
+    .get_stats = hello_get_stats,
 
     .rx = hello_rx,
     .tx = hello_tx,

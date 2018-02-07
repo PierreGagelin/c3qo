@@ -179,11 +179,13 @@ TEST_F(tu_manager, manager_bk_bind)
 //
 TEST_F(tu_manager, manager_bk_flow)
 {
-    std::unordered_map<int, struct bk_info>::const_iterator i;
-    std::unordered_map<int, struct bk_info>::const_iterator e;
+    std::unordered_map<int, struct bk_info>::const_iterator bk_1;
+    std::unordered_map<int, struct bk_info>::const_iterator bk_2;
+    std::unordered_map<int, struct bk_info>::const_iterator end;
     const char *filename = "/tmp/tu_manager_config_bind.txt";
     std::fstream file;
-    char notif[12] = "hello world";
+    char notif[] = "useless value";
+    int count;
 
     file.open(filename, std::ios::out | std::ios::trunc);
     ASSERT_EQ(file.is_open(), true);
@@ -209,13 +211,33 @@ TEST_F(tu_manager, manager_bk_flow)
     // Parsing configuration
     EXPECT_EQ(m_bk.conf_parse(filename), true);
 
-    i = m_bk.bk_map_.find(1);
-    ASSERT_TRUE(i != e);
+    // Retrieve block 1 and block 2
+    bk_1 = m_bk.bk_map_.find(1);
+    bk_2 = m_bk.bk_map_.find(2);
+    end = m_bk.bk_map_.end();
+    ASSERT_TRUE(bk_1 != end);
+    ASSERT_TRUE(bk_2 != end);
+
+    // No data should have gone through blocks
+    bk_1->second.bk.get_stats(bk_1->second.ctx, notif, sizeof(notif));
+    count = atoi(notif);
+    EXPECT_TRUE(count == 0);
+    bk_2->second.bk.get_stats(bk_2->second.ctx, notif, sizeof(notif));
+    count = atoi(notif);
+    EXPECT_TRUE(count == 0);
 
     // Notify the block to generate a TX data flow: it shall return 0
-    EXPECT_TRUE(i->second.bk.ctrl(i->second.ctx, notif) == 0);
+    EXPECT_TRUE(bk_1->second.bk.ctrl(bk_1->second.ctx, notif) == 0);
 
-    // Clean blocks
+    // A buffer should have crossed block 2
+    bk_1->second.bk.get_stats(bk_1->second.ctx, notif, sizeof(notif));
+    count = atoi(notif);
+    EXPECT_TRUE(count == 0);
+    bk_2->second.bk.get_stats(bk_2->second.ctx, notif, sizeof(notif));
+    count = atoi(notif);
+    EXPECT_TRUE(count == 1);
+
+    // Clear blocks
     m_bk.block_clear();
 }
 
