@@ -28,6 +28,7 @@ struct bk_info
 {
     struct bk_if bk;     // Block interface
     void *ctx;           // Block context
+    int id;              // Block ID
     enum bk_type type;   // Block type
     enum bk_state state; // Block state
 };
@@ -50,17 +51,66 @@ struct command
 // Using only one instance to minimize stack pression
 struct command cmd_;
 
+// Need to declare those (intricated calls)
+void block_stop(struct bk_info &bki);
+void block_init(struct bk_info &bki);
+void block_start(struct bk_info &bki);
+
 //
-// @brief Create a block interface
+// @brief Stop and delete a block
 //
-// @param id   : Identifier in the block list
-// @param type : Type of interface to implement
+// @param id : Block ID
+//
+void block_del(int id)
+{
+    std::unordered_map<int, struct bk_info>::iterator it;
+
+    it = manager_bk::bk_map_.find(id);
+    if (it == manager_bk::bk_map_.end())
+    {
+        // Block does not exist
+        return;
+    }
+
+    block_stop(it->second);
+
+    LOGGER_INFO("Delete block [bk_id=%d ; bk_type=%s]", it->second.id, get_bk_type(it->second.type));
+
+    manager_bk::bk_map_.erase(it);
+}
+
+//
+// @brief Clean all blocks
+//
+void block_clean()
+{
+    std::unordered_map<int, struct bk_info>::iterator i;
+    std::unordered_map<int, struct bk_info>::iterator e;
+
+    // Stop every blocks
+    i = manager_bk::bk_map_.begin();
+    e = manager_bk::bk_map_.end();
+    while (i != e)
+    {
+        block_stop(i->second);
+        ++i;
+    }
+
+    manager_bk::bk_map_.clear();
+}
+
+//
+// @brief Add or replace a block
+//
+// @param id   : Block ID
+// @param type : Block type
 //
 void block_add(int id, enum bk_type type)
 {
+    std::pair<std::unordered_map<int, struct bk_info>::iterator, bool> ret;
     struct bk_info block;
 
-    LOGGER_DEBUG("Add block [bk_id=%d ; bk_type=%d]", id, type);
+    LOGGER_INFO("Add block [bk_id=%d ; bk_type=%s]", id, get_bk_type(type));
 
     switch (type)
     {
@@ -81,15 +131,107 @@ void block_add(int id, enum bk_type type)
     }
     default:
     {
-        LOGGER_WARNING("Unknown block type [bk_id=%d ; bk_type=%d]", id, type);
+        LOGGER_WARNING("Unknown block type value [bk_id=%d ; bk_type=%d]", id, type);
         return;
     }
     }
 
+    block.id = id;
     block.type = type;
     block.state = STATE_STOP;
 
-    manager_bk::bk_map_[id] = block;
+    block_del(id);
+    manager_bk::bk_map_.insert({id, block});
+}
+
+//
+// @brief Stop a block
+//
+// @param bki : Block information
+//
+void block_stop(struct bk_info &bki)
+{
+    // Verify block state
+    switch (bki.state)
+    {
+    case STATE_STOP:
+        block_init(bki);
+        block_start(bki);
+        break;
+
+    case STATE_INIT:
+        block_start(bki);
+        break;
+
+    case STATE_START:
+        // Normal case
+        break;
+    }
+
+    LOGGER_INFO("Stop block [bk_id=%d ; bk_type=%s]", bki.id, get_bk_type(bki.type));
+
+    bki.bk.stop(bki.ctx);
+    bki.state = STATE_STOP;
+}
+
+//
+// @brief Initialiaze a block
+//
+// @param bki : Block information
+//
+void block_init(struct bk_info &bki)
+{
+    // Verify block state
+    switch (bki.state)
+    {
+    case STATE_STOP:
+        // Normal case
+        break;
+
+    case STATE_INIT:
+        block_start(bki);
+        block_stop(bki);
+        break;
+
+    case STATE_START:
+        block_stop(bki);
+        break;
+    }
+
+    LOGGER_INFO("Initialize block [bk_id=%d ; bk_type=%s]", bki.id, get_bk_type(bki.type));
+
+    bki.ctx = bki.bk.init(bki.id);
+    bki.state = STATE_INIT;
+}
+
+//
+// @brief Stop a block
+//
+// @param bki : Block information
+//
+void block_start(struct bk_info &bki)
+{
+    // Verify block state
+    switch (bki.state)
+    {
+    case STATE_STOP:
+        block_init(bki);
+        break;
+
+    case STATE_INIT:
+        // Normal case
+        break;
+
+    case STATE_START:
+        block_stop(bki);
+        block_init(bki);
+        break;
+    }
+
+    LOGGER_INFO("Start block [bk_id=%d ; bk_type=%s]", bki.id, get_bk_type(bki.type));
+
+    bki.bk.start(bki.ctx);
+    bki.state = STATE_START;
 }
 
 //
@@ -116,7 +258,7 @@ void exec_cmd()
     it = manager_bk::bk_map_.find(manager_bk::cmd_.id);
     if (it == manager_bk::bk_map_.end())
     {
-        LOGGER_WARNING("Cannot stop unknown block [bk_id=%d ; bk_cmd=%d]", manager_bk::cmd_.id, manager_bk::cmd_.cmd);
+        LOGGER_WARNING("Cannot execute command on unknown block [bk_id=%d ; bk_cmd=%s ; cmd_arg=%s]", manager_bk::cmd_.id, get_bk_cmd(manager_bk::cmd_.cmd), manager_bk::cmd_.arg);
         return;
     }
 
@@ -124,11 +266,18 @@ void exec_cmd()
     {
     case CMD_INIT:
     {
-        it->second.ctx = it->second.bk.init(it->first);
+        block_init(it->second);
         break;
     }
     case CMD_CONF:
     {
+        if (it->second.state == STATE_STOP)
+        {
+            block_init(it->second);
+        }
+
+        LOGGER_INFO("Configure block [bk_id=%d ; bk_type=%s ; conf=%s]", it->first, get_bk_type(it->second.type), manager_bk::cmd_.arg);
+
         it->second.bk.conf(it->second.ctx, manager_bk::cmd_.arg);
         break;
     }
@@ -138,31 +287,38 @@ void exec_cmd()
         int bk_id;
         int nb_arg;
 
+        if (it->second.state == STATE_STOP)
+        {
+            block_init(it->second);
+        }
+
         // Retrieve bindings parameters from command argument
         nb_arg = sscanf(manager_bk::cmd_.arg, "%d:%d", &port, &bk_id);
         if (nb_arg != 2)
         {
-            LOGGER_WARNING("Cannot find bindings parameters [bk_id=%d ; bk_cmd=%d]", it->first, manager_bk::cmd_.cmd)
+            LOGGER_WARNING("Cannot bind block: corrupted parameters [bk_id=%d ; cmd_arg=%s]", it->first, manager_bk::cmd_.arg);
             break;
         }
+
+        LOGGER_INFO("Bind block [bk_id=%d ; bk_type=%s ; port=%d ; bk_id_dest=%d]", it->first, get_bk_type(it->second.type), port, bk_id);
 
         it->second.bk.bind(it->second.ctx, port, bk_id);
         break;
     }
     case CMD_START:
     {
-        it->second.bk.start(it->second.ctx);
+        block_start(it->second);
         break;
     }
     case CMD_STOP:
     {
-        it->second.bk.stop(it->second.ctx);
+        block_stop(it->second);
         break;
     }
     default:
     {
         // Ignore this entry
-        LOGGER_WARNING("Unknown block command [bk_cmd=%d]", manager_bk::cmd_.cmd);
+        LOGGER_WARNING("Cannot execute unknown command [bk_id=%d ; bk_cmd=%d]", it->first, manager_bk::cmd_.cmd);
         break;
     }
     }
@@ -174,16 +330,13 @@ void exec_cmd()
 // @param file : configuration file
 //
 // @return Several values
-//           - -2 on bad parsing
-//           - -1 on bad values
+//           - -1 on bad parsing
 //           -  0 if there are no more lines
 //           -  1 on success
 //
 int conf_parse_line(FILE *file)
 {
     int nb_arg;
-    int cmd;
-    int id;
 
     if (feof(file) != 0)
     {
@@ -191,33 +344,16 @@ int conf_parse_line(FILE *file)
         return 0;
     }
 
-    nb_arg = fscanf(file, "%d %d %4095s\n", &cmd, &id, manager_bk::cmd_.arg);
+    // Retrieve command
+    nb_arg = fscanf(file, "%d %d %4095s\n", &manager_bk::cmd_.cmd, &manager_bk::cmd_.id, manager_bk::cmd_.arg);
     if (nb_arg != 3)
     {
         manager_bk::cmd_.arg[sizeof(manager_bk::cmd_.arg) - 1] = '\0';
-        LOGGER_ERR("Corrupted configuration entry [bk_id=%d ; bk_cmd=%d ; bk_arg=%s]", id, cmd, manager_bk::cmd_.arg);
-        return -2;
-    }
-
-    // Check values (shouldn't stop the configuration)
-    if ((cmd > CMD_MAX) || (cmd <= CMD_NONE))
-    {
-        LOGGER_WARNING("Block command doesn't exist [bk_id=%d, bk_cmd=%d]", id, cmd);
+        LOGGER_ERR("Corrupted configuration entry [bk_id=%d ; bk_cmd=%s ; bk_arg=%s]", manager_bk::cmd_.id, get_bk_cmd(manager_bk::cmd_.cmd), manager_bk::cmd_.arg);
         return -1;
     }
 
-    manager_bk::cmd_.cmd = (enum bk_cmd)cmd;
-    manager_bk::cmd_.id = id;
-
     return 1;
-}
-
-//
-// @brief Clean all blocks
-//
-void block_clean()
-{
-    manager_bk::bk_map_.clear();
 }
 
 //
@@ -295,16 +431,11 @@ bool conf_parse(const char *filename)
         int rc;
 
         rc = conf_parse_line(file);
-        if (rc == -2)
+        if (rc == -1)
         {
             // Shouldn't read anymore
             ret = false;
             break;
-        }
-        else if (rc == -1)
-        {
-            // Shouldn't use values
-            continue;
         }
         else if (rc == 0)
         {
