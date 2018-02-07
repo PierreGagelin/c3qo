@@ -201,7 +201,7 @@ TEST_F(tu_manager, manager_bk_flow)
     for (int i = 0; i < 8; i++)
     {
         file << CMD_BIND << " 1  " << i << ":2 " << std::endl;
-        file << CMD_BIND << " 1  " << i << ":0 " << std::endl;
+        file << CMD_BIND << " 2  " << i << ":0 " << std::endl;
     }
 
     file.close();

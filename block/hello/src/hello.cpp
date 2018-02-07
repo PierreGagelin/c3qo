@@ -124,15 +124,7 @@ void hello_bind(void *vctx, int port, int bk_id)
 
 void hello_start(void *vctx)
 {
-    struct hello_ctx *ctx;
-
-    // Verify input
-    if (vctx == NULL)
-    {
-        LOGGER_ERR("Failed to start block: NULL context");
-        return;
-    }
-    ctx = (struct hello_ctx *)vctx;
+    (void)vctx;
 
     LOGGER_DEBUG("Hello world");
 }

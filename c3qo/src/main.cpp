@@ -12,11 +12,13 @@ extern "C" {
 #include "c3qo/manager_bk.hpp"
 #include "utils/logger.hpp"
 
+// Manager of blocks shall be linked
+extern class manager_bk m_bk;
+
 extern char *optarg; // Comes with getopt
 
 int main(int argc, char **argv)
 {
-    manager_bk m_bk;
     bool conf;
     int opt;
     const char *filename = "/tmp/config.txt";
