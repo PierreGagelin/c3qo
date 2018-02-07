@@ -19,6 +19,7 @@ enum bk_type
     TYPE_SERVER_US_NB = 3, // Unix stream non-block server
     TYPE_MAX = 4,          // Maximum value
 };
+const char *get_bk_type(enum bk_type t);
 
 //
 // @enum bk_cmd
@@ -39,6 +40,7 @@ enum bk_cmd
     CMD_STATS = 7, // Retrieve block's statistics
     CMD_MAX = 8,   // Maximum value
 };
+const char *get_bk_cmd(enum bk_cmd t);
 
 //
 // @enum bk_state
@@ -53,6 +55,7 @@ enum bk_state
     STATE_START = 3, // Block is started
     STATE_MAX = 4,   // Maximum value
 };
+const char *get_bk_state(enum bk_state t);
 
 //
 // @struct bk_if

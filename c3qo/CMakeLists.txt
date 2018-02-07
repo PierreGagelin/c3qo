@@ -2,6 +2,7 @@
 
 # Build manager as a static library
 set(SOURCES_MANAGER)
+set(SOURCES_MANAGER ${SOURCES_MANAGER} src/block.cpp)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_bk.cpp)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_fd.cpp)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_tm.cpp)
