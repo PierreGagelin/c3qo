@@ -1,7 +1,8 @@
 
 
 // C++ library headers
-#include <cstdio> // fopen, fgets, sscanf
+#include <cstdio>  // fopen, fgets, sscanf
+#include <cstring> // memset
 
 // Project headers
 #include "c3qo/block.hpp"
@@ -435,7 +436,7 @@ int manager_bk::conf_parse_line(FILE *file)
     }
 
     // Retrieve command
-    nb_arg = fscanf(file, "%d %d %4095s\n", &cmd_.cmd, &cmd_.id, cmd_.arg);
+    nb_arg = fscanf(file, "%d %d %4095s\n", (int *)&cmd_.cmd, &cmd_.id, cmd_.arg);
     if (nb_arg != 3)
     {
         cmd_.arg[sizeof(cmd_.arg) - 1] = '\0';
