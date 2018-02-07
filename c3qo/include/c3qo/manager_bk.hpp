@@ -34,13 +34,24 @@ struct command
     char arg[4096];  // Argument of the command
 };
 
+//
+// @enum flow_type
+//
+enum flow_type
+{
+    FLOW_RX,    // RX flow
+    FLOW_TX,    // TX flow
+    FLOW_NOTIF, // Notification flow
+};
+const char *get_flow_type(enum flow_type type);
+
 class manager_bk
 {
   public:
     manager_bk();
     ~manager_bk();
 
-  protected:
+  public:
     // Map of blocks
     std::unordered_map<int, struct bk_info> bk_map_;
 
@@ -53,8 +64,14 @@ class manager_bk
     void block_init(struct bk_info &bki);
     void block_start(struct bk_info &bki);
     void block_stop(struct bk_info &bki);
+    void block_flow(int bk_id, void *data, enum flow_type type);
 
-  protected:
+  public:
+    void process_rx(int bk_id, void *data);
+    void process_tx(int bk_id, void *data);
+    void process_notif(int bk_id, void *notif);
+
+  public:
     void block_del(int id);
     void block_clear();
 

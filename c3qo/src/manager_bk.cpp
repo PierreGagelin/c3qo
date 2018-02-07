@@ -13,6 +13,27 @@ extern struct bk_if hello_if;
 extern struct bk_if client_us_nb_if;
 extern struct bk_if server_us_nb_if;
 
+// One block manager to rule them all
+class manager_bk m_bk;
+
+const char *get_flow_type(enum flow_type type)
+{
+    switch (type)
+    {
+    case FLOW_NOTIF:
+        return "FLOW_TYPE_NOTIF";
+
+    case FLOW_RX:
+        return "FLOW_TYPE_RX";
+
+    case FLOW_TX:
+        return "FLOW_TYPE_TX";
+
+    default:
+        return "FLOW_TYPE_UNKNOWN";
+    }
+}
+
 //
 // @brief Constructor and destructor
 //
@@ -36,6 +57,12 @@ void manager_bk::block_add(int id, enum bk_type type)
     std::pair<std::unordered_map<int, struct bk_info>::iterator, bool> ret;
     struct bk_info block;
 
+    if (id == 0)
+    {
+        LOGGER_ERR("Failed to add block: forbidden block ID [bk_id=%d ; bk_type=%s]", id, get_bk_type(type));
+        return;
+    }
+
     LOGGER_INFO("Add block [bk_id=%d ; bk_type=%s]", id, get_bk_type(type));
 
     switch (type)
@@ -57,7 +84,7 @@ void manager_bk::block_add(int id, enum bk_type type)
     }
     default:
     {
-        LOGGER_WARNING("Unknown block type value [bk_id=%d ; bk_type=%d]", id, type);
+        LOGGER_ERR("Failed to add block: unknown block type value [bk_id=%d ; bk_type=%d]", id, type);
         return;
     }
     }
@@ -161,6 +188,100 @@ void manager_bk::block_stop(struct bk_info &bki)
 }
 
 //
+// @brief Start a data flow between blocks
+//
+// @param bk_id : Block ID where the flow starts
+// @param data  : Data to process
+// @param type  : Flow type (RX, TX, NOTIF)
+//
+void manager_bk::block_flow(int bk_id, void *data, enum flow_type type)
+{
+    std::unordered_map<int, struct bk_info>::iterator i;
+    std::unordered_map<int, struct bk_info>::iterator e;
+
+    LOGGER_DEBUG("Begin data flow [bk_id=%d ; data=%p ; flow_type=%s]", bk_id, data, get_flow_type(type));
+
+    // Process the data from one block to the other
+    e = bk_map_.end();
+    while (true)
+    {
+        i = bk_map_.find(bk_id);
+        if (i == e)
+        {
+            LOGGER_WARNING("Could not continue data flow: unknown block ID [bk_id=%d ; data=%p ; flow_type=%s]", bk_id, data, get_flow_type(type));
+            return;
+        }
+        else if (i->second.state != STATE_START)
+        {
+            LOGGER_WARNING("Could not continue data flow: block is not started [bk_id=%d ; bk_state=%s ; data=%p ; flow_type=%s]", bk_id, get_bk_state(i->second.state), data, get_flow_type(type));
+            return;
+        }
+
+        switch (type)
+        {
+        case FLOW_NOTIF:
+            LOGGER_DEBUG("Notify block [bk_id=%d ; notif=%p]", bk_id, data);
+            bk_id = i->second.bk.ctrl(i->second.ctx, data);
+            break;
+
+        case FLOW_RX:
+            LOGGER_DEBUG("Process RX data [bk_id=%d ; data=%p]", bk_id, data);
+            bk_id = i->second.bk.rx(i->second.ctx, data);
+            break;
+
+        case FLOW_TX:
+            LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", bk_id, data);
+            bk_id = i->second.bk.tx(i->second.ctx, data);
+            break;
+
+        default:
+            LOGGER_WARNING("Could not continue data flow: unknown flow type value [bk_id=%d ; data=%p ; flow_type=%d]", bk_id, data, type);
+            return;
+        }
+
+        if (bk_id == 0)
+        {
+            // Block ID 0 is the regular way out of this flow
+            LOGGER_DEBUG("End data flow [bk_id=%d ; data=%p ; flow_type=%s]", bk_id, data, get_flow_type(type));
+            break;
+        }
+    }
+}
+
+//
+// @brief Send RX data to a block
+//
+// @param bk_id : Block ID
+// @param data  : Data to process
+//
+void manager_bk::process_rx(int bk_id, void *data)
+{
+    block_flow(bk_id, data, FLOW_RX);
+}
+
+//
+// @brief Send TX data to a block
+//
+// @param bk_id : Block ID
+// @param data  : Data to process
+//
+void manager_bk::process_tx(int bk_id, void *data)
+{
+    block_flow(bk_id, data, FLOW_TX);
+}
+
+//
+// @brief Send RX data to a block
+//
+// @param bk_id : Block ID
+// @param notif : Notification to process
+//
+void manager_bk::process_notif(int bk_id, void *notif)
+{
+    block_flow(bk_id, notif, FLOW_NOTIF);
+}
+
+//
 // @brief Stop and delete a block
 //
 // @param id : Block ID
@@ -184,7 +305,7 @@ void manager_bk::block_del(int id)
 }
 
 //
-// @brief Clean all blocks
+// @brief Clear all blocks
 //
 void manager_bk::block_clear()
 {

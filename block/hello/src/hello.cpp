@@ -6,7 +6,14 @@
 
 // Project headers
 #include "c3qo/block.hpp"
+#include "c3qo/manager_bk.hpp"
 #include "utils/logger.hpp"
+
+// Get an access to the block manager for:
+//   - process_notif
+//   - process_rx
+//   - process_tx
+extern class manager_bk m_bk;
 
 //
 // @struct hello_bind
@@ -190,18 +197,22 @@ int hello_tx(void *vctx, void *vdata)
     return ret;
 }
 
-void hello_ctrl(void *vctx, void *vnotif)
+int hello_ctrl(void *vctx, void *vnotif)
 {
     struct hello_ctx *ctx;
 
     if (vctx == NULL)
     {
         LOGGER_ERR("Failed to notify block: NULL context");
-        return;
+        return 0;
     }
     ctx = (struct hello_ctx *)vctx;
 
-    LOGGER_DEBUG("Notify block [bk_id=%d ; notif=%p]", ctx->conf.bk_id, vnotif);
+    // Send a message
+    m_bk.process_tx(ctx->bind.id[ctx->count % 8], vnotif);
+
+    // No forwarding
+    return 0;
 }
 
 //

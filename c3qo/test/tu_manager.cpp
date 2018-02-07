@@ -23,6 +23,9 @@ extern "C" {
 // Gtest library
 #include "gtest/gtest.h"
 
+// Manager shall be linked
+extern class manager_bk m_bk;
+
 bool fd_called;
 void fd_callback(void *ctx, int fd)
 {
@@ -41,7 +44,7 @@ void tm_callback(void *arg)
     strncpy(zozo_l_asticot, (char *)arg, sizeof(zozo_l_asticot));
 }
 
-class tu_manager : public testing::Test, public manager_bk
+class tu_manager : public testing::Test
 {
   public:
     void SetUp();
@@ -95,11 +98,12 @@ TEST_F(tu_manager, manager_bk_add)
     file.close();
 
     // Parsing configuration
-    EXPECT_EQ(conf_parse(filename), true);
+    EXPECT_EQ(m_bk.conf_parse(filename), true);
 
     // Prepare expected configuration dump for the blocks
     //   - format : "<bk_id> <bk_type> <bk_state>;"
-    ss << "0 " << TYPE_CLIENT_US_NB << " " << STATE_STOP << ";";
+    //
+    //ss << "0 " << TYPE_CLIENT_US_NB << " " << STATE_STOP << ";"; Should not appear : block ID 0 is reserved!
     ss << "1 " << TYPE_SERVER_US_NB << " " << STATE_STOP << ";";
     for (int i = 2; i < 5000; i++)
     {
@@ -108,11 +112,11 @@ TEST_F(tu_manager, manager_bk_add)
     buf_exp = ss.str();
 
     // Verify the configuration dump
-    len = conf_get(buf, sizeof(buf));
+    len = m_bk.conf_get(buf, sizeof(buf));
     EXPECT_EQ(len, buf_exp.length());
 
     // Clean blocks
-    block_clear();
+    m_bk.block_clear();
 }
 
 //
@@ -154,7 +158,7 @@ TEST_F(tu_manager, manager_bk_bind)
     file.close();
 
     // Parsing configuration
-    EXPECT_EQ(conf_parse(filename), true);
+    EXPECT_EQ(m_bk.conf_parse(filename), true);
 
     // Prepare expected configuration dump for the blocks
     //   - format : "<bk_id> <bk_type> <bk_state>;"
@@ -163,11 +167,56 @@ TEST_F(tu_manager, manager_bk_bind)
     buf_exp = ss.str();
 
     // Verify the configuration dump
-    len = conf_get(buf, sizeof(buf));
+    len = m_bk.conf_get(buf, sizeof(buf));
     EXPECT_EQ(len, buf_exp.length());
 
     // Clean blocks
-    block_clear();
+    m_bk.block_clear();
+}
+
+//
+// @brief Test the data flow between blocks
+//
+TEST_F(tu_manager, manager_bk_flow)
+{
+    std::unordered_map<int, struct bk_info>::const_iterator i;
+    std::unordered_map<int, struct bk_info>::const_iterator e;
+    const char *filename = "/tmp/tu_manager_config_bind.txt";
+    std::fstream file;
+    char notif[12] = "hello world";
+
+    file.open(filename, std::ios::out | std::ios::trunc);
+    ASSERT_EQ(file.is_open(), true);
+
+    // Add, initialize, configure and start 2 blocks hello
+    // Spaces should not matter, but 3 values are mandatory
+    file << CMD_ADD << "   1          " << TYPE_HELLO << std::endl;
+    file << CMD_ADD << "   2          " << TYPE_HELLO << std::endl;
+    file << CMD_START << " 1  no_arg  " << std::endl;
+    file << CMD_START << " 2  no_arg  " << std::endl;
+
+    // Bindings :
+    //   - block 1 to block 2
+    //   - block 2 to block 0
+    for (int i = 0; i < 8; i++)
+    {
+        file << CMD_BIND << " 1  " << i << ":2 " << std::endl;
+        file << CMD_BIND << " 1  " << i << ":0 " << std::endl;
+    }
+
+    file.close();
+
+    // Parsing configuration
+    EXPECT_EQ(m_bk.conf_parse(filename), true);
+
+    i = m_bk.bk_map_.find(1);
+    ASSERT_TRUE(i != e);
+
+    // Notify the block to generate a TX data flow: it shall return 0
+    EXPECT_TRUE(i->second.bk.ctrl(i->second.ctx, notif) == 0);
+
+    // Clean blocks
+    m_bk.block_clear();
 }
 
 //
