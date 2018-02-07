@@ -71,7 +71,7 @@ struct bk_if
     // Data and control
     int (*rx)(void *vctx, void *vdata);
     int (*tx)(void *vctx, void *vdata);
-    void (*ctrl)(void *vctx, void *vnotif);
+    int (*ctrl)(void *vctx, void *vnotif);
 };
 
 #endif // C3QO_BLOCK_HPP
