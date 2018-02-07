@@ -43,3 +43,18 @@ target_link_libraries(tu_manager logger)
 target_link_libraries(tu_manager gtest)
 target_link_libraries(tu_manager gtest_main)
 
+
+# Build TU for performances
+set(SOURCES_TU_PERF test/tu_perf.cpp)
+
+add_executable(tu_perf ${SOURCES_TU_PERF})
+add_test(NAME tu_perf COMMAND tu_perf)
+
+target_include_directories(tu_perf PUBLIC ${UTILS_INCLUDE_DIR})
+target_include_directories(tu_perf PUBLIC ${C3QO_INCLUDE_DIR})
+
+target_link_libraries(tu_perf manager)
+target_link_libraries(tu_perf logger)
+target_link_libraries(tu_perf gtest)
+target_link_libraries(tu_perf gtest_main)
+
