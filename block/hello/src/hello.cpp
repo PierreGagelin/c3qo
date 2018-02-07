@@ -28,8 +28,9 @@ struct hello_bind
 //
 struct hello_conf
 {
-    int bk_id;     // Block ID
-    char name[64]; // Block name
+    int bk_id;            // Block ID
+    enum bk_type bk_type; // Block type
+    char name[64];        // Block name
 };
 
 //
@@ -55,7 +56,7 @@ void *hello_init(int bk_id)
     ctx = (struct hello_ctx *)malloc(sizeof(*ctx));
     if (ctx == NULL)
     {
-        LOGGER_ERR("Failed to initialize block");
+        LOGGER_ERR("Failed to initialize block: could not reserve memory for the context");
         return ctx;
     }
 
@@ -67,9 +68,8 @@ void *hello_init(int bk_id)
     memset(ctx->bind.id, 0, sizeof(ctx->bind.id));
     ctx->conf.bk_id = bk_id;
     ctx->conf.name[0] = '\0';
+    ctx->conf.bk_type = TYPE_HELLO;
     ctx->count = 0;
-
-    LOGGER_INFO("Initialize block [bk_id=%d]", ctx->conf.bk_id);
 
     return ctx;
 }
@@ -93,7 +93,7 @@ void hello_conf(void *vctx, char *conf)
         return;
     }
 
-    LOGGER_INFO("Configure block [bk_id=%d ; name=%s]", ctx->conf.bk_id, conf);
+    LOGGER_INFO("Configure block name [bk_id=%d ; name=%s]", ctx->conf.bk_id, conf);
 
     // Write name given by configuration
     memcpy(ctx->conf.name, conf, len + 1);
@@ -106,29 +106,26 @@ void hello_bind(void *vctx, int port, int bk_id)
     // Verify input
     if ((vctx == NULL) || (port < 0) || (port > 7))
     {
-        LOGGER_ERR("Failed to bind block");
+        LOGGER_ERR("Failed to bind block: NULL context or port not in range [port=%d ; range=[0,7]]", port);
         return;
     }
     ctx = (struct hello_ctx *)vctx;
 
     // Bind a port to a block
     ctx->bind.id[port] = bk_id;
-
-    LOGGER_INFO("Bind block [bk_id=%d ; port=%d ; bk_id_dest=%d]", ctx->conf.bk_id, port, bk_id);
 }
 
 void hello_start(void *vctx)
 {
     struct hello_ctx *ctx;
 
+    // Verify input
     if (vctx == NULL)
     {
-        LOGGER_ERR("Failed to start block");
+        LOGGER_ERR("Failed to start block: NULL context");
         return;
     }
     ctx = (struct hello_ctx *)vctx;
-
-    LOGGER_INFO("Start block [bk_id=%d]", ctx->conf.bk_id);
 
     LOGGER_DEBUG("Hello world");
 }
@@ -139,14 +136,12 @@ void hello_stop(void *vctx)
 
     if (vctx == NULL)
     {
-        LOGGER_ERR("Failed to stop block");
+        LOGGER_ERR("Failed to stop block: NULL context");
         return;
     }
     ctx = (struct hello_ctx *)vctx;
 
     free(ctx);
-
-    LOGGER_INFO("Stop block [bk_id=%d]", ctx->conf.bk_id);
 }
 
 int hello_rx(void *vctx, void *vdata)
@@ -156,7 +151,7 @@ int hello_rx(void *vctx, void *vdata)
 
     if (vctx == NULL)
     {
-        LOGGER_ERR("Failed to process RX data");
+        LOGGER_ERR("Failed to process RX data: NULL context");
         return 0;
     }
     ctx = (struct hello_ctx *)vctx;
@@ -179,7 +174,7 @@ int hello_tx(void *vctx, void *vdata)
 
     if (vctx == NULL)
     {
-        LOGGER_ERR("Failed to process TX data");
+        LOGGER_ERR("Failed to process TX data: NULL context");
         return 0;
     }
     ctx = (struct hello_ctx *)vctx;
@@ -201,7 +196,7 @@ void hello_ctrl(void *vctx, void *vnotif)
 
     if (vctx == NULL)
     {
-        LOGGER_ERR("Failed to notify block");
+        LOGGER_ERR("Failed to notify block: NULL context");
         return;
     }
     ctx = (struct hello_ctx *)vctx;

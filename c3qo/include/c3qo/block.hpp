@@ -13,11 +13,9 @@
 //
 enum bk_type
 {
-    TYPE_NONE = 0,         // Default value
-    TYPE_HELLO = 1,        // Block that says hello
-    TYPE_CLIENT_US_NB = 2, // Unix stream non-block client
-    TYPE_SERVER_US_NB = 3, // Unix stream non-block server
-    TYPE_MAX = 4,          // Maximum value
+    TYPE_HELLO,        // Block that says hello
+    TYPE_CLIENT_US_NB, // Unix stream non-block client
+    TYPE_SERVER_US_NB, // Unix stream non-block server
 };
 const char *get_bk_type(enum bk_type t);
 
@@ -30,15 +28,13 @@ const char *get_bk_type(enum bk_type t);
 //
 enum bk_cmd
 {
-    CMD_NONE = 0,  // Default value
-    CMD_ADD = 1,   // Create a block
-    CMD_INIT = 2,  // Initialize a block
-    CMD_CONF = 3,  // Configure a block
-    CMD_BIND = 4,  // Bind a block to another
-    CMD_START = 5, // Start a block
-    CMD_STOP = 6,  // Stop a block
-    CMD_STATS = 7, // Retrieve block's statistics
-    CMD_MAX = 8,   // Maximum value
+    CMD_ADD,   // Create a block
+    CMD_INIT,  // Initialize a block
+    CMD_CONF,  // Configure a block
+    CMD_BIND,  // Bind a block to another
+    CMD_START, // Start a block
+    CMD_STOP,  // Stop a block
+    CMD_STATS, // Retrieve block's statistics
 };
 const char *get_bk_cmd(enum bk_cmd t);
 
@@ -49,11 +45,9 @@ const char *get_bk_cmd(enum bk_cmd t);
 //
 enum bk_state
 {
-    STATE_NONE = 0,  // Default value
-    STATE_STOP = 1,  // Block is stopped
-    STATE_INIT = 2,  // Block is initialized
-    STATE_START = 3, // Block is started
-    STATE_MAX = 4,   // Maximum value
+    STATE_STOP,  // Block is stopped
+    STATE_INIT,  // Block is initialized
+    STATE_START, // Block is started
 };
 const char *get_bk_state(enum bk_state t);
 
