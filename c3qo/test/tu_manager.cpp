@@ -41,7 +41,7 @@ void tm_callback(void *arg)
     strncpy(zozo_l_asticot, (char *)arg, sizeof(zozo_l_asticot));
 }
 
-class tu_manager : public testing::Test
+class tu_manager : public testing::Test, public manager_bk
 {
   public:
     void SetUp();
@@ -95,7 +95,7 @@ TEST_F(tu_manager, manager_bk_add)
     file.close();
 
     // Parsing configuration
-    EXPECT_EQ(manager_bk::conf_parse(filename), true);
+    EXPECT_EQ(conf_parse(filename), true);
 
     // Prepare expected configuration dump for the blocks
     //   - format : "<bk_id> <bk_type> <bk_state>;"
@@ -108,11 +108,11 @@ TEST_F(tu_manager, manager_bk_add)
     buf_exp = ss.str();
 
     // Verify the configuration dump
-    len = manager_bk::conf_get(buf, sizeof(buf));
+    len = conf_get(buf, sizeof(buf));
     EXPECT_EQ(len, buf_exp.length());
 
     // Clean blocks
-    manager_bk::block_clean();
+    block_clear();
 }
 
 //
@@ -154,7 +154,7 @@ TEST_F(tu_manager, manager_bk_bind)
     file.close();
 
     // Parsing configuration
-    EXPECT_EQ(manager_bk::conf_parse(filename), true);
+    EXPECT_EQ(conf_parse(filename), true);
 
     // Prepare expected configuration dump for the blocks
     //   - format : "<bk_id> <bk_type> <bk_state>;"
@@ -163,11 +163,11 @@ TEST_F(tu_manager, manager_bk_bind)
     buf_exp = ss.str();
 
     // Verify the configuration dump
-    len = manager_bk::conf_get(buf, sizeof(buf));
+    len = conf_get(buf, sizeof(buf));
     EXPECT_EQ(len, buf_exp.length());
 
     // Clean blocks
-    manager_bk::block_clean();
+    block_clear();
 }
 
 //

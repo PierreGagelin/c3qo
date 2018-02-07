@@ -1,10 +1,7 @@
 
 
 // C++ library headers
-#include <unordered_map> // unordered_map container
-#include <cstdio>        // fopen, fgets, sscanf
-#include <cstdlib>       // malloc, free, strtoul
-#include <cstdint>       // fixed-size data types
+#include <cstdio> // fopen, fgets, sscanf
 
 // Project headers
 #include "c3qo/block.hpp"
@@ -16,87 +13,16 @@ extern struct bk_if hello_if;
 extern struct bk_if client_us_nb_if;
 extern struct bk_if server_us_nb_if;
 
-namespace manager_bk
+//
+// @brief Constructor and destructor
+//
+manager_bk::manager_bk()
 {
-
-//
-// @struct bk_info
-//
-// @brief Description of a block for the manager
-//
-struct bk_info
-{
-    struct bk_if bk;     // Block interface
-    void *ctx;           // Block context
-    int id;              // Block ID
-    enum bk_type type;   // Block type
-    enum bk_state state; // Block state
-};
-
-// Map of blocks
-std::unordered_map<int, struct bk_info> bk_map_;
-
-//
-// @struct command
-//
-// Generic command to manage a block
-//
-struct command
-{
-    int id;          // Identifier of the block
-    enum bk_cmd cmd; // Type of command
-    char arg[4096];  // Argument of the command
-};
-
-// Using only one instance to minimize stack pression
-struct command cmd_;
-
-// Need to declare those (intricated calls)
-void block_stop(struct bk_info &bki);
-void block_init(struct bk_info &bki);
-void block_start(struct bk_info &bki);
-
-//
-// @brief Stop and delete a block
-//
-// @param id : Block ID
-//
-void block_del(int id)
-{
-    std::unordered_map<int, struct bk_info>::iterator it;
-
-    it = manager_bk::bk_map_.find(id);
-    if (it == manager_bk::bk_map_.end())
-    {
-        // Block does not exist
-        return;
-    }
-
-    block_stop(it->second);
-
-    LOGGER_INFO("Delete block [bk_id=%d ; bk_type=%s]", it->second.id, get_bk_type(it->second.type));
-
-    manager_bk::bk_map_.erase(it);
+    memset(&cmd_, 0, sizeof(cmd_));
 }
-
-//
-// @brief Clean all blocks
-//
-void block_clean()
+manager_bk::~manager_bk()
 {
-    std::unordered_map<int, struct bk_info>::iterator i;
-    std::unordered_map<int, struct bk_info>::iterator e;
-
-    // Stop every blocks
-    i = manager_bk::bk_map_.begin();
-    e = manager_bk::bk_map_.end();
-    while (i != e)
-    {
-        block_stop(i->second);
-        ++i;
-    }
-
-    manager_bk::bk_map_.clear();
+    block_clear();
 }
 
 //
@@ -105,7 +31,7 @@ void block_clean()
 // @param id   : Block ID
 // @param type : Block type
 //
-void block_add(int id, enum bk_type type)
+void manager_bk::block_add(int id, enum bk_type type)
 {
     std::pair<std::unordered_map<int, struct bk_info>::iterator, bool> ret;
     struct bk_info block;
@@ -141,37 +67,7 @@ void block_add(int id, enum bk_type type)
     block.state = STATE_STOP;
 
     block_del(id);
-    manager_bk::bk_map_.insert({id, block});
-}
-
-//
-// @brief Stop a block
-//
-// @param bki : Block information
-//
-void block_stop(struct bk_info &bki)
-{
-    // Verify block state
-    switch (bki.state)
-    {
-    case STATE_STOP:
-        block_init(bki);
-        block_start(bki);
-        break;
-
-    case STATE_INIT:
-        block_start(bki);
-        break;
-
-    case STATE_START:
-        // Normal case
-        break;
-    }
-
-    LOGGER_INFO("Stop block [bk_id=%d ; bk_type=%s]", bki.id, get_bk_type(bki.type));
-
-    bki.bk.stop(bki.ctx);
-    bki.state = STATE_STOP;
+    bk_map_.insert({id, block});
 }
 
 //
@@ -179,7 +75,7 @@ void block_stop(struct bk_info &bki)
 //
 // @param bki : Block information
 //
-void block_init(struct bk_info &bki)
+void manager_bk::block_init(struct bk_info &bki)
 {
     // Verify block state
     switch (bki.state)
@@ -209,7 +105,7 @@ void block_init(struct bk_info &bki)
 //
 // @param bki : Block information
 //
-void block_start(struct bk_info &bki)
+void manager_bk::block_start(struct bk_info &bki)
 {
     // Verify block state
     switch (bki.state)
@@ -235,34 +131,107 @@ void block_start(struct bk_info &bki)
 }
 
 //
+// @brief Stop a block
+//
+// @param bki : Block information
+//
+void manager_bk::block_stop(struct bk_info &bki)
+{
+    // Verify block state
+    switch (bki.state)
+    {
+    case STATE_STOP:
+        block_init(bki);
+        block_start(bki);
+        break;
+
+    case STATE_INIT:
+        block_start(bki);
+        break;
+
+    case STATE_START:
+        // Normal case
+        break;
+    }
+
+    LOGGER_INFO("Stop block [bk_id=%d ; bk_type=%s]", bki.id, get_bk_type(bki.type));
+
+    bki.bk.stop(bki.ctx);
+    bki.state = STATE_STOP;
+}
+
+//
+// @brief Stop and delete a block
+//
+// @param id : Block ID
+//
+void manager_bk::block_del(int id)
+{
+    std::unordered_map<int, struct bk_info>::iterator it;
+
+    it = bk_map_.find(id);
+    if (it == bk_map_.end())
+    {
+        // Block does not exist
+        return;
+    }
+
+    block_stop(it->second);
+
+    LOGGER_INFO("Delete block [bk_id=%d ; bk_type=%s]", it->second.id, get_bk_type(it->second.type));
+
+    bk_map_.erase(it);
+}
+
+//
+// @brief Clean all blocks
+//
+void manager_bk::block_clear()
+{
+    std::unordered_map<int, struct bk_info>::iterator i;
+    std::unordered_map<int, struct bk_info>::iterator e;
+
+    // Stop every blocks
+    i = bk_map_.begin();
+    e = bk_map_.end();
+    while (i != e)
+    {
+        block_stop(i->second);
+        ++i;
+    }
+
+    bk_map_.clear();
+}
+
+//
 // @brief Execute the global manager command
 //        Some of them are directly executed by a block
 //
-void exec_cmd()
+void manager_bk::exec_cmd()
 {
     std::unordered_map<int, struct bk_info>::iterator it;
 
     // Add a new block, the only command that does not require to find the block
-    if (manager_bk::cmd_.cmd == CMD_ADD)
+    if (cmd_.cmd == CMD_ADD)
     {
         unsigned long bk_type;
 
-        bk_type = strtoul(manager_bk::cmd_.arg, NULL, 10);
+        bk_type = strtoul(cmd_.arg, NULL, 10);
 
-        block_add(manager_bk::cmd_.id, (enum bk_type)bk_type);
+        block_add(cmd_.id, (enum bk_type)bk_type);
 
         return;
     }
 
     // Find the block concerned by the command
-    it = manager_bk::bk_map_.find(manager_bk::cmd_.id);
-    if (it == manager_bk::bk_map_.end())
+    it = bk_map_.find(cmd_.id);
+    if (it == bk_map_.end())
     {
-        LOGGER_WARNING("Cannot execute command on unknown block [bk_id=%d ; bk_cmd=%s ; cmd_arg=%s]", manager_bk::cmd_.id, get_bk_cmd(manager_bk::cmd_.cmd), manager_bk::cmd_.arg);
+        LOGGER_WARNING("Cannot execute command on unknown block [bk_id=%d ; bk_cmd=%s ; cmd_arg=%s]", cmd_.id, get_bk_cmd(cmd_.cmd), cmd_.arg);
         return;
     }
 
-    switch (manager_bk::cmd_.cmd)
+    switch (cmd_.cmd)
     {
     case CMD_INIT:
     {
@@ -276,9 +245,9 @@ void exec_cmd()
             block_init(it->second);
         }
 
-        LOGGER_INFO("Configure block [bk_id=%d ; bk_type=%s ; conf=%s]", it->first, get_bk_type(it->second.type), manager_bk::cmd_.arg);
+        LOGGER_INFO("Configure block [bk_id=%d ; bk_type=%s ; conf=%s]", it->first, get_bk_type(it->second.type), cmd_.arg);
 
-        it->second.bk.conf(it->second.ctx, manager_bk::cmd_.arg);
+        it->second.bk.conf(it->second.ctx, cmd_.arg);
         break;
     }
     case CMD_BIND:
@@ -293,10 +262,10 @@ void exec_cmd()
         }
 
         // Retrieve bindings parameters from command argument
-        nb_arg = sscanf(manager_bk::cmd_.arg, "%d:%d", &port, &bk_id);
+        nb_arg = sscanf(cmd_.arg, "%d:%d", &port, &bk_id);
         if (nb_arg != 2)
         {
-            LOGGER_WARNING("Cannot bind block: corrupted parameters [bk_id=%d ; cmd_arg=%s]", it->first, manager_bk::cmd_.arg);
+            LOGGER_WARNING("Cannot bind block: corrupted parameters [bk_id=%d ; cmd_arg=%s]", it->first, cmd_.arg);
             break;
         }
 
@@ -318,7 +287,7 @@ void exec_cmd()
     default:
     {
         // Ignore this entry
-        LOGGER_WARNING("Cannot execute unknown command [bk_id=%d ; bk_cmd=%d]", it->first, manager_bk::cmd_.cmd);
+        LOGGER_WARNING("Cannot execute unknown command [bk_id=%d ; bk_cmd=%d]", it->first, cmd_.cmd);
         break;
     }
     }
@@ -334,7 +303,7 @@ void exec_cmd()
 //           -  0 if there are no more lines
 //           -  1 on success
 //
-int conf_parse_line(FILE *file)
+int manager_bk::conf_parse_line(FILE *file)
 {
     int nb_arg;
 
@@ -345,11 +314,11 @@ int conf_parse_line(FILE *file)
     }
 
     // Retrieve command
-    nb_arg = fscanf(file, "%d %d %4095s\n", &manager_bk::cmd_.cmd, &manager_bk::cmd_.id, manager_bk::cmd_.arg);
+    nb_arg = fscanf(file, "%d %d %4095s\n", &cmd_.cmd, &cmd_.id, cmd_.arg);
     if (nb_arg != 3)
     {
-        manager_bk::cmd_.arg[sizeof(manager_bk::cmd_.arg) - 1] = '\0';
-        LOGGER_ERR("Corrupted configuration entry [bk_id=%d ; bk_cmd=%s ; bk_arg=%s]", manager_bk::cmd_.id, get_bk_cmd(manager_bk::cmd_.cmd), manager_bk::cmd_.arg);
+        cmd_.arg[sizeof(cmd_.arg) - 1] = '\0';
+        LOGGER_ERR("Corrupted configuration entry [bk_id=%d ; bk_cmd=%s ; bk_arg=%s]", cmd_.id, get_bk_cmd(cmd_.cmd), cmd_.arg);
         return -1;
     }
 
@@ -357,61 +326,11 @@ int conf_parse_line(FILE *file)
 }
 
 //
-// @brief Fill a string representing existing blocks
-//        Format for each entry follows :
-//          - <bk_id> <bk_type> <bk_state>;
-//
-// @param buf : string to fill
-// @param len : maximum length to write
-//
-// @return actual length written
-//
-size_t conf_get(char *buf, size_t len)
-{
-    std::unordered_map<int, struct bk_info>::const_iterator i;
-    std::unordered_map<int, struct bk_info>::const_iterator e;
-    size_t w;
-
-    LOGGER_DEBUG("Getting blocks information")
-
-    w = 0;
-    i = manager_bk::bk_map_.begin();
-    e = manager_bk::bk_map_.end();
-    while (i != e)
-    {
-        int ret;
-
-        ret = snprintf(buf + w, len - w, "%u %d %d;", i->first, i->second.type, i->second.state);
-        if (ret < 0)
-        {
-            LOGGER_ERR("snprintf failed");
-            break;
-        }
-        else
-        {
-            w += (size_t)ret;
-        }
-
-        // Stop if there's no more room in buf
-        if (w >= len)
-        {
-            LOGGER_WARNING("Not enough space to dump blocks information");
-            w = len;
-            break;
-        }
-
-        ++i;
-    }
-
-    return w;
-}
-
-//
 // @brief Parse a configuration file to retrieve block configuration
 //
 // @param filename : Name of the configuration file
 //
-bool conf_parse(const char *filename)
+bool manager_bk::conf_parse(const char *filename)
 {
     FILE *file;
     bool ret;
@@ -460,4 +379,52 @@ bool conf_parse(const char *filename)
     return ret;
 }
 
-} // END namespace manager_bk
+//
+// @brief Fill a string representing existing blocks
+//        Format for each entry follows :
+//          - <bk_id> <bk_type> <bk_state>;
+//
+// @param buf : string to fill
+// @param len : maximum length to write
+//
+// @return actual length written
+//
+size_t manager_bk::conf_get(char *buf, size_t len)
+{
+    std::unordered_map<int, struct bk_info>::const_iterator i;
+    std::unordered_map<int, struct bk_info>::const_iterator e;
+    size_t w;
+
+    LOGGER_DEBUG("Getting blocks information")
+
+    w = 0;
+    i = bk_map_.begin();
+    e = bk_map_.end();
+    while (i != e)
+    {
+        int ret;
+
+        ret = snprintf(buf + w, len - w, "%u %d %d;", i->first, i->second.type, i->second.state);
+        if (ret < 0)
+        {
+            LOGGER_ERR("snprintf failed");
+            break;
+        }
+        else
+        {
+            w += (size_t)ret;
+        }
+
+        // Stop if there's no more room in buf
+        if (w >= len)
+        {
+            LOGGER_WARNING("Not enough space to dump blocks information");
+            w = len;
+            break;
+        }
+
+        ++i;
+    }
+
+    return w;
+}

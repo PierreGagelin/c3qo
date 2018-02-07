@@ -16,6 +16,7 @@ extern char *optarg; // Comes with getopt
 
 int main(int argc, char **argv)
 {
+    manager_bk m_bk;
     bool conf;
     int opt;
     const char *filename = "/tmp/config.txt";
@@ -59,7 +60,7 @@ int main(int argc, char **argv)
     }
 
     // Parse configuration file
-    conf = manager_bk::conf_parse(filename);
+    conf = m_bk.conf_parse(filename);
     if (conf == false)
     {
         ret = -1;
