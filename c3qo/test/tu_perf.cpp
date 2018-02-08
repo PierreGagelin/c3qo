@@ -91,12 +91,12 @@ TEST_F(tu_perf, commutation)
     bk = m_bk.bk_map_.find(1);
     end = m_bk.bk_map_.end();
     ASSERT_TRUE(bk != end);
-    for (int i = 0; i < 100000; i++)
+    for (int i = 0; i < 10000; i++)
     {
         EXPECT_TRUE(bk->second.bk.ctrl(bk->second.ctx, buf) == 0);
     }
 
-    // Verify that 100000 buffers crossed bk_2 to bk_100
+    // Verify that 10000 buffers crossed bk_2 to bk_100
     for (int i = 2; i < 101; i++)
     {
         int count;
@@ -106,7 +106,7 @@ TEST_F(tu_perf, commutation)
 
         bk->second.bk.get_stats(bk->second.ctx, buf, sizeof(buf));
         count = atoi(buf);
-        EXPECT_TRUE(count == 100000);
+        EXPECT_TRUE(count == 10000);
     }
 
     // Clean blocks
