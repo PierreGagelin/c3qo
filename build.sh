@@ -2,18 +2,20 @@
 # Script to build the c3qo project
 
 
-BUILD_DIR="build/"
+DIR_BUILD="build"
+DIR_LCOV="$DIR_BUILD/lcov"
 
 LLVM="false"
 
 ACTION_BUILD="false"
 ACTION_CLEAN="false"
+ACTION_LCOV="false"
 
 
-function build
+function action_build
 {
-        mkdir -p "$BUILD_DIR"
-        cd "$BUILD_DIR"
+        mkdir $DIR_BUILD
+        cd $DIR_BUILD
 
         if [ $LLVM = "true" ]
         then
@@ -28,16 +30,75 @@ function build
 }
 
 
-function clean
+function action_clean
 {
-        if [ -d "$BUILD_DIR" ]
+        if [ -d $DIR_BUILD ]
         then
-                rm -r "$BUILD_DIR"
+                rm -r "$DIR_BUILD"
         fi
 }
 
 
-while getopts "bcl" opt
+function action_lcov
+{
+        local file_b="$DIR_LCOV/coverage.build"
+        local file_r="$DIR_LCOV/coverage.run"
+        local file_t="$DIR_LCOV/coverage.total"
+        local file_b_count=
+        local file_r_count=
+
+        # Verify that the build directory exists
+        if [ ! -d $DIR_BUILD ]
+        then
+                echo "FAILED: project is not built"
+                exit 1
+        fi
+
+        # Verify that there are files for the analysis
+        file_b_count=$(find $DIR_BUILD -name "*.gcno" | wc -l)
+        file_r_count=$(find $DIR_BUILD -name "*.gcda" | wc -l)
+        if [ $file_b_count -eq 0 ]
+        then
+                echo "FAILED: no .gcno files available. Did you compile with GCOV?"
+                exit 1
+        fi
+        if [ $file_r_count -eq 0 ]
+        then
+                echo "FAILED: no .gcda files available. Did you run the tests?"
+                exit 1
+        fi
+
+        # Prepare a directory for LCOV output
+        if [ -d $DIR_LCOV ]
+        then
+            rm -r $DIR_LCOV
+        fi
+        mkdir $DIR_LCOV
+
+        # Analysis of .gcno (build) and .gcda (run) files
+        lcov --directory $DIR_BUILD --capture --initial --output-file $file_b
+        lcov --directory $DIR_BUILD --capture           --output-file $file_r
+
+        # Catenate the output of both
+        lcov --directory $DIR_BUILD --add-tracefile $file_b --add-tracefile $file_r --output-file $file_t
+
+        # Extract only src folders
+        lcov --extract $file_t "*/src/*" --output-file $file_t
+
+        # Remove gtest src folder
+        lcov --remove $file_t "*/gtest*" --output-file $file_t
+
+        # Generate an index.html file into $DIR_LCOV with results
+        genhtml --output-directory $DIR_LCOV $file_t
+
+        open $DIR_LCOV/index.html
+
+        # Clean
+        rm  $(find $DIR_BUILD -name "*.gcda")
+}
+
+
+while getopts "bcgl" opt
 do
         case "${opt}" in
                 b)
@@ -47,6 +108,9 @@ do
                         ACTION_CLEAN="true"
                         ;;
                 l)
+                        ACTION_LCOV="true"
+                        ;;
+                L)
                         LLVM="true"
                         ;;
                 *)
@@ -58,13 +122,19 @@ done
 
 if [ $ACTION_CLEAN = "true" ]
 then
-        clean
+        action_clean
 fi
 
 
 if [ $ACTION_BUILD = "true" ]
 then
-        build
+        action_build
+fi
+
+
+if [ $ACTION_LCOV = "true" ]
+then
+        action_lcov
 fi
 
 

@@ -12,14 +12,25 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_BUILD_TYPE Debug)
 
 # Compilation flags
-set(CMAKE_CXX_FLAGS_DEBUG   "-g -O0")
-set(CMAKE_CXX_FLAGS_RELEASE "-O2")
-set(CMAKE_CXX_FLAGS         "-std=c++11 -Wall -Wextra -Werror")
+set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Werror")
+set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
+
+# Using GCOV on the code
+set(C3QO_COVERAGE off)
+if (${C3QO_COVERAGE})
+    # Force the build type to Debug
+    set(CMAKE_BUILD_TYPE Debug)
+
+    # Compile and link flags for coverage
+    set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} --coverage")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+endif()
 
 # Add a flag to disable logs on Release
-IF (${CMAKE_BUILD_TYPE} STREQUAL Release)
+if (${CMAKE_BUILD_TYPE} STREQUAL Release)
     add_definitions(-DLOGGER_DISABLE)
-ENDIF()
+endif()
 
 
 # Configure gtest as an external project
