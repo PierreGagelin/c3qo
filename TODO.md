@@ -1,15 +1,13 @@
 
 
-This file contains some ideas to things to do
-
+This file contains some ideas of things to do
 
 # Dev
-- synchronous timer management
-- implement a block for synchronous socket
+- implement the main loop
+- make a network CLI block
+- try ASIO library for sockets
 
-
-# Test
+# Testing
 - set LCOV / GCOV on the code
-- make functionnal tests
-
+- make functionnal tests with Docker
 
