@@ -14,7 +14,7 @@ ACTION_LCOV="false"
 
 function action_build
 {
-        mkdir $DIR_BUILD
+        mkdir -p $DIR_BUILD
         cd $DIR_BUILD
 
         if [ $LLVM = "true" ]

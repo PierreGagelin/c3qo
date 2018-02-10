@@ -1,11 +1,10 @@
 
 
 // C++ library headers
-#include <cstdlib> // malloc
 #include <cstring> // memset, strnlen
 
 // Project headers
-#include "c3qo/block.hpp"
+#include "block/hello.hpp"
 #include "c3qo/manager_bk.hpp"
 #include "utils/logger.hpp"
 
@@ -15,47 +14,6 @@
 //   - process_tx
 extern class manager_bk m_bk;
 
-//
-// @struct hello_bind
-//
-// @brief Internal structure to bind a port to a block. Here it is
-//        a basic array, but it's up to the block to have another way
-//        to deal with its bindings (unordered_map, list...)
-//
-struct hello_bind
-{
-    int id[8]; // List of binds for this block
-};
-
-//
-// @struct hello_conf
-//
-// @brief Internal structure to store configuration. These entries should
-//        be provided by the conf callback around startup time
-//
-struct hello_conf
-{
-    int bk_id;            // Block ID
-    enum bk_type bk_type; // Block type
-    char name[64];        // Block name
-};
-
-//
-// @struct hello_ctx
-//
-// @brief Internal structure to store the context. To limit arguments in
-//        callbacks, it also stores conf and bind structures. It aims
-//        to store run-time "context" rather than configuration
-//
-struct hello_ctx
-{
-    struct hello_conf conf; // Block configuration structure
-    struct hello_bind bind; // Block bind structure
-
-    // Context information
-    int count; // Number of packets processed
-};
-
 void *hello_init(int bk_id)
 {
     struct hello_ctx *ctx;
@@ -63,7 +21,7 @@ void *hello_init(int bk_id)
     ctx = (struct hello_ctx *)malloc(sizeof(*ctx));
     if (ctx == NULL)
     {
-        LOGGER_ERR("Failed to initialize block: could not reserve memory for the context");
+        LOGGER_ERR("Failed to initialize block: could not reserve memory for the context [bk_id=%d]", bk_id);
         return ctx;
     }
 
@@ -140,6 +98,7 @@ void hello_stop(void *vctx)
     }
     ctx = (struct hello_ctx *)vctx;
 
+    // Free the context structure
     free(ctx);
 }
 

@@ -16,23 +16,43 @@ extern "C" {
 #include "utils/logger.hpp"
 
 //
-// @brief Set the file descriptor to be NON-BLOCKING
+// @brief Create a socket and set it to be non-blocking
 //
-void c3qo_socket_set_nb(int fd)
+int socket_nb(int domain, int type, int protocol)
+{
+    int fd;
+
+    // Create the client socket
+    fd = socket(domain, type, protocol);
+    if (fd == -1)
+    {
+        return -1;
+    }
+
+    // Set the socket to be non-blocking
+    socket_nb_set(fd);
+
+    return fd;
+}
+
+//
+// @brief Set the file descriptor to be non-blocking
+//
+void socket_nb_set(int fd)
 {
     int flags;
 
     flags = fcntl(fd, F_GETFL, 0);
     flags |= O_NONBLOCK;
 
-    fcntl(fd, F_SETOWN, getpid()); // WARN: not POSIX
-    fcntl(fd, F_SETFL, flags);     // WARN: not POSIX
+    fcntl(fd, F_SETOWN, getpid());
+    fcntl(fd, F_SETFL, flags);
 }
 
 //
 // @brief Non-blocking write to the file descriptor
 //
-ssize_t c3qo_socket_write_nb(int fd, const char *buff, size_t size)
+ssize_t socket_nb_write(int fd, const char *buff, size_t size)
 {
     ssize_t ret;
 
@@ -64,7 +84,7 @@ ssize_t c3qo_socket_write_nb(int fd, const char *buff, size_t size)
 //
 // @brief Non-blocking read to the file descriptor
 //
-ssize_t c3qo_socket_read_nb(int fd, char *buff, size_t size)
+ssize_t socket_nb_read(int fd, char *buff, size_t size)
 {
     ssize_t ret;
 
@@ -94,6 +114,33 @@ ssize_t c3qo_socket_read_nb(int fd, char *buff, size_t size)
 }
 
 //
+// @brief Check if a socket is connected
+//
+bool socket_nb_connect_check(int fd)
+{
+    socklen_t len;
+    int optval;
+
+    // Verify connection status
+    len = sizeof(optval);
+    if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (void *)(&optval), &len) != 0)
+    {
+        LOGGER_ERR("Failed to check socket connection status: getsockopt failed [fd=%d]", fd);
+        return false;
+    }
+
+    if (optval != 0)
+    {
+        LOGGER_DEBUG("Check socket connection status: socket not connected [fd=%d]", fd);
+        return false;
+    }
+
+    LOGGER_DEBUG("Check socket connection status: socket connected [fd=%d]", fd);
+
+    return true;
+}
+
+//
 // @brief Connect in a non-blocking way
 //
 // @param fd : socket that shall be non-blocking
@@ -104,14 +151,14 @@ ssize_t c3qo_socket_read_nb(int fd, char *buff, size_t size)
 //           - 1  : need to call getsockopt
 //           - 2  : need to call connect again
 //
-int c3qo_socket_connect_nb(int fd, const struct sockaddr *addr, socklen_t len)
+int socket_nb_connect(int fd, const struct sockaddr *addr, socklen_t len)
 {
     int ret;
 
     ret = connect(fd, addr, len);
     if (ret == 0)
     {
-        // Successfull connection
+        LOGGER_DEBUG("Connect non-blocking socket: success [fd=%d]", fd);
         return 0;
     }
 
@@ -120,20 +167,22 @@ int c3qo_socket_connect_nb(int fd, const struct sockaddr *addr, socklen_t len)
     case EISCONN:
         // Socket already connected, nothing to do
         return 0;
+
     case EINPROGRESS:
     case EALREADY:
-        //
-        // EINPROGRESS : server is listening but not answering, waiting for getsockopt
-        // EALREADY    : socket was already in EINPROGRESS, waiting for getsockopt
-        //
+        // EINPROGRESS: server is listening but not answering, waiting for getsockopt
+        // EALREADY   : socket was already in EINPROGRESS, waiting for getsockopt
+        LOGGER_DEBUG("Connect non-blocking socket: in progress [fd=%d]", fd);
         return 1;
+
     case ECONNREFUSED:
-        // No one listening on the socket
+        LOGGER_DEBUG("Connect non-blocking socket: no one listening on socket [fd=%d]", fd);
         return 2;
+
     case EADDRNOTAVAIL:
     default:
         // La pauvre socket n'a pas de travail, dommage pour elle
-        LOGGER_ERR("Failed to handle errno on socket connect [fd=%d ; connect=%d ; errno=%d]", fd, ret, errno);
+        LOGGER_ERR("Failed to connect non-blocking socket: unknown error [fd=%d ; errno=%d]", fd, errno);
         return -1;
     }
 }

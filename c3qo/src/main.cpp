@@ -10,6 +10,8 @@ extern "C" {
 
 // Project headers
 #include "c3qo/manager_bk.hpp"
+#include "c3qo/manager_fd.hpp"
+#include "c3qo/manager_tm.hpp"
 #include "utils/logger.hpp"
 
 // Manager of blocks shall be linked
@@ -66,6 +68,13 @@ int main(int argc, char **argv)
     if (conf == false)
     {
         ret = -1;
+    }
+
+    // Main loop
+    while (true)
+    {
+        manager_fd::select();
+        manager_tm::check_exp();
     }
 
     LOGGER_CLOSE();
