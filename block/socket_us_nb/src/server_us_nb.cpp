@@ -8,7 +8,6 @@
 
 // C++ library headers
 #include <cstdio>  // snprintf
-#include <cstdlib> // malloc
 #include <cstring> // memset
 
 // System library headers
@@ -20,34 +19,13 @@ extern "C" {
 }
 
 // Project headers
-#include "c3qo/block.hpp"
+#include "block/server_us_nb.hpp"
 #include "c3qo/manager_fd.hpp"
 #include "utils/logger.hpp"
 #include "utils/socket.hpp"
 
-#define SOCKET_FD_MAX 64 // Maximum number of file descriptors
 #define SOCKET_READ_SIZE 256
 #define SOCKET_NAME "/tmp/server_us_nb"
-
-//
-// @struct server_us_nb_ctx
-//
-struct server_us_nb_ctx
-{
-    // Configuration
-    int bk_id;
-
-    // Context
-    // TODO: replace this shit with a real container
-    int fd[SOCKET_FD_MAX]; // File descriptors of the socket
-    int fd_count;          // Number of fd in use
-
-    // Statistics
-    size_t rx_pkt_count; // RX: Number of packets read
-    size_t rx_pkt_bytes; // RX: Total size read
-    size_t tx_pkt_count; // TX: Number of packets sent
-    size_t tx_pkt_bytes; // TX: Total size sent
-};
 
 static inline int server_us_nb_fd_find(struct server_us_nb_ctx *ctx, int fd)
 {
@@ -75,7 +53,7 @@ static int server_us_nb_fd_add(struct server_us_nb_ctx *ctx, int fd)
 {
     int i;
 
-    c3qo_socket_set_nb(fd);
+    socket_nb_set(fd);
 
     if (ctx->fd[ctx->fd_count] != -1)
     {
@@ -152,7 +130,7 @@ static void server_us_nb_flush_fd(struct server_us_nb_ctx *ctx, int fd)
     do
     {
         memset(buff, 0, sizeof(buff));
-        ret = c3qo_socket_read_nb(fd, buff, sizeof(buff));
+        ret = socket_nb_read(fd, buff, sizeof(buff));
         if (ret > 0)
         {
             ctx->rx_pkt_count += 1;
@@ -166,7 +144,7 @@ static void server_us_nb_flush_fd(struct server_us_nb_ctx *ctx, int fd)
 //
 // @param fd : file descriptor ready for read
 //
-void server_us_nb_handler(void *vctx, int fd)
+static void server_us_nb_handler(void *vctx, int fd)
 {
     struct server_us_nb_ctx *ctx;
 
@@ -231,7 +209,7 @@ void *server_us_nb_init(int bk_id)
     ctx = (struct server_us_nb_ctx *)malloc(sizeof(*ctx));
     if (ctx == NULL)
     {
-        LOGGER_ERR("Failed to initialize block");
+        LOGGER_ERR("Failed to initialize block: could not reserve memory for the context [bk_id=%d]", bk_id);
         return ctx;
     }
 
@@ -262,12 +240,10 @@ void server_us_nb_start(void *vctx)
 
     if (vctx == NULL)
     {
-        LOGGER_ERR("Failed to start block");
+        LOGGER_ERR("Failed to start block: NULL context");
         return;
     }
     ctx = (struct server_us_nb_ctx *)vctx;
-
-    LOGGER_INFO("Start block [ctx=%p]", ctx);
 
     // Creation of the server socket
     ctx->fd[0] = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -287,7 +263,7 @@ void server_us_nb_start(void *vctx)
     }
 
     // Set the socket to be NB
-    c3qo_socket_set_nb(ctx->fd[0]);
+    socket_nb_set(ctx->fd[0]);
 
     memset(&srv_addr, 0, sizeof(srv_addr));
     srv_addr.sun_family = AF_UNIX;
@@ -346,6 +322,9 @@ void server_us_nb_stop(void *vctx)
 
     // Remove UNIX socket
     unlink(SOCKET_NAME);
+
+    // Free the context structure
+    free(ctx);
 }
 
 //

@@ -133,9 +133,10 @@ void check_exp()
         timer = manager_tm::tm_list_.front();
         if (timer.time < time)
         {
-            // Timer has expired
-            timer.callback(timer.arg);
+            // Timer has expired: remove timer and execute callback
+            //   - order matters: callback could register the timer again
             manager_tm::tm_list_.pop_front();
+            timer.callback(timer.arg);
         }
         else
         {

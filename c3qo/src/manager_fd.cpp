@@ -194,6 +194,27 @@ void clean()
 }
 
 //
+// @brief Prepare the read and write sets of file descriptor
+//
+void prepare_set()
+{
+    FD_ZERO(&manager_fd::set_r);
+    FD_ZERO(&manager_fd::set_w);
+
+    for (int fd = 0; fd <= manager_fd::set_max; fd++)
+    {
+        if (manager_fd::list_r[fd].callback != NULL)
+        {
+            FD_SET(fd, &manager_fd::set_r);
+        }
+        if (manager_fd::list_w[fd].callback != NULL)
+        {
+            FD_SET(fd, &manager_fd::set_w);
+        }
+    }
+}
+
+//
 // @brief Verify if a file descriptor is ready for reading
 //
 // @return Return code of select
@@ -206,6 +227,8 @@ int select()
     // Wait up to 10ms
     tv.tv_sec = 0;
     tv.tv_usec = 10000;
+
+    prepare_set();
 
     ret = select(manager_fd::set_max + 1, &manager_fd::set_r, &manager_fd::set_w, NULL, &tv);
     if (ret == 0)

@@ -8,7 +8,6 @@
 
 // C++ library headers
 #include <cstdio>  // snprintf
-#include <cstdlib> // malloc
 #include <cstring> // memset
 
 // System library headers
@@ -20,36 +19,32 @@ extern "C" {
 }
 
 // Project headers
-#include "c3qo/block.hpp"
+#include "block/client_us_nb.hpp"
+#include "c3qo/manager_bk.hpp"
 #include "c3qo/manager_fd.hpp"
+#include "c3qo/manager_tm.hpp"
 #include "utils/logger.hpp"
 #include "utils/socket.hpp"
+
+// One function uses the other: need definition
+static void client_us_nb_connect(struct client_us_nb_ctx *ctx);
+static void client_us_nb_connect_retry(void *vctx);
+
+// Get an access to the block manager for:
+//   - process_notif
+//   - process_rx
+//   - process_tx
+extern class manager_bk m_bk;
 
 #define SOCKET_NAME "/tmp/server_us_nb"
 
 //
-// @brief Context of the block
-//
-struct client_us_nb_ctx
-{
-    // Configuration
-    int bk_id; // Block ID
-
-    // Context
-    int fd; // Socket file descriptor
-
-    // Statistics
-    size_t rx_pkt_count; // RX: Number of packets read
-    size_t rx_pkt_bytes; // RX: Total size read
-    size_t tx_pkt_count; // TX: Number of packets sent
-    size_t tx_pkt_bytes; // TX: Total size sent
-};
-
-//
-// @brief Remove a managed file descriptor and close it
+// @brief Remove the managed file descriptor and close it
 //
 static void client_us_nb_clean(struct client_us_nb_ctx *ctx)
 {
+    LOGGER_INFO("Remove socket from block context [bk_id=%d ; fd=%d]", ctx->bk_id, ctx->fd);
+
     manager_fd::remove(ctx->fd, true);
     manager_fd::remove(ctx->fd, false);
     close(ctx->fd);
@@ -59,93 +54,157 @@ static void client_us_nb_clean(struct client_us_nb_ctx *ctx)
 //
 // @brief Callback function when data is received
 //
-void client_us_nb_callback(void *vctx, int fd)
+static void client_us_nb_callback(void *vctx, int fd)
 {
     struct client_us_nb_ctx *ctx;
+    ssize_t ret;
 
     // Verify input
     if (vctx == NULL)
     {
-        LOGGER_ERR("Failed to handle file descriptor callback [fd=%d]", fd);
+        LOGGER_ERR("Failed to handle file descriptor callback: NULL context [fd=%d]", fd);
         return;
     }
     ctx = (struct client_us_nb_ctx *)vctx;
     if (fd != ctx->fd)
     {
-        LOGGER_ERR("Failed to retrieve file descriptor from context [ctx=%p ; fd=%d]", ctx, fd);
+        LOGGER_ERR("Failed to handle file descriptor callback: unknown file descriptor [bk_id=%d ; fd_exp=%d ; fd_recv=%d]", ctx->bk_id, ctx->fd, fd);
     }
 
-    LOGGER_DEBUG("Handle file descriptor callback [ctx=%p ; fd=%d]", ctx, fd);
+    LOGGER_DEBUG("Handle file descriptor callback [bk_id=%d ; fd=%d]", ctx->bk_id, fd);
 
-    LOGGER_DEBUG("Received data on socket. Not implemented yet [fd=%d]", fd);
+    // Flush the file descriptor
+    do
+    {
+        ret = socket_nb_read(ctx->fd, ctx->buf, sizeof(ctx->buf));
+        if (ret > 0)
+        {
+            LOGGER_DEBUG("Received data on socket [bk_id=%d ; fd=%d ; buf=%p ; size=%zd]", ctx->bk_id, ctx->fd, ctx->buf, ret);
+            // For the moment this is OK because the data flow is synchronous
+            // Need to fix it if asynchronous data flow arrives
+            m_bk.process_rx(ctx->bind, ctx->buf);
+        }
+    } while (ret > 0);
 }
 
 //
-// @brief Check that the socket is connected
+// @brief Check if the socket is connected
 //
-void client_us_nb_connect_check(void *vctx, int fd)
+static void client_us_nb_connect_check(void *vctx, int fd)
 {
     struct client_us_nb_ctx *ctx;
-    socklen_t len;
-    int optval;
 
     // Verify input
     if (vctx == NULL)
     {
-        LOGGER_ERR("Failed to check connection status [fd=%d]", fd);
+        LOGGER_ERR("Failed to check socket connection status: NULL context [fd=%d]", fd);
         return;
     }
     ctx = (struct client_us_nb_ctx *)vctx;
     if (fd != ctx->fd)
     {
-        LOGGER_ERR("Failed to retrieve file descriptor from context [ctx=%p ; fd=%d]", ctx, fd);
+        LOGGER_ERR("Failed to check socket connection status: unknown file descriptor [bk_id=%d ; fd_exp=%d ; fd_recv=%d]", ctx->bk_id, ctx->fd, fd);
     }
 
-    LOGGER_DEBUG("Check connection status [ctx=%p ; fd=%d]", ctx, ctx->fd);
-
-    // Verify connection status
-    len = sizeof(optval);
-    if (getsockopt(ctx->fd, SOL_SOCKET, SO_ERROR, (void *)(&optval), &len) != 0)
+    if (socket_nb_connect_check(ctx->fd) == true)
     {
-        LOGGER_ERR("getsockopt failed on socket [fd=%d]", ctx->fd);
+        // Socket is connected, no need to look for write occasion anymore
+        ctx->connected = true;
+        manager_fd::remove(ctx->fd, false);
+        manager_fd::add(ctx, ctx->fd, &client_us_nb_callback, true);
+    }
+}
+
+//
+// @brief Try to connect the socket again. It is more portable to create a new one
+//
+static void client_us_nb_connect_retry(void *vctx)
+{
+    struct client_us_nb_ctx *ctx;
+
+    // Verify input
+    if (vctx == NULL)
+    {
+        LOGGER_ERR("Failed to retry connection on socket: NULL context");
         return;
     }
+    ctx = (struct client_us_nb_ctx *)vctx;
 
-    if (optval != 0)
+    if (close(ctx->fd) == -1)
     {
-        LOGGER_ERR("SO_ERROR still not clear on socket [fd=%d]", ctx->fd);
-        return;
+        LOGGER_WARNING("Could not close file descriptor properly: I/O might be pending and lost [bk_id=%d ; fd=%d]", ctx->bk_id, ctx->fd);
+    }
+    // TODO: put the socket options in the configuration
+    ctx->fd = socket_nb(AF_UNIX, SOCK_STREAM, 0);
+    if (ctx->fd == -1)
+    {
+        LOGGER_ERR("Failed to retry connection on socket: could not create non-blocking socket [bk_id=%d ; fd=%d]", ctx->bk_id, ctx->fd);
     }
 
-    LOGGER_DEBUG("Client socket connected to server [ctx=%p ; fd=%d]", ctx, ctx->fd);
-
-    manager_fd::remove(ctx->fd, false);
-    manager_fd::add(ctx, ctx->fd, &client_us_nb_callback, true);
+    client_us_nb_connect(ctx);
 }
 
 //
 // @brief Connect to a server
 //
-static int client_us_nb_connect(int fd)
+static void client_us_nb_connect(struct client_us_nb_ctx *ctx)
 {
     struct sockaddr_un clt_addr;
     int ret;
 
+    // Prepare socket structure
     memset(&clt_addr, 0, sizeof(clt_addr));
     clt_addr.sun_family = AF_UNIX;
     ret = snprintf(clt_addr.sun_path, sizeof(clt_addr.sun_path), SOCKET_NAME);
     if (ret < 0)
     {
-        LOGGER_ERR("Failed snprintf [buf=%p ; size=%lu ; string=%s]", clt_addr.sun_path, sizeof(clt_addr.sun_path), SOCKET_NAME);
-        return -1;
+        LOGGER_ERR("Failed to connect socket: snprintf error [buf=%p ; size=%lu ; string=%s]", clt_addr.sun_path, sizeof(clt_addr.sun_path), SOCKET_NAME);
+        return;
     }
     else if (((size_t)ret) > sizeof(clt_addr.sun_path))
     {
-        LOGGER_ERR("Failed to write socket name, it's too large [sun_path=%s ; max_size=%lu]", SOCKET_NAME, sizeof(clt_addr.sun_path));
-        return -1;
+        LOGGER_ERR("Failed to connect socket: socket name too long [sun_path=%s ; max_size=%lu]", SOCKET_NAME, sizeof(clt_addr.sun_path));
+        return;
     }
 
-    return c3qo_socket_connect_nb(fd, (struct sockaddr *)&clt_addr, sizeof(clt_addr));
+    // Connect the socket
+    ret = socket_nb_connect(ctx->fd, (struct sockaddr *)&clt_addr, sizeof(clt_addr));
+    switch (ret)
+    {
+    case 1:
+        // Connection in progress, register file descriptor for writing to check the connection when it's ready
+        manager_fd::add(ctx, ctx->fd, &client_us_nb_connect_check, false);
+        break;
+
+    case -1:
+    case 2:
+        struct manager_tm::timer tm;
+
+        LOGGER_DEBUG("Prepare a timer for socket connection retry [bk_id=%d ; fd=%d]", ctx->bk_id, ctx->fd)
+
+        // Prepare a 100ms timer for connection retry
+        tm.tid = ctx->fd;
+        tm.callback = &client_us_nb_connect_retry;
+        tm.arg = ctx;
+        tm.time.tv_sec = 0;
+        tm.time.tv_usec = 100000;
+        manager_tm::add(tm);
+        break;
+
+    case 0:
+        // Success: register the file descriptor with a callback for data reception
+        if (manager_fd::add(ctx, ctx->fd, &client_us_nb_callback, true) == false)
+        {
+            LOGGER_ERR("Failed to register callback on client socket [fd=%d ; callback=%p]", ctx->fd, &client_us_nb_callback);
+            client_us_nb_clean(ctx);
+        }
+        else
+        {
+            LOGGER_DEBUG("Registered callback on client socket [fd=%d ; callback=%p]", ctx->fd, &client_us_nb_callback);
+            ctx->connected = true;
+        }
+        break;
+    }
 }
 
 //
@@ -159,18 +218,20 @@ void *client_us_nb_init(int bk_id)
     ctx = (struct client_us_nb_ctx *)malloc(sizeof(*ctx));
     if (ctx == NULL)
     {
-        LOGGER_ERR("Failed to initialize block");
+        LOGGER_ERR("Failed to initialize block: could not reserve memory for the context [bk_id=%d]", bk_id);
         return ctx;
     }
 
     ctx->bk_id = bk_id;
+
     ctx->fd = -1;
+    ctx->connected = false;
+    // ctx->buf: no need to initialize
+
     ctx->rx_pkt_count = 0;
     ctx->rx_pkt_bytes = 0;
     ctx->tx_pkt_count = 0;
     ctx->tx_pkt_bytes = 0;
-
-    LOGGER_INFO("Initialize block [ctx=%p]", ctx);
 
     return ctx;
 }
@@ -181,62 +242,25 @@ void *client_us_nb_init(int bk_id)
 void client_us_nb_start(void *vctx)
 {
     struct client_us_nb_ctx *ctx;
-    int ret;
 
     if (vctx == NULL)
     {
-        LOGGER_ERR("Failed to start block");
+        LOGGER_ERR("Failed to start block: NULL context");
         return;
     }
     ctx = (struct client_us_nb_ctx *)vctx;
 
-    LOGGER_INFO("Start block [ctx=%p]", ctx);
-
     // Create the client socket
-    ctx->fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    // TODO: put the socket options in the configuration
+    ctx->fd = socket_nb(AF_UNIX, SOCK_STREAM, 0);
     if (ctx->fd == -1)
     {
-        LOGGER_ERR("Failed to open client socket [fd=%d]", ctx->fd);
+        LOGGER_ERR("Failed to start block: could not create non-blocking socket [fd=%d]", ctx->fd);
         return;
     }
-
-    // Set the socket to be non-blocking
-    c3qo_socket_set_nb(ctx->fd);
 
     // Connect the socket to the server
-    ret = client_us_nb_connect(ctx->fd);
-    if (ret == -1)
-    {
-        LOGGER_ERR("Failed to connect to server [fd=%d]", ctx->fd);
-        client_us_nb_clean(ctx);
-        return;
-    }
-    else if (ret == 1)
-    {
-        LOGGER_DEBUG("Connection sent but not acknowledged, will check later [fd=%d]", ctx->fd);
-        manager_fd::add(ctx, ctx->fd, &client_us_nb_connect_check, false);
-        return;
-    }
-    else if (ret == 2)
-    {
-        LOGGER_ERR("Failed to find someone listening, launch timer for reconnection [fd=%d]", ctx->fd);
-
-        return;
-    }
-    else
-    {
-        // Success: register the file descriptor with a callback for data reception
-        if (manager_fd::add(ctx, ctx->fd, &client_us_nb_callback, true) == false)
-        {
-            LOGGER_ERR("Failed to register callback on client socket [fd=%d ; callback=%p]", ctx->fd, &client_us_nb_callback);
-            client_us_nb_clean(ctx);
-            return;
-        }
-        else
-        {
-            LOGGER_DEBUG("Registered callback on client socket [fd=%d ; callback=%p]", ctx->fd, &client_us_nb_callback);
-        }
-    }
+    client_us_nb_connect(ctx);
 }
 
 //
@@ -261,6 +285,9 @@ void client_us_nb_stop(void *vctx)
     }
 
     client_us_nb_clean(ctx);
+
+    // Free the context structure
+    free(ctx);
 }
 
 // Declare the interface for this block

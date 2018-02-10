@@ -44,6 +44,10 @@ add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src EXCLUDE_FROM_ALL)
 # Allow tests to register themselves as tests
 enable_testing()
 
+# Include directories for blocks
+set(BLOCK_INCLUDE_DIR)
+set(BLOCK_INCLUDE_DIR ${BLOCK_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/block/socket_us_nb/include)
+set(BLOCK_INCLUDE_DIR ${BLOCK_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/block/hello/include)
 
 # Include directories for c3qo engine
 set(C3QO_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/c3qo/include)
