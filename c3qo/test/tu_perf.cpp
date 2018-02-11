@@ -50,50 +50,38 @@ void tu_perf::TearDown()
 //
 TEST_F(tu_perf, commutation)
 {
-    std::unordered_map<int, struct bk_info>::const_iterator bk;
-    std::unordered_map<int, struct bk_info>::const_iterator end;
-    const char *filename = "/tmp/tu_perf.txt";
-    std::fstream file;
+    const struct bk_info *bi;
     char buf[] = "yolooooo";
 
     // Reduce amount of output
     logger_set_level(LOGGER_LEVEL_WARNING);
 
-    file.open(filename, std::ios::out | std::ios::trunc);
-    ASSERT_EQ(file.is_open(), true);
-
     // Configure a chain of 100 blocks:
     //   - bk_1 -> bk_2 -> bk_3 -> bk_4... -> bk_100 -> bk_101
     for (int i = 1; i < 101; i++)
     {
-        file << CMD_ADD << "   " << i << " " << TYPE_HELLO << std::endl;
-        file << CMD_START << " " << i << " no_arg        " << std::endl;
+        m_bk.block_add(i, TYPE_HELLO);
+        m_bk.block_start(i);
 
         for (int j = 0; j < 8; j++)
         {
             // Bind port j of bk_i to bk_i+1
-            file << CMD_BIND << " " << i << " " << j << ":" << i + 1 << std::endl;
+            m_bk.block_bind(i, j, i + 1);
         }
     }
 
     // Modify binds of bk_100 to point to 0
     for (int j = 0; j < 8; j++)
     {
-        file << CMD_BIND << " " << 100 << " " << j << ":0" << std::endl;
+        m_bk.block_bind(100, j, 0);
     }
 
-    file.close();
-
-    // Parsing configuration
-    EXPECT_EQ(m_bk.conf_parse(filename), true);
-
     // Send data from bk_1
-    bk = m_bk.bk_map_.find(1);
-    end = m_bk.bk_map_.end();
-    ASSERT_TRUE(bk != end);
+    bi = m_bk.block_get(1);
+    ASSERT_NE(bi, (void *)NULL);
     for (int i = 0; i < 10000; i++)
     {
-        EXPECT_TRUE(bk->second.bk.ctrl(bk->second.ctx, buf) == 0);
+        EXPECT_EQ(bi->bk.ctrl(bi->ctx, buf), 0);
     }
 
     // Verify that 10000 buffers crossed bk_2 to bk_100
@@ -101,10 +89,10 @@ TEST_F(tu_perf, commutation)
     {
         int count;
 
-        bk = m_bk.bk_map_.find(i);
-        ASSERT_TRUE(bk != end);
+        bi = m_bk.block_get(i);
+        ASSERT_NE(bi, (void *)NULL);
 
-        bk->second.bk.get_stats(bk->second.ctx, buf, sizeof(buf));
+        bi->bk.get_stats(bi->ctx, buf, sizeof(buf));
         count = atoi(buf);
         EXPECT_TRUE(count == 10000);
     }

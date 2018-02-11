@@ -6,6 +6,8 @@ extern "C" {
 #include <sys/time.h> // gettimeofday, timeval
 }
 
+#define USEC_MAX 1000000 // Maximum number of usec
+
 namespace manager_tm
 {
 
