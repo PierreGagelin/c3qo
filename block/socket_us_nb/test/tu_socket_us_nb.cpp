@@ -13,8 +13,12 @@
 // Gtest library
 #include "gtest/gtest.h"
 
+// Client and server shall be linked
 extern struct bk_if client_us_nb_if;
 extern struct bk_if server_us_nb_if;
+
+// Managers shall be linked
+extern class manager_tm m_tm;
 
 class tu_socket_us_nb : public testing::Test
 {
@@ -103,7 +107,7 @@ TEST_F(tu_socket_us_nb, connect_retry)
     {
         // Lookup for something on the socket and make timer expire
         manager_fd::select();
-        manager_tm::check_exp();
+        m_tm.check_exp();
     } while (ctx_s->fd_count < 2);
 
     server_us_nb_if.stop(ctx_s);

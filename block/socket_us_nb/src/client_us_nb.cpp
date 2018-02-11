@@ -30,11 +30,9 @@ extern "C" {
 static void client_us_nb_connect(struct client_us_nb_ctx *ctx);
 static void client_us_nb_connect_retry(void *vctx);
 
-// Get an access to the block manager for:
-//   - process_notif
-//   - process_rx
-//   - process_tx
+// Managers shall be linked
 extern class manager_bk m_bk;
+extern class manager_tm m_tm;
 
 #define SOCKET_NAME "/tmp/server_us_nb"
 
@@ -178,7 +176,7 @@ static void client_us_nb_connect(struct client_us_nb_ctx *ctx)
 
     case -1:
     case 2:
-        struct manager_tm::timer tm;
+        struct timer tm;
 
         LOGGER_DEBUG("Prepare a timer for socket connection retry [bk_id=%d ; fd=%d]", ctx->bk_id, ctx->fd)
 
@@ -188,7 +186,7 @@ static void client_us_nb_connect(struct client_us_nb_ctx *ctx)
         tm.arg = ctx;
         tm.time.tv_sec = 0;
         tm.time.tv_usec = 100000;
-        manager_tm::add(tm);
+        m_tm.add(tm);
         break;
 
     case 0:
