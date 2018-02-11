@@ -13,62 +13,42 @@
 #include <cstdlib> // NULL
 #include <cstring> // memset
 
-// System library headers
-extern "C" {
-#include <sys/select.h> // select and associated definitions
-}
-
 // Project headers
+#include "c3qo/manager_fd.hpp"
 #include "utils/logger.hpp"
 
-namespace manager_fd
-{
-
-// Routine to call on a fd
-struct fd_call
-{
-    void *ctx;
-    void (*callback)(void *ctx, int fd);
-};
-
-// Sets of file descriptors managed for read and write
-fd_set set_r;
-fd_set set_w;
-int set_max;
-
-// List of registered callbacks for read and write events
-struct fd_call list_r[FD_SETSIZE];
-struct fd_call list_w[FD_SETSIZE];
+// One static instance of timer manager
+class manager_fd m_fd;
 
 //
 // @brief Initialize the file descriptor manager
 //
-void init()
+void manager_fd::init()
 {
     LOGGER_INFO("Initialize manager_fd");
 
-    memset(&manager_fd::list_r, 0, sizeof(manager_fd::list_r));
-    memset(&manager_fd::list_w, 0, sizeof(manager_fd::list_w));
-    manager_fd::set_max = -1;
+    memset(&list_r, 0, sizeof(list_r));
+    memset(&list_w, 0, sizeof(list_w));
+    set_max = -1;
 }
 
 //
 // @brief Update the maximum fd value in the list
 //
-void update_max()
+void manager_fd::update_max()
 {
     // Find previous file descriptor managed
-    for (int i = manager_fd::set_max; i >= 0; i--)
+    for (int i = set_max; i >= 0; i--)
     {
-        if ((manager_fd::list_r[i].callback != NULL) || (manager_fd::list_w[i].callback != NULL))
+        if ((list_r[i].callback != NULL) || (list_w[i].callback != NULL))
         {
-            manager_fd::set_max = i;
+            set_max = i;
             return;
         }
     }
 
     // We manage no descriptor
-    manager_fd::set_max = -1;
+    set_max = -1;
     return;
 }
 
@@ -81,7 +61,7 @@ void update_max()
 //
 // @return true on success, false on failure
 //
-bool add(void *ctx, int fd, void (*callback)(void *ctx, int fd), bool read)
+bool manager_fd::add(void *ctx, int fd, void (*callback)(void *ctx, int fd), bool read)
 {
     struct fd_call *list;
     static fd_set *set;
@@ -106,13 +86,13 @@ bool add(void *ctx, int fd, void (*callback)(void *ctx, int fd), bool read)
     // Work either on read or write for this file descriptor
     if (read == true)
     {
-        list = manager_fd::list_r;
-        set = &manager_fd::set_r;
+        list = list_r;
+        set = &set_r;
     }
     else
     {
-        list = manager_fd::list_w;
-        set = &manager_fd::set_w;
+        list = list_w;
+        set = &set_w;
     }
 
     // Add new file descriptor if not already registered
@@ -121,9 +101,9 @@ bool add(void *ctx, int fd, void (*callback)(void *ctx, int fd), bool read)
         FD_SET(fd, set);
 
         // Update max file descriptor if necessary
-        if (fd > manager_fd::set_max)
+        if (fd > set_max)
         {
-            manager_fd::set_max = fd;
+            set_max = fd;
         }
     }
 
@@ -136,7 +116,7 @@ bool add(void *ctx, int fd, void (*callback)(void *ctx, int fd), bool read)
 //
 // @brief Remove a file descriptor from the reading list
 //
-void remove(int fd, bool read)
+void manager_fd::remove(int fd, bool read)
 {
     struct fd_call *list;
     static fd_set *set;
@@ -150,13 +130,13 @@ void remove(int fd, bool read)
     // Work either on read or write for this file descriptor
     if (read == true)
     {
-        list = manager_fd::list_r;
-        set = &manager_fd::set_r;
+        list = list_r;
+        set = &set_r;
     }
     else
     {
-        list = manager_fd::list_w;
-        set = &manager_fd::set_w;
+        list = list_w;
+        set = &set_w;
     }
 
     if (list[fd].callback == NULL)
@@ -171,7 +151,7 @@ void remove(int fd, bool read)
     FD_CLR(fd, set);
 
     // If this value was the maximum fd value, we need to refresh it
-    if (fd == manager_fd::set_max)
+    if (fd == set_max)
     {
         update_max();
     }
@@ -180,36 +160,36 @@ void remove(int fd, bool read)
 //
 // @brief Clean the file descriptor set
 //
-void clean()
+void manager_fd::clean()
 {
     LOGGER_INFO("Clear file descriptor list");
 
-    FD_ZERO(&manager_fd::set_r);
-    FD_ZERO(&manager_fd::set_w);
+    FD_ZERO(&set_r);
+    FD_ZERO(&set_w);
 
-    memset(&manager_fd::list_r, 0, sizeof(manager_fd::list_r));
-    memset(&manager_fd::list_w, 0, sizeof(manager_fd::list_w));
+    memset(&list_r, 0, sizeof(list_r));
+    memset(&list_w, 0, sizeof(list_w));
 
-    manager_fd::set_max = -1;
+    set_max = -1;
 }
 
 //
 // @brief Prepare the read and write sets of file descriptor
 //
-void prepare_set()
+void manager_fd::prepare_set()
 {
-    FD_ZERO(&manager_fd::set_r);
-    FD_ZERO(&manager_fd::set_w);
+    FD_ZERO(&set_r);
+    FD_ZERO(&set_w);
 
-    for (int fd = 0; fd <= manager_fd::set_max; fd++)
+    for (int fd = 0; fd <= set_max; fd++)
     {
-        if (manager_fd::list_r[fd].callback != NULL)
+        if (list_r[fd].callback != NULL)
         {
-            FD_SET(fd, &manager_fd::set_r);
+            FD_SET(fd, &set_r);
         }
-        if (manager_fd::list_w[fd].callback != NULL)
+        if (list_w[fd].callback != NULL)
         {
-            FD_SET(fd, &manager_fd::set_w);
+            FD_SET(fd, &set_w);
         }
     }
 }
@@ -219,7 +199,7 @@ void prepare_set()
 //
 // @return Return code of select
 //
-int select()
+int manager_fd::select_fd()
 {
     struct timeval tv;
     int ret;
@@ -230,7 +210,7 @@ int select()
 
     prepare_set();
 
-    ret = select(manager_fd::set_max + 1, &manager_fd::set_r, &manager_fd::set_w, NULL, &tv);
+    ret = select(set_max + 1, &set_r, &set_w, NULL, &tv);
     if (ret == 0)
     {
         // Nothing to read, select timed out
@@ -246,18 +226,18 @@ int select()
         // There are 'ret' fd ready for reading
 
         j = 0;
-        for (int fd = 0; fd <= manager_fd::set_max; fd++)
+        for (int fd = 0; fd <= set_max; fd++)
         {
-            if ((manager_fd::list_r[fd].callback != NULL) && (FD_ISSET(fd, &manager_fd::set_r) != 0))
+            if ((list_r[fd].callback != NULL) && (FD_ISSET(fd, &set_r) != 0))
             {
                 // Data ready for reading
-                manager_fd::list_r[fd].callback(manager_fd::list_r[fd].ctx, fd);
+                list_r[fd].callback(list_r[fd].ctx, fd);
                 j++;
             }
-            if ((manager_fd::list_w[fd].callback != NULL) && (FD_ISSET(fd, &manager_fd::set_w) != 0))
+            if ((list_w[fd].callback != NULL) && (FD_ISSET(fd, &set_w) != 0))
             {
                 // Data ready for writing
-                manager_fd::list_w[fd].callback(manager_fd::list_r[fd].ctx, fd);
+                list_w[fd].callback(list_r[fd].ctx, fd);
                 j++;
             }
 
@@ -271,5 +251,3 @@ int select()
 
     return ret;
 }
-
-} // END namespace manager_fd

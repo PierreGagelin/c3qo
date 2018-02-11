@@ -33,6 +33,7 @@ static void client_us_nb_connect_retry(void *vctx);
 // Managers shall be linked
 extern class manager_bk m_bk;
 extern class manager_tm m_tm;
+extern class manager_fd m_fd;
 
 #define SOCKET_NAME "/tmp/server_us_nb"
 
@@ -43,8 +44,8 @@ static void client_us_nb_clean(struct client_us_nb_ctx *ctx)
 {
     LOGGER_INFO("Remove socket from block context [bk_id=%d ; fd=%d]", ctx->bk_id, ctx->fd);
 
-    manager_fd::remove(ctx->fd, true);
-    manager_fd::remove(ctx->fd, false);
+    m_fd.remove(ctx->fd, true);
+    m_fd.remove(ctx->fd, false);
     close(ctx->fd);
     ctx->fd = -1;
 }
@@ -108,8 +109,8 @@ static void client_us_nb_connect_check(void *vctx, int fd)
     {
         // Socket is connected, no need to look for write occasion anymore
         ctx->connected = true;
-        manager_fd::remove(ctx->fd, false);
-        manager_fd::add(ctx, ctx->fd, &client_us_nb_callback, true);
+        m_fd.remove(ctx->fd, false);
+        m_fd.add(ctx, ctx->fd, &client_us_nb_callback, true);
     }
 }
 
@@ -171,7 +172,7 @@ static void client_us_nb_connect(struct client_us_nb_ctx *ctx)
     {
     case 1:
         // Connection in progress, register file descriptor for writing to check the connection when it's ready
-        manager_fd::add(ctx, ctx->fd, &client_us_nb_connect_check, false);
+        m_fd.add(ctx, ctx->fd, &client_us_nb_connect_check, false);
         break;
 
     case -1:
@@ -191,7 +192,7 @@ static void client_us_nb_connect(struct client_us_nb_ctx *ctx)
 
     case 0:
         // Success: register the file descriptor with a callback for data reception
-        if (manager_fd::add(ctx, ctx->fd, &client_us_nb_callback, true) == false)
+        if (m_fd.add(ctx, ctx->fd, &client_us_nb_callback, true) == false)
         {
             LOGGER_ERR("Failed to register callback on client socket [fd=%d ; callback=%p]", ctx->fd, &client_us_nb_callback);
             client_us_nb_clean(ctx);

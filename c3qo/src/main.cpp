@@ -17,6 +17,7 @@ extern "C" {
 // Managers shall be linked
 extern class manager_bk m_bk;
 extern class manager_tm m_tm;
+extern class manager_fd m_fd;
 
 extern char *optarg; // Comes with getopt
 
@@ -74,7 +75,7 @@ int main(int argc, char **argv)
     // Main loop
     while (true)
     {
-        manager_fd::select();
+        m_fd.select_fd();
         m_tm.check_exp();
     }
 

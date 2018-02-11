@@ -26,6 +26,7 @@ extern "C" {
 // Managers shall be linked
 extern class manager_bk m_bk;
 extern class manager_tm m_tm;
+extern class manager_fd m_fd;
 
 bool fd_called;
 void fd_callback(void *ctx, int fd)
@@ -209,23 +210,23 @@ TEST_F(tu_manager, manager_fd)
     ASSERT_NE(fd, -1);
 
     // Initialize the file descriptor manager
-    manager_fd::init();
+    m_fd.init();
 
     // Add a file descriptor to be managed for reading
-    EXPECT_EQ(manager_fd::add(NULL, fd, &fd_callback, true), true);
+    EXPECT_EQ(m_fd.add(NULL, fd, &fd_callback, true), true);
 
     // Write into the managed
     fprintf(file, "hello world!");
 
     // Verify something is ready to be read
-    EXPECT_GT(manager_fd::select(), 0);
+    EXPECT_GT(m_fd.select_fd(), 0);
 
     // Verify that the callback was executed
     EXPECT_EQ(fd_called, true);
 
     // Clean the file descriptor manager
-    manager_fd::remove(fd, true);
-    manager_fd::clean();
+    m_fd.remove(fd, true);
+    m_fd.clean();
     fclose(file);
 }
 

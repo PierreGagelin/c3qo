@@ -1,20 +1,45 @@
 #ifndef C3QO_MANAGER_FD_HPP
 #define C3QO_MANAGER_FD_HPP
 
-namespace manager_fd
+// System library headers
+extern "C" {
+#include <sys/select.h> // select and associated definitions
+}
+
+// Routine to call on a fd
+struct fd_call
 {
+    void *ctx;
+    void (*callback)(void *ctx, int fd);
+};
 
-// Initialize and clean the file descriptor manager
-void init();
-void clean();
+class manager_fd
+{
+  protected:
+    // Sets of file descriptors managed for read and write
+    fd_set set_r;
+    fd_set set_w;
+    int set_max;
 
-// Add or remove a file descriptor
-bool add(void *ctx, int fd, void (*callback)(void *ctx, int fd), bool read);
-void remove(int fd, bool read);
+  protected:
+    // List of registered callbacks for read and write events
+    struct fd_call list_r[FD_SETSIZE];
+    struct fd_call list_w[FD_SETSIZE];
 
-// Lookup fd ready
-int select();
+  protected:
+    void update_max();
+    void prepare_set();
 
-} // END namespace manager_fd
+  public:
+    bool add(void *ctx, int fd, void (*callback)(void *ctx, int fd), bool read);
+    void remove(int fd, bool read);
+
+  public:
+    void init();
+    void clean();
+
+  public:
+    int select_fd();
+};
 
 #endif // C3QO_MANAGER_FD_HPP
