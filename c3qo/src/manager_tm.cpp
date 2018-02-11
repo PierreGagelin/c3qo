@@ -7,13 +7,11 @@
 
 // C++ library headers
 #include <forward_list> // forward_list container
-#include <cstdlib>      // NULL
+#include <cstdlib>      // NULL, abs
 
 // Project headers
 #include "c3qo/manager_tm.hpp"
 #include "utils/logger.hpp"
-
-#define USEC_MAX 1000000 // Maximum number of usec
 
 namespace manager_tm
 {
@@ -82,12 +80,10 @@ bool add(struct timer &tm)
     }
     tm.time.tv_sec += t.tv_sec;
     tm.time.tv_usec += t.tv_usec;
-    if (tm.time.tv_usec >= USEC_MAX)
-    {
-        // Convert usec to sec
-        tm.time.tv_sec += tm.time.tv_usec / USEC_MAX;
-        tm.time.tv_usec = tm.time.tv_usec % USEC_MAX;
-    }
+
+    // Wrap microseconds value to be both in range and positive
+    tm.time.tv_sec += tm.time.tv_usec / USEC_MAX;
+    tm.time.tv_usec = tm.time.tv_usec % USEC_MAX;
 
     // Remove potentially existing timer and push new one
     manager_tm::tm_list_.remove(tm);

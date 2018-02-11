@@ -51,7 +51,7 @@ class manager_bk
     manager_bk();
     ~manager_bk();
 
-  public:
+  protected:
     // Map of blocks
     std::unordered_map<int, struct bk_info> bk_map_;
 
@@ -60,11 +60,7 @@ class manager_bk
     struct command cmd_;
 
   protected:
-    void block_add(int id, enum bk_type type);
-    void block_init(struct bk_info &bki);
-    void block_start(struct bk_info &bki);
-    void block_stop(struct bk_info &bki);
-    void block_flow(int bk_id, void *data, enum flow_type type);
+    void block_flow(int id, void *data, enum flow_type type);
 
   public:
     void process_rx(int bk_id, void *data);
@@ -72,10 +68,19 @@ class manager_bk
     void process_notif(int bk_id, void *notif);
 
   public:
+    void block_add(int id, enum bk_type type);
+    void block_init(int id);
+    void block_conf(int id, char *conf);
+    void block_bind(int id, int port, int bk_id);
+    void block_start(int id);
+    void block_stop(int id);
+
+  public:
+    const struct bk_info *block_get(int id);
     void block_del(int id);
     void block_clear();
 
-  public:
+  protected:
     int conf_parse_line(FILE *file);
     void exec_cmd();
 
