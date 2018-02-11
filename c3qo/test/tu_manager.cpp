@@ -23,7 +23,9 @@ extern "C" {
 // Gtest library
 #include "gtest/gtest.h"
 
+// Managers shall be linked
 extern class manager_bk m_bk;
+extern class manager_tm m_tm;
 
 bool fd_called;
 void fd_callback(void *ctx, int fd)
@@ -232,12 +234,12 @@ TEST_F(tu_manager, manager_fd)
 //
 TEST_F(tu_manager, manager_tm_expiration)
 {
-    struct manager_tm::timer t;
+    struct timer t;
     char def[8] = "hello";
     char arg[8] = "world";
 
     // Initialize manager and zozo
-    manager_tm::clear();
+    m_tm.clear();
     tm_callback(def);
 
     // Register a 40 ms timer
@@ -246,7 +248,7 @@ TEST_F(tu_manager, manager_tm_expiration)
     t.arg = arg;
     t.time.tv_sec = 0;
     t.time.tv_usec = 40000;
-    EXPECT_EQ(manager_tm::add(t), true);
+    EXPECT_EQ(m_tm.add(t), true);
 
     // Verify timer expiration
     for (int i = 0; i < 4; i++)
@@ -259,7 +261,7 @@ TEST_F(tu_manager, manager_tm_expiration)
         EXPECT_EQ(select(0, NULL, NULL, NULL, &sleep), 0);
 
         // Check timer expiration
-        manager_tm::check_exp();
+        m_tm.check_exp();
 
         if (i < 3)
         {
@@ -279,16 +281,16 @@ TEST_F(tu_manager, manager_tm_expiration)
 //
 TEST_F(tu_manager, manager_tm_order)
 {
-    struct manager_tm::timer t_0;
-    struct manager_tm::timer t_1;
-    struct manager_tm::timer t_2;
+    struct timer t_0;
+    struct timer t_1;
+    struct timer t_2;
     struct timeval time_start;
     struct timeval time_cur;
     char arg[3][8] = {"timer0", "timer1", "timer2"};
     char def[8] = "default";
 
     // Initialize manager and his friend zozo
-    manager_tm::clear();
+    m_tm.clear();
     tm_callback(def);
 
     // Get system time
@@ -314,9 +316,9 @@ TEST_F(tu_manager, manager_tm_order)
     t_2.arg = arg[2];
     t_2.time.tv_sec = 0;
     t_2.time.tv_usec = 120000;
-    EXPECT_EQ(manager_tm::add(t_2), true);
-    EXPECT_EQ(manager_tm::add(t_0), true);
-    EXPECT_EQ(manager_tm::add(t_1), true);
+    EXPECT_EQ(m_tm.add(t_2), true);
+    EXPECT_EQ(m_tm.add(t_0), true);
+    EXPECT_EQ(m_tm.add(t_1), true);
 
     // Verify the order of expiration
     for (int i = 0; i < 6; i++)
@@ -331,7 +333,7 @@ TEST_F(tu_manager, manager_tm_order)
 
         // Check timer expiration
         ASSERT_NE(gettimeofday(&time_cur, NULL), -1);
-        manager_tm::check_exp();
+        m_tm.check_exp();
 
         time_cur.tv_sec -= time_start.tv_sec;
         time_cur.tv_usec -= time_start.tv_usec;
@@ -340,20 +342,20 @@ TEST_F(tu_manager, manager_tm_order)
         time_cur.tv_sec -= time_start.tv_usec / USEC_MAX;
         time_cur.tv_usec = time_start.tv_usec % USEC_MAX;
 
-        ASSERT_TRUE(manager_tm::operator<(time_cur, time_start));
+        ASSERT_LT(time_cur, time_start);
 
-        if (manager_tm::operator<(time_cur, t_0.time))
+        if (time_cur < t_0.time)
         {
             // Timer shouldn't have expired
             exp = def;
             break;
         }
-        else if (manager_tm::operator<(time_cur, t_0.time))
+        else if (time_cur < t_0.time)
         {
             // Timer 0 should expire but not yet timer 1
             exp = arg[0];
         }
-        else if (manager_tm::operator<(time_cur, t_0.time))
+        else if (time_cur < t_0.time)
         {
             // Timer 1 should expire but not yet timer 2
             exp = arg[1];
@@ -372,12 +374,12 @@ TEST_F(tu_manager, manager_tm_order)
 //
 TEST_F(tu_manager, manager_tm_id)
 {
-    struct manager_tm::timer t;
+    struct timer t;
     char def[8] = "hello";
     char arg[8] = "world";
 
     // Initialize manager and the global
-    manager_tm::clear();
+    m_tm.clear();
     tm_callback(def);
 
     // Register two timers with the same ID:
@@ -388,10 +390,10 @@ TEST_F(tu_manager, manager_tm_id)
     t.arg = arg;
     t.time.tv_sec = 0;
     t.time.tv_usec = 20000;
-    EXPECT_EQ(manager_tm::add(t), true);
+    EXPECT_EQ(m_tm.add(t), true);
     t.time.tv_sec = 0;
     t.time.tv_usec = 30000;
-    EXPECT_EQ(manager_tm::add(t), true);
+    EXPECT_EQ(m_tm.add(t), true);
 
     // Verify only the 30ms is kept
     for (int i = 0; i < 4; i++)
@@ -405,7 +407,7 @@ TEST_F(tu_manager, manager_tm_id)
         EXPECT_EQ(select(0, NULL, NULL, NULL, &sleep), 0);
 
         // Check timer expiration
-        manager_tm::check_exp();
+        m_tm.check_exp();
 
         if (i < 2)
         {

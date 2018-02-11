@@ -14,8 +14,9 @@ extern "C" {
 #include "c3qo/manager_tm.hpp"
 #include "utils/logger.hpp"
 
-// Manager of blocks shall be linked
+// Managers shall be linked
 extern class manager_bk m_bk;
+extern class manager_tm m_tm;
 
 extern char *optarg; // Comes with getopt
 
@@ -74,7 +75,7 @@ int main(int argc, char **argv)
     while (true)
     {
         manager_fd::select();
-        manager_tm::check_exp();
+        m_tm.check_exp();
     }
 
     LOGGER_CLOSE();

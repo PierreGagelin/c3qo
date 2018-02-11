@@ -23,7 +23,7 @@ extern "C" {
 // Gtest library
 #include "gtest/gtest.h"
 
-// Manager shall be linked
+// Managers shall be linked
 extern class manager_bk m_bk;
 
 class tu_perf : public testing::Test
