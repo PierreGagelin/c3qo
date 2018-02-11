@@ -19,6 +19,7 @@ extern struct bk_if server_us_nb_if;
 
 // Managers shall be linked
 extern class manager_tm m_tm;
+extern class manager_fd m_fd;
 
 class tu_socket_us_nb : public testing::Test
 {
@@ -31,7 +32,7 @@ void tu_socket_us_nb::SetUp()
     LOGGER_OPEN();
     logger_set_level(LOGGER_LEVEL_DEBUG);
 
-    manager_fd::init();
+    m_fd.init();
 }
 
 void tu_socket_us_nb::TearDown()
@@ -64,7 +65,7 @@ TEST_F(tu_socket_us_nb, connect)
     {
         char buf[16];
 
-        manager_fd::select();
+        m_fd.select_fd();
 
         server_us_nb_if.get_stats(ctx_s, buf, 16);
         fd_count = atoi(buf);
@@ -106,7 +107,7 @@ TEST_F(tu_socket_us_nb, connect_retry)
     do
     {
         // Lookup for something on the socket and make timer expire
-        manager_fd::select();
+        m_fd.select_fd();
         m_tm.check_exp();
     } while (ctx_s->fd_count < 2);
 

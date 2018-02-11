@@ -27,6 +27,8 @@ extern "C" {
 #define SOCKET_READ_SIZE 256
 #define SOCKET_NAME "/tmp/server_us_nb"
 
+extern class manager_fd m_fd;
+
 static inline int server_us_nb_fd_find(struct server_us_nb_ctx *ctx, int fd)
 {
     int i;
@@ -96,7 +98,7 @@ static void server_us_nb_remove(struct server_us_nb_ctx *ctx, int i)
 
     LOGGER_DEBUG("Remove file descriptor from block server_us_nb [fd=%d ; fd_count_old=%d ; fd_count_new=%d]", ctx->fd[i], ctx->fd_count, ctx->fd_count - 1);
 
-    manager_fd::remove(ctx->fd[i], true);
+    m_fd.remove(ctx->fd[i], true);
     close(ctx->fd[i]);
     ctx->fd[i] = -1;
     ctx->fd_count--;
@@ -181,7 +183,7 @@ static void server_us_nb_handler(void *vctx, int fd)
         }
 
         // Register the fd for event
-        if (manager_fd::add(ctx, fd_client, &server_us_nb_handler, true) == false)
+        if (m_fd.add(ctx, fd_client, &server_us_nb_handler, true) == false)
         {
             LOGGER_ERR("Failed to register callback on new client socket [fd=%d ; callback=%p]", fd_client, &server_us_nb_handler);
             server_us_nb_remove_fd(ctx, fd_client);
@@ -255,7 +257,7 @@ void server_us_nb_start(void *vctx)
     }
 
     // Register the file descriptor for reading
-    if (manager_fd::add(ctx, ctx->fd[0], &server_us_nb_handler, true) == false)
+    if (m_fd.add(ctx, ctx->fd[0], &server_us_nb_handler, true) == false)
     {
         LOGGER_ERR("Failed to register callback on server socket [fd=%d ; callback=%p]", ctx->fd[0], &server_us_nb_handler);
         server_us_nb_remove_fd(ctx, ctx->fd[0]);
