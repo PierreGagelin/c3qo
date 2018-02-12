@@ -31,8 +31,6 @@ void tu_socket_us_nb::SetUp()
 {
     LOGGER_OPEN();
     logger_set_level(LOGGER_LEVEL_DEBUG);
-
-    m_fd.init();
 }
 
 void tu_socket_us_nb::TearDown()

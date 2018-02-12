@@ -21,35 +21,19 @@
 class manager_fd m_fd;
 
 //
-// @brief Initialize the file descriptor manager
+// @brief Constructor
 //
-void manager_fd::init()
+// We size vector to maximum, it allows to have a small binary footprint
+//
+manager_fd::manager_fd()
 {
-    LOGGER_INFO("Initialize manager_fd");
+    struct fd_call def;
 
-    memset(&list_r, 0, sizeof(list_r));
-    memset(&list_w, 0, sizeof(list_w));
-    set_max = -1;
-}
+    def.ctx = NULL;
+    def.callback = NULL;
 
-//
-// @brief Update the maximum fd value in the list
-//
-void manager_fd::update_max()
-{
-    // Find previous file descriptor managed
-    for (int i = set_max; i >= 0; i--)
-    {
-        if ((list_r[i].callback != NULL) || (list_w[i].callback != NULL))
-        {
-            set_max = i;
-            return;
-        }
-    }
-
-    // We manage no descriptor
-    set_max = -1;
-    return;
+    list_r_.assign(FD_SETSIZE, def);
+    list_w_.assign(FD_SETSIZE, def);
 }
 
 //
@@ -63,9 +47,6 @@ void manager_fd::update_max()
 //
 bool manager_fd::add(void *ctx, int fd, void (*callback)(void *ctx, int fd), bool read)
 {
-    struct fd_call *list;
-    static fd_set *set;
-
     // Verify user input
     if (callback == NULL)
     {
@@ -86,29 +67,14 @@ bool manager_fd::add(void *ctx, int fd, void (*callback)(void *ctx, int fd), boo
     // Work either on read or write for this file descriptor
     if (read == true)
     {
-        list = list_r;
-        set = &set_r;
+        list_r_[fd].ctx = ctx;
+        list_r_[fd].callback = callback;
     }
     else
     {
-        list = list_w;
-        set = &set_w;
+        list_w_[fd].ctx = ctx;
+        list_w_[fd].callback = callback;
     }
-
-    // Add new file descriptor if not already registered
-    if (list[fd].callback == NULL)
-    {
-        FD_SET(fd, set);
-
-        // Update max file descriptor if necessary
-        if (fd > set_max)
-        {
-            set_max = fd;
-        }
-    }
-
-    list[fd].callback = callback;
-    list[fd].ctx = ctx;
 
     return true;
 }
@@ -118,9 +84,6 @@ bool manager_fd::add(void *ctx, int fd, void (*callback)(void *ctx, int fd), boo
 //
 void manager_fd::remove(int fd, bool read)
 {
-    struct fd_call *list;
-    static fd_set *set;
-
     // Verify user input
     if ((fd >= FD_SETSIZE) || (fd < 0))
     {
@@ -130,68 +93,55 @@ void manager_fd::remove(int fd, bool read)
     // Work either on read or write for this file descriptor
     if (read == true)
     {
-        list = list_r;
-        set = &set_r;
+        list_r_[fd].callback = NULL;
+        list_r_[fd].ctx = NULL;
     }
     else
     {
-        list = list_w;
-        set = &set_w;
+        list_w_[fd].callback = NULL;
+        list_w_[fd].ctx = NULL;
     }
-
-    if (list[fd].callback == NULL)
-    {
-        // Unknown file descriptor, do nothing
-        return;
-    }
-
-    // Remove from list and set
-    list[fd].callback = NULL;
-    list[fd].ctx = NULL;
-    FD_CLR(fd, set);
-
-    // If this value was the maximum fd value, we need to refresh it
-    if (fd == set_max)
-    {
-        update_max();
-    }
-}
-
-//
-// @brief Clean the file descriptor set
-//
-void manager_fd::clean()
-{
-    LOGGER_INFO("Clear file descriptor list");
-
-    FD_ZERO(&set_r);
-    FD_ZERO(&set_w);
-
-    memset(&list_r, 0, sizeof(list_r));
-    memset(&list_w, 0, sizeof(list_w));
-
-    set_max = -1;
 }
 
 //
 // @brief Prepare the read and write sets of file descriptor
 //
-void manager_fd::prepare_set()
+// @param set_r : file descriptor set to fill for read
+// @param set_w : file descriptor set to fill for write
+//
+// @return maximum file descriptor value
+//
+int manager_fd::prepare_set(fd_set *set_r, fd_set *set_w)
 {
-    FD_ZERO(&set_r);
-    FD_ZERO(&set_w);
+    int max;
 
-    for (int fd = 0; fd <= set_max; fd++)
+    FD_ZERO(set_r);
+    FD_ZERO(set_w);
+
+    max = 0;
+    for (int fd = 0; fd < FD_SETSIZE; fd++)
     {
-        if (list_r[fd].callback != NULL)
+        if (list_r_[fd].callback != NULL)
         {
-            FD_SET(fd, &set_r);
+            FD_SET(fd, set_r);
+
+            if (fd > max)
+            {
+                max = fd;
+            }
         }
-        if (list_w[fd].callback != NULL)
+        if (list_w_[fd].callback != NULL)
         {
-            FD_SET(fd, &set_w);
+            FD_SET(fd, set_w);
+
+            if (fd > max)
+            {
+                max = fd;
+            }
         }
     }
+
+    return max;
 }
 
 //
@@ -202,13 +152,16 @@ void manager_fd::prepare_set()
 int manager_fd::select_fd()
 {
     struct timeval tv;
+    fd_set set_r;
+    fd_set set_w;
+    int set_max;
     int ret;
 
     // Wait up to 10ms
     tv.tv_sec = 0;
     tv.tv_usec = 10000;
 
-    prepare_set();
+    set_max = prepare_set(&set_r, &set_w);
 
     ret = select(set_max + 1, &set_r, &set_w, NULL, &tv);
     if (ret == 0)
@@ -228,16 +181,16 @@ int manager_fd::select_fd()
         j = 0;
         for (int fd = 0; fd <= set_max; fd++)
         {
-            if ((list_r[fd].callback != NULL) && (FD_ISSET(fd, &set_r) != 0))
+            if ((FD_ISSET(fd, &set_r) != 0) && (list_r_[fd].callback != NULL))
             {
                 // Data ready for reading
-                list_r[fd].callback(list_r[fd].ctx, fd);
+                list_r_[fd].callback(list_r_[fd].ctx, fd);
                 j++;
             }
-            if ((list_w[fd].callback != NULL) && (FD_ISSET(fd, &set_w) != 0))
+            if ((FD_ISSET(fd, &set_w) != 0) && (list_w_[fd].callback != NULL))
             {
                 // Data ready for writing
-                list_w[fd].callback(list_r[fd].ctx, fd);
+                list_w_[fd].callback(list_r_[fd].ctx, fd);
                 j++;
             }
 
