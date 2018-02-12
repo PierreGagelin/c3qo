@@ -36,13 +36,14 @@ endif()
 # Configure gtest as an external project
 configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
 execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" . WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download)
-execute_process(COMMAND ${CMAKE_COMMAND} --build .                 WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download)
+execute_process(COMMAND ${CMAKE_COMMAND} --build                 . WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download)
 
 # Add gtest directly to our build. This defines the gtest and gtest_main targets
 add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src EXCLUDE_FROM_ALL)
 
 # Allow tests to register themselves as tests
 enable_testing()
+
 
 # Include directories for blocks
 set(BLOCK_INCLUDE_DIR)

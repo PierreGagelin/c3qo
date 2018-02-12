@@ -1,6 +1,9 @@
 #ifndef C3QO_MANAGER_FD_HPP
 #define C3QO_MANAGER_FD_HPP
 
+// C++ library headers
+#include <vector>
+
 // System library headers
 extern "C" {
 #include <sys/select.h> // select and associated definitions
@@ -15,28 +18,20 @@ struct fd_call
 
 class manager_fd
 {
-  protected:
-    // Sets of file descriptors managed for read and write
-    fd_set set_r;
-    fd_set set_w;
-    int set_max;
+  public:
+    manager_fd();
 
   protected:
     // List of registered callbacks for read and write events
-    struct fd_call list_r[FD_SETSIZE];
-    struct fd_call list_w[FD_SETSIZE];
+    std::vector<struct fd_call> list_r_;
+    std::vector<struct fd_call> list_w_;
 
   protected:
-    void update_max();
-    void prepare_set();
+    int prepare_set(fd_set *set_r, fd_set *set_w);
 
   public:
     bool add(void *ctx, int fd, void (*callback)(void *ctx, int fd), bool read);
     void remove(int fd, bool read);
-
-  public:
-    void init();
-    void clean();
 
   public:
     int select_fd();

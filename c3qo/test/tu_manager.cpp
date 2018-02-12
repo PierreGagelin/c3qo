@@ -209,9 +209,6 @@ TEST_F(tu_manager, manager_fd)
     fd = fileno(file);
     ASSERT_NE(fd, -1);
 
-    // Initialize the file descriptor manager
-    m_fd.init();
-
     // Add a file descriptor to be managed for reading
     EXPECT_EQ(m_fd.add(NULL, fd, &fd_callback, true), true);
 
@@ -226,7 +223,6 @@ TEST_F(tu_manager, manager_fd)
 
     // Clean the file descriptor manager
     m_fd.remove(fd, true);
-    m_fd.clean();
     fclose(file);
 }
 
