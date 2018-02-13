@@ -31,5 +31,6 @@ void *client_us_nb_init(int bk_id);
 void client_us_nb_bind(void *vctx, int port, int bk_id);
 void client_us_nb_start(void *vctx);
 void client_us_nb_stop(void *vctx);
+int client_us_nb_tx(void *vctx, void *vdata);
 
 #endif // BLOCK_CLIENT_US_NB_HPP

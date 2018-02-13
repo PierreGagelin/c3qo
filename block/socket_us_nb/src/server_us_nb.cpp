@@ -403,6 +403,37 @@ size_t server_us_nb_get_stats(void *vctx, char *buf, size_t len)
     }
 }
 
+int server_us_nb_tx(void *vctx, void *vdata)
+{
+    struct server_us_nb_ctx *ctx;
+
+    if (vctx == NULL)
+    {
+        LOGGER_ERR("Failed to process TX data: NULL context");
+        return 0;
+    }
+    ctx = (struct server_us_nb_ctx *)vctx;
+
+    LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", ctx->bk_id, vdata);
+
+    // Update statistics
+    ctx->tx_pkt_count++;
+    //ctx->tx_pkt_bytes += ?
+
+    // Broadcast to every client
+    for (int i = 0; i < SOCKET_FD_MAX; i++)
+    {
+        if (ctx->fd[i] == -1)
+        {
+            continue;
+        }
+        socket_nb_write(ctx->fd[i], (char *)vdata, SOCKET_READ_SIZE);
+    }
+
+    // Drop the buffer
+    return 0;
+}
+
 // Declare the interface for this block
 struct bk_if server_us_nb_if = {
     .init = server_us_nb_init,
@@ -414,6 +445,6 @@ struct bk_if server_us_nb_if = {
     .get_stats = server_us_nb_get_stats,
 
     .rx = NULL,
-    .tx = NULL,
+    .tx = server_us_nb_tx,
     .ctrl = NULL,
 };

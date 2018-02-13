@@ -315,6 +315,30 @@ void client_us_nb_stop(void *vctx)
     free(ctx);
 }
 
+int client_us_nb_tx(void *vctx, void *vdata)
+{
+    struct client_us_nb_ctx *ctx;
+
+    if (vctx == NULL)
+    {
+        LOGGER_ERR("Failed to process TX data: NULL context");
+        return 0;
+    }
+    ctx = (struct client_us_nb_ctx *)vctx;
+
+    LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", ctx->bk_id, vdata);
+
+    // Update statistics
+    ctx->tx_pkt_count++;
+    //ctx->tx_pkt_bytes += ?
+
+    // Send to server
+    socket_nb_write(ctx->fd, (char *)vdata, SOCKET_READ_SIZE);
+
+    // Drop the buffer
+    return 0;
+}
+
 // Declare the interface for this block
 struct bk_if client_us_nb_if = {
     .init = client_us_nb_init,
@@ -326,6 +350,6 @@ struct bk_if client_us_nb_if = {
     .get_stats = NULL,
 
     .rx = NULL,
-    .tx = NULL,
+    .tx = client_us_nb_tx,
     .ctrl = NULL,
 };
