@@ -111,8 +111,8 @@ TEST_F(tu_manager, manager_bk_conf)
 
     // Prepare expected configuration dump for the blocks
     //   - format : "<bk_id> <bk_type> <bk_state>;"
-    ss << "1 " << TYPE_HELLO << " " << STATE_STOP << ";";
-    ss << "0 " << TYPE_HELLO << " " << STATE_STOP << ";";
+    ss << "1 " << TYPE_HELLO << " " << STATE_START << ";";
+    ss << "0 " << TYPE_HELLO << " " << STATE_START << ";";
     buf_exp = ss.str();
 
     // Verify the configuration dump
@@ -244,7 +244,7 @@ TEST_F(tu_manager, manager_tm_expiration)
     t.callback = &tm_callback;
     t.arg = arg;
     t.time.tv_sec = 0;
-    t.time.tv_usec = 40000;
+    t.time.tv_nsec = 40 * 1000 * 1000;
     EXPECT_EQ(m_tm.add(t), true);
 
     // Verify timer expiration
@@ -254,7 +254,7 @@ TEST_F(tu_manager, manager_tm_expiration)
 
         // Sleep 10 ms
         sleep.tv_sec = 0;
-        sleep.tv_usec = 10000;
+        sleep.tv_usec = 10 * 1000;
         EXPECT_EQ(select(0, NULL, NULL, NULL, &sleep), 0);
 
         // Check timer expiration
@@ -281,8 +281,8 @@ TEST_F(tu_manager, manager_tm_order)
     struct timer t_0;
     struct timer t_1;
     struct timer t_2;
-    struct timeval time_start;
-    struct timeval time_cur;
+    struct timespec time_start;
+    struct timespec time_cur;
     char arg[3][8] = {"timer0", "timer1", "timer2"};
     char def[8] = "default";
 
@@ -291,7 +291,7 @@ TEST_F(tu_manager, manager_tm_order)
     tm_callback(def);
 
     // Get system time
-    ASSERT_NE(gettimeofday(&time_start, NULL), -1);
+    ASSERT_NE(clock_gettime(CLOCK_REALTIME, &time_start), -1);
 
     // Register three timers:
     //   - 40ms
@@ -302,17 +302,17 @@ TEST_F(tu_manager, manager_tm_order)
     t_0.tid = 0;
     t_0.arg = arg[0];
     t_0.time.tv_sec = 0;
-    t_0.time.tv_usec = 40000;
+    t_0.time.tv_nsec = 40 * 1000 * 1000;
     t_1.callback = &tm_callback;
     t_1.tid = 1;
     t_1.arg = arg[1];
     t_1.time.tv_sec = 0;
-    t_1.time.tv_usec = 80000;
+    t_1.time.tv_nsec = 80 * 1000 * 1000;
     t_2.callback = &tm_callback;
     t_2.tid = 2;
     t_2.arg = arg[2];
     t_2.time.tv_sec = 0;
-    t_2.time.tv_usec = 120000;
+    t_2.time.tv_nsec = 120 * 1000 * 1000;
     EXPECT_EQ(m_tm.add(t_2), true);
     EXPECT_EQ(m_tm.add(t_0), true);
     EXPECT_EQ(m_tm.add(t_1), true);
@@ -325,21 +325,21 @@ TEST_F(tu_manager, manager_tm_order)
 
         // Sleep 20 ms
         sleep.tv_sec = 0;
-        sleep.tv_usec = 20000;
+        sleep.tv_usec = 20 * 1000;
         EXPECT_EQ(select(0, NULL, NULL, NULL, &sleep), 0);
 
         // Check timer expiration
-        ASSERT_NE(gettimeofday(&time_cur, NULL), -1);
+        ASSERT_NE(clock_gettime(CLOCK_REALTIME, &time_cur), -1);
         m_tm.check_exp();
 
+        ASSERT_LT(time_start, time_cur);
+
         time_cur.tv_sec -= time_start.tv_sec;
-        time_cur.tv_usec -= time_start.tv_usec;
+        time_cur.tv_nsec -= time_start.tv_nsec;
 
         // Wrap microseconds value to be both in range and positive
-        time_cur.tv_sec -= time_start.tv_usec / USEC_MAX;
-        time_cur.tv_usec = time_start.tv_usec % USEC_MAX;
-
-        ASSERT_LT(time_cur, time_start);
+        time_cur.tv_sec -= time_start.tv_nsec / NSEC_MAX;
+        time_cur.tv_nsec = time_start.tv_nsec % NSEC_MAX;
 
         if (time_cur < t_0.time)
         {
@@ -386,10 +386,10 @@ TEST_F(tu_manager, manager_tm_id)
     t.tid = 0;
     t.arg = arg;
     t.time.tv_sec = 0;
-    t.time.tv_usec = 20000;
+    t.time.tv_nsec = 20 * 1000 * 1000;
     EXPECT_EQ(m_tm.add(t), true);
     t.time.tv_sec = 0;
-    t.time.tv_usec = 30000;
+    t.time.tv_nsec = 30 * 1000 * 1000;
     EXPECT_EQ(m_tm.add(t), true);
 
     // Verify only the 30ms is kept
@@ -400,7 +400,7 @@ TEST_F(tu_manager, manager_tm_id)
 
         // Sleep 10 ms
         sleep.tv_sec = 0;
-        sleep.tv_usec = 10000;
+        sleep.tv_usec = 10 * 1000;
         EXPECT_EQ(select(0, NULL, NULL, NULL, &sleep), 0);
 
         // Check timer expiration

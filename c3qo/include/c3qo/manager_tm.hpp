@@ -3,13 +3,9 @@
 
 // C++ library headers
 #include <forward_list> // forward_list container
+#include <ctime>        // struct timespec, clockid_t, clock_get(res/time)
 
-// System library headers
-extern "C" {
-#include <sys/time.h> // gettimeofday, timeval
-}
-
-#define USEC_MAX 1000000 // Maximum number of usec + 1
+#define NSEC_MAX (1000 * 1000 * 1000) // Maximum number of nsec + 1
 
 //
 // @struct timer
@@ -17,7 +13,7 @@ extern "C" {
 struct timer
 {
     int tid;                     // Timer ID
-    struct timeval time;         // Expiration time for the timer
+    struct timespec time;        // Expiration time for the timer
     void (*callback)(void *arg); // Function to call when timer expires
     void *arg;                   // Argument to give to the callback
 };
@@ -25,8 +21,8 @@ struct timer
 bool operator==(const struct timer &a, const struct timer &b);
 bool operator<(const struct timer &a, const struct timer &b);
 
-bool operator==(const struct timeval &a, const struct timeval &b);
-bool operator<(const struct timeval &a, const struct timeval &b);
+bool operator==(const struct timespec &a, const struct timespec &b);
+bool operator<(const struct timespec &a, const struct timespec &b);
 
 class manager_tm
 {

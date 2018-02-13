@@ -20,27 +20,27 @@ class manager_tm m_tm;
 //
 bool manager_tm::add(struct timer &tm)
 {
-    struct timeval t;
+    struct timespec t;
 
     // Verify user input
     if (tm.callback == NULL)
     {
-        LOGGER_WARNING("Cannot add timer without a callback [tid=%d ; sec=%ld ; usec=%ld]", tm.tid, (long)tm.time.tv_sec, (long)tm.time.tv_usec);
+        LOGGER_WARNING("Cannot add timer: NULL callback [tid=%d ; sec=%ld ; nsec=%ld]", tm.tid, (long)tm.time.tv_sec, (long)tm.time.tv_nsec);
         return false;
     }
 
     // Convert relative time to absolute time
-    if (gettimeofday(&t, NULL) == -1)
+    if (clock_gettime(CLOCK_REALTIME, &t) == -1)
     {
-        LOGGER_ERR("Failed call to gettimeofday for timer [tid=%d ; sec=%ld ; usec=%ld]", tm.tid, (long)tm.time.tv_sec, (long)tm.time.tv_usec);
+        LOGGER_ERR("Failed to add timer: clock_gettime failed [tid=%d ; sec=%ld ; nsec=%ld]", tm.tid, (long)tm.time.tv_sec, (long)tm.time.tv_nsec);
         return false;
     }
     tm.time.tv_sec += t.tv_sec;
-    tm.time.tv_usec += t.tv_usec;
+    tm.time.tv_nsec += t.tv_nsec;
 
     // Wrap microseconds value to be both in range and positive
-    tm.time.tv_sec += tm.time.tv_usec / USEC_MAX;
-    tm.time.tv_usec = tm.time.tv_usec % USEC_MAX;
+    tm.time.tv_sec += tm.time.tv_nsec / NSEC_MAX;
+    tm.time.tv_nsec = tm.time.tv_nsec % NSEC_MAX;
 
     // Remove potentially existing timer and push new one
     tm_list_.remove(tm);
@@ -68,11 +68,11 @@ void manager_tm::del(struct timer &tm)
 void manager_tm::check_exp()
 {
     struct timer timer;
-    struct timeval time;
+    struct timespec time;
 
-    if (gettimeofday(&time, NULL) == -1)
+    if (clock_gettime(CLOCK_REALTIME, &time) == -1)
     {
-        LOGGER_WARNING("Couldn't retrieve time of day, will try it next time [sec=%ld ; usec=%ld]", (long)time.tv_sec, (long)time.tv_usec);
+        LOGGER_ERR("Failed to check expiration: clock_gettime failed [sec=%ld ; nsec=%ld]", (long)time.tv_sec, (long)time.tv_nsec);
         return;
     }
 
@@ -107,8 +107,8 @@ void manager_tm::clear()
     tm_list_.clear();
 }
 
-// Operators for struct timeval
-bool operator==(const struct timeval &a, const struct timeval &b)
+// Operators for struct timespec
+bool operator==(const struct timespec &a, const struct timespec &b)
 {
     if ((a.tv_sec == b.tv_sec) && (a.tv_sec == b.tv_sec))
     {
@@ -119,7 +119,7 @@ bool operator==(const struct timeval &a, const struct timeval &b)
         return false;
     }
 }
-bool operator<(const struct timeval &a, const struct timeval &b)
+bool operator<(const struct timespec &a, const struct timespec &b)
 {
     if (a.tv_sec < b.tv_sec)
     {
@@ -127,7 +127,7 @@ bool operator<(const struct timeval &a, const struct timeval &b)
     }
     else if (a.tv_sec == b.tv_sec)
     {
-        return (a.tv_usec < b.tv_usec);
+        return (a.tv_nsec < b.tv_nsec);
     }
     else
     {
