@@ -20,13 +20,16 @@ extern "C" {
 
 // Project headers
 #include "block/server_us_nb.hpp"
+#include "c3qo/manager_bk.hpp"
 #include "c3qo/manager_fd.hpp"
 #include "utils/logger.hpp"
 #include "utils/socket.hpp"
 
-#define SOCKET_READ_SIZE 256
 #define SOCKET_NAME "/tmp/server_us_nb"
+#define SOCKET_READ_SIZE 256
 
+// Managers shall be linked
+extern class manager_bk m_bk;
 extern class manager_fd m_fd;
 
 static inline int server_us_nb_fd_find(struct server_us_nb_ctx *ctx, int fd)
@@ -127,16 +130,22 @@ static inline void server_us_nb_remove_fd(struct server_us_nb_ctx *ctx, int fd)
 static void server_us_nb_flush_fd(struct server_us_nb_ctx *ctx, int fd)
 {
     ssize_t ret;
-    char buff[SOCKET_READ_SIZE];
+    char buf[SOCKET_READ_SIZE];
 
     do
     {
-        memset(buff, 0, sizeof(buff));
-        ret = socket_nb_read(fd, buff, sizeof(buff));
+        memset(buf, 0, sizeof(buf));
+        ret = socket_nb_read(fd, buf, sizeof(buf));
         if (ret > 0)
         {
+            LOGGER_DEBUG("Received data on socket [bk_id=%d ; fd=%d ; buf=%p ; size=%zd]", ctx->bk_id, fd, buf, ret);
+
             ctx->rx_pkt_count += 1;
             ctx->rx_pkt_bytes += (size_t)ret;
+
+            // For the moment this is OK because the data flow is synchronous
+            // Need to fix it if asynchronous data flow arrives
+            m_bk.process_rx(ctx->bind, buf);
         }
     } while (ret > 0);
 }
@@ -226,9 +235,30 @@ void *server_us_nb_init(int bk_id)
     // Remove UNIX socket
     unlink(SOCKET_NAME);
 
-    LOGGER_INFO("Initialize block [ctx=%p]", ctx);
+    LOGGER_INFO("Initialize block [bk_id=%d ; ctx=%p]", bk_id, ctx);
 
     return ctx;
+}
+
+//
+// @brief Bind a block to a port
+//
+// This block only has one port
+//
+void server_us_nb_bind(void *vctx, int port, int bk_id)
+{
+    struct server_us_nb_ctx *ctx;
+
+    // Verify input
+    if ((vctx == NULL) || (port != 0))
+    {
+        LOGGER_ERR("Failed to bind block: NULL context or port not in range [port=%d ; range=[0,0]]", port);
+        return;
+    }
+    ctx = (struct server_us_nb_ctx *)vctx;
+
+    // Bind to a block
+    ctx->bind = bk_id;
 }
 
 //
@@ -377,7 +407,7 @@ size_t server_us_nb_get_stats(void *vctx, char *buf, size_t len)
 struct bk_if server_us_nb_if = {
     .init = server_us_nb_init,
     .conf = NULL,
-    .bind = NULL,
+    .bind = server_us_nb_bind,
     .start = server_us_nb_start,
     .stop = server_us_nb_stop,
 

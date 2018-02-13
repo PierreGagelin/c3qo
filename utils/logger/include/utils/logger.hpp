@@ -1,10 +1,13 @@
 #ifndef C3QO_LOGGER_HPP
 #define C3QO_LOGGER_HPP
 
+// System library headers
+extern "C" {
 #include <syslog.h> // syslog
+}
 
 // Open and close connection to syslog
-#define LOGGER_OPEN() openlog("c3qo", 0, 0);
+#define LOGGER_OPEN(name) openlog(name, 0, 0);
 #define LOGGER_CLOSE() closelog();
 
 // Differents levels of log
@@ -19,11 +22,8 @@ enum logger_level
     LOGGER_LEVEL_NOTICE = 6,
     LOGGER_LEVEL_INFO = 7,
     LOGGER_LEVEL_DEBUG = 8,
-    LOGGER_LEVEL_MAX = 8,
 };
-
-// Current level of log. Only log with lower level will be displayed
-extern enum logger_level logger_level;
+const char *get_logger_level(enum logger_level l);
 
 // Setting logger level
 void logger_set_level(enum logger_level l);
@@ -41,6 +41,9 @@ void logger_set_level(enum logger_level l);
 //
 
 #ifndef LOGGER_DISABLE
+
+// Current level of log. Only log with lower level will be displayed
+extern enum logger_level logger_level;
 
 // Format a log entry with function name, line and level
 #define LOGGER_EMERG(msg, ...)                                                           \

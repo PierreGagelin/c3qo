@@ -19,7 +19,6 @@ struct client_us_nb_ctx
     // Context
     int fd;         // Socket file descriptor
     bool connected; // True if socket is connected
-    char buf[4096]; // Buffer to read on socket
 
     // Statistics
     size_t rx_pkt_count; // RX: Number of packets read
@@ -28,8 +27,9 @@ struct client_us_nb_ctx
     size_t tx_pkt_bytes; // TX: Total size sent
 };
 
-void client_us_nb_stop(void *vctx);
-void client_us_nb_start(void *vctx);
 void *client_us_nb_init(int bk_id);
+void client_us_nb_bind(void *vctx, int port, int bk_id);
+void client_us_nb_start(void *vctx);
+void client_us_nb_stop(void *vctx);
 
 #endif // BLOCK_CLIENT_US_NB_HPP

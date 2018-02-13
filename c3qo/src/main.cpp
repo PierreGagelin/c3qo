@@ -28,8 +28,8 @@ int main(int argc, char **argv)
     const char *filename = "/tmp/config.txt";
     int ret = 0;
 
-    LOGGER_OPEN();
-    logger_set_level(LOGGER_LEVEL_MAX);
+    LOGGER_OPEN("c3qo");
+    logger_set_level(LOGGER_LEVEL_DEBUG);
 
     while ((opt = getopt(argc, argv, "hf:l:")) != -1)
     {
