@@ -159,7 +159,7 @@ int manager_fd::select_fd()
 
     // Wait up to 10ms
     tv.tv_sec = 0;
-    tv.tv_usec = 10000;
+    tv.tv_usec = 10 * 1000;
 
     set_max = prepare_set(&set_r, &set_w);
 

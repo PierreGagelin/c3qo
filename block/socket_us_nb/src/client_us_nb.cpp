@@ -186,7 +186,7 @@ static void client_us_nb_connect(struct client_us_nb_ctx *ctx)
         tm.callback = &client_us_nb_connect_retry;
         tm.arg = ctx;
         tm.time.tv_sec = 0;
-        tm.time.tv_usec = 100000;
+        tm.time.tv_nsec = 100 * 1000 * 1000;
         m_tm.add(tm);
         break;
 
