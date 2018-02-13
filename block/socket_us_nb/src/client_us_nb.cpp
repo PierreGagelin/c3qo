@@ -36,6 +36,7 @@ extern class manager_tm m_tm;
 extern class manager_fd m_fd;
 
 #define SOCKET_NAME "/tmp/server_us_nb"
+#define SOCKET_READ_SIZE 256
 
 //
 // @brief Remove the managed file descriptor and close it
@@ -56,6 +57,7 @@ static void client_us_nb_clean(struct client_us_nb_ctx *ctx)
 static void client_us_nb_callback(void *vctx, int fd)
 {
     struct client_us_nb_ctx *ctx;
+    char buf[SOCKET_READ_SIZE];
     ssize_t ret;
 
     // Verify input
@@ -75,13 +77,17 @@ static void client_us_nb_callback(void *vctx, int fd)
     // Flush the file descriptor
     do
     {
-        ret = socket_nb_read(ctx->fd, ctx->buf, sizeof(ctx->buf));
+        ret = socket_nb_read(ctx->fd, buf, sizeof(buf));
         if (ret > 0)
         {
-            LOGGER_DEBUG("Received data on socket [bk_id=%d ; fd=%d ; buf=%p ; size=%zd]", ctx->bk_id, ctx->fd, ctx->buf, ret);
+            LOGGER_DEBUG("Received data on socket [bk_id=%d ; fd=%d ; buf=%p ; size=%zd]", ctx->bk_id, ctx->fd, buf, ret);
+
+            ctx->rx_pkt_count++;
+            ctx->rx_pkt_bytes += (size_t)ret;
+
             // For the moment this is OK because the data flow is synchronous
             // Need to fix it if asynchronous data flow arrives
-            m_bk.process_rx(ctx->bind, ctx->buf);
+            m_bk.process_rx(ctx->bind, buf);
         }
     } while (ret > 0);
 }
@@ -225,7 +231,6 @@ void *client_us_nb_init(int bk_id)
 
     ctx->fd = -1;
     ctx->connected = false;
-    // ctx->buf: no need to initialize
 
     ctx->rx_pkt_count = 0;
     ctx->rx_pkt_bytes = 0;
@@ -233,6 +238,27 @@ void *client_us_nb_init(int bk_id)
     ctx->tx_pkt_bytes = 0;
 
     return ctx;
+}
+
+//
+// @brief Bind a block to a port
+//
+// This block only has one port
+//
+void client_us_nb_bind(void *vctx, int port, int bk_id)
+{
+    struct client_us_nb_ctx *ctx;
+
+    // Verify input
+    if ((vctx == NULL) || (port != 0))
+    {
+        LOGGER_ERR("Failed to bind block: NULL context or port not in range [port=%d ; range=[0,0]]", port);
+        return;
+    }
+    ctx = (struct client_us_nb_ctx *)vctx;
+
+    // Bind to a block
+    ctx->bind = bk_id;
 }
 
 //
@@ -293,7 +319,7 @@ void client_us_nb_stop(void *vctx)
 struct bk_if client_us_nb_if = {
     .init = client_us_nb_init,
     .conf = NULL,
-    .bind = NULL,
+    .bind = client_us_nb_bind,
     .start = client_us_nb_start,
     .stop = client_us_nb_stop,
 

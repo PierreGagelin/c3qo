@@ -17,7 +17,7 @@ set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
 # Using GCOV on the code
-set(C3QO_COVERAGE off)
+set(C3QO_COVERAGE on)
 if (${C3QO_COVERAGE})
     # Force the build type to Debug
     set(CMAKE_BUILD_TYPE Debug)

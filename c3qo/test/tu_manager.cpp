@@ -55,7 +55,7 @@ class tu_manager : public testing::Test, public manager_bk
 
 void tu_manager::SetUp()
 {
-    LOGGER_OPEN();
+    LOGGER_OPEN("tu_manager");
     logger_set_level(LOGGER_LEVEL_DEBUG);
 
     fd_called = false;

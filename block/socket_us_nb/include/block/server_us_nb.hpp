@@ -15,7 +15,8 @@
 struct server_us_nb_ctx
 {
     // Configuration
-    int bk_id;
+    int bk_id; // Block ID
+    int bind;  // Binding ID
 
     // Context
     // TODO: replace this shit with a real container
@@ -30,6 +31,7 @@ struct server_us_nb_ctx
 };
 
 void *server_us_nb_init(int bk_id);
+void server_us_nb_bind(void *vctx, int port, int bk_id);
 void server_us_nb_start(void *vctx);
 void server_us_nb_stop(void *vctx);
 size_t server_us_nb_get_stats(void *vctx, char *buf, size_t len);

@@ -35,7 +35,7 @@ class tu_perf : public testing::Test
 
 void tu_perf::SetUp()
 {
-    LOGGER_OPEN();
+    LOGGER_OPEN("tu_perf");
     logger_set_level(LOGGER_LEVEL_DEBUG);
 }
 

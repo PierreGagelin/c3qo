@@ -29,7 +29,7 @@ class tu_socket_us_nb : public testing::Test
 
 void tu_socket_us_nb::SetUp()
 {
-    LOGGER_OPEN();
+    LOGGER_OPEN("tu_socket_us_nb");
     logger_set_level(LOGGER_LEVEL_DEBUG);
 }
 

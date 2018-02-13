@@ -23,7 +23,7 @@ class tu_hello : public testing::Test
 
 void tu_hello::SetUp()
 {
-    LOGGER_OPEN();
+    LOGGER_OPEN("tu_hello");
     logger_set_level(LOGGER_LEVEL_DEBUG);
 }
 
