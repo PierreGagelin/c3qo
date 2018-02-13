@@ -112,3 +112,49 @@ TEST_F(tu_socket_us_nb, connect_retry)
     server_us_nb_if.stop(ctx_s);
     client_us_nb_if.stop(ctx_c);
 }
+
+//
+// @brief Send a message from client to server
+//
+TEST_F(tu_socket_us_nb, data)
+{
+    struct server_us_nb_ctx *ctx_s; // server context
+    struct client_us_nb_ctx *ctx_c; // client context
+
+    // Initialize client and server
+    ctx_s = (struct server_us_nb_ctx *)server_us_nb_if.init(1);
+    ctx_c = (struct client_us_nb_ctx *)client_us_nb_if.init(2);
+    ASSERT_TRUE(ctx_c != NULL);
+    ASSERT_TRUE(ctx_c != NULL);
+    EXPECT_TRUE(ctx_c->connected == false);
+    EXPECT_TRUE(ctx_s->fd_count == 0);
+
+    // Start server
+    server_us_nb_if.start(ctx_s);
+    EXPECT_TRUE(ctx_s->fd_count == 1);
+
+    // Start client
+    client_us_nb_if.start(ctx_c);
+    EXPECT_TRUE(ctx_c->connected == false);
+
+    do
+    {
+        // Lookup for something on the socket and make timer expire
+        m_fd.select_fd();
+        m_tm.check_exp();
+    } while (ctx_s->fd_count < 2);
+
+    EXPECT_EQ(ctx_s->rx_pkt_count, (size_t)0);
+
+    client_us_nb_if.tx(ctx_c, (void *)"hello world");
+
+    do
+    {
+        // Lookup for something on the socket and make timer expire
+        m_fd.select_fd();
+        m_tm.check_exp();
+    } while (ctx_s->rx_pkt_count < 1);
+
+    server_us_nb_if.stop(ctx_s);
+    client_us_nb_if.stop(ctx_c);
+}
