@@ -77,11 +77,9 @@ TEST_F(tu_perf, commutation)
     }
 
     // Send data from bk_1
-    bi = m_bk.block_get(1);
-    ASSERT_NE(bi, (void *)NULL);
     for (int i = 0; i < 10000; i++)
     {
-        EXPECT_EQ(bi->bk.ctrl(bi->ctx, buf), 0);
+        m_bk.process_notif(1, buf);
     }
 
     // Verify that 10000 buffers crossed bk_2 to bk_100
