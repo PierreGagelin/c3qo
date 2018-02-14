@@ -87,12 +87,21 @@ TEST_F(tu_manager, manager_bk_conf)
     // Spaces should not matter, but 3 values are mandatory
     file << CMD_ADD << "   1          " << TYPE_HELLO << std::endl;
     file << CMD_ADD << "   2          " << TYPE_HELLO << std::endl;
+    file << CMD_ADD << "   3          " << TYPE_CLIENT_US_NB << std::endl;
+    file << CMD_ADD << "   4          " << TYPE_SERVER_US_NB << std::endl;
+
     file << CMD_INIT << "  1  no_arg  " << std::endl;
     file << CMD_INIT << "  2  no_arg  " << std::endl;
+    file << CMD_INIT << "  3  no_arg  " << std::endl;
+    file << CMD_INIT << "  4  no_arg  " << std::endl;
+
     file << CMD_CONF << "  1  hello_1 " << std::endl;
     file << CMD_CONF << "  2  hello_2 " << std::endl;
+
     file << CMD_START << " 1  no_arg  " << std::endl;
     file << CMD_START << " 2  no_arg  " << std::endl;
+    file << CMD_START << " 3  no_arg  " << std::endl;
+    file << CMD_START << " 4  no_arg  " << std::endl;
 
     // Bindings for block 1:
     //   - port=0 ; bk_id=2
@@ -111,8 +120,10 @@ TEST_F(tu_manager, manager_bk_conf)
 
     // Prepare expected configuration dump for the blocks
     //   - format : "<bk_id> <bk_type> <bk_state>;"
-    ss << "1 " << TYPE_HELLO << " " << STATE_START << ";";
-    ss << "0 " << TYPE_HELLO << " " << STATE_START << ";";
+    ss << "1 " << TYPE_HELLO        << " " << STATE_START << ";";
+    ss << "2 " << TYPE_HELLO        << " " << STATE_START << ";";
+    ss << "3 " << TYPE_CLIENT_US_NB << " " << STATE_START << ";";
+    ss << "4 " << TYPE_SERVER_US_NB << " " << STATE_START << ";";
     buf_exp = ss.str();
 
     // Verify the configuration dump
@@ -120,7 +131,7 @@ TEST_F(tu_manager, manager_bk_conf)
     EXPECT_EQ(len, buf_exp.length());
 
     // Verify block informations
-    for (int i = 1; i < 3; i++)
+    for (int i = 1; i < 5; i++)
     {
         const struct bk_info *bi;
 
@@ -130,7 +141,26 @@ TEST_F(tu_manager, manager_bk_conf)
         EXPECT_EQ(bi->id, i);
         EXPECT_NE(bi->ctx, (void *)NULL);
         EXPECT_EQ(bi->state, STATE_START);
-        EXPECT_EQ(bi->type, TYPE_HELLO);
+
+        switch (i)
+        {
+        case 1:
+        case 2:
+            EXPECT_EQ(bi->type, TYPE_HELLO);
+            break;
+
+        case 3:
+            EXPECT_EQ(bi->type, TYPE_CLIENT_US_NB);
+            break;
+
+        case 4:
+            EXPECT_EQ(bi->type, TYPE_SERVER_US_NB);
+            break;
+
+        default:
+            ASSERT_TRUE(false);
+            break;
+        }
     }
 
     // Clean blocks

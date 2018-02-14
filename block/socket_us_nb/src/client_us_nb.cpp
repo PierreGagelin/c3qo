@@ -304,12 +304,10 @@ void client_us_nb_stop(void *vctx)
 
     LOGGER_INFO("Stop block [ctx=%p]", ctx);
 
-    if (ctx->fd == -1)
+    if (ctx->fd != -1)
     {
-        return;
+        client_us_nb_clean(ctx);
     }
-
-    client_us_nb_clean(ctx);
 
     // Free the context structure
     free(ctx);

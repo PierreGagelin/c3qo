@@ -5,7 +5,7 @@ project(c3q0)
 
 
 # Generate a JSON file with compilation commands (used with Visual Studio Code)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
 
 # Build type: either Debug or Release
@@ -17,7 +17,7 @@ set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
 # Using GCOV on the code
-set(C3QO_COVERAGE on)
+set(C3QO_COVERAGE off)
 if (${C3QO_COVERAGE})
     # Force the build type to Debug
     set(CMAKE_BUILD_TYPE Debug)

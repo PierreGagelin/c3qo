@@ -74,6 +74,52 @@ TEST_F(tu_socket_us_nb, connect)
 }
 
 //
+// @brief Establish several connections from client to server
+//
+TEST_F(tu_socket_us_nb, multi_connect)
+{
+    struct server_us_nb_ctx *ctx_s;     // server context
+    struct client_us_nb_ctx *ctx_c[10]; // client context
+
+    ctx_s = (struct server_us_nb_ctx *)server_us_nb_if.init(1);
+    for (int i = 0; i < 10; i++)
+    {
+        ctx_c[i] = (struct client_us_nb_ctx *)client_us_nb_if.init(i + 2);
+    }
+
+    server_us_nb_if.start(ctx_s);
+    for (int i = 0; i < 10; i++)
+    {
+        client_us_nb_if.start(ctx_c[i]);
+    }
+
+    while (ctx_s->fd_count < 6)
+    {
+        // Lookup for something on the socket and make timer expire
+        m_fd.select_fd();
+        m_tm.check_exp();
+    }
+
+    for (int i = 0; i < 10; i++)
+    {
+        if (i < 5)
+        {
+            EXPECT_EQ(ctx_c[i]->connected, true);
+        }
+        else
+        {
+            EXPECT_EQ(ctx_c[i]->connected, false);
+        }
+    }
+
+    server_us_nb_if.stop(ctx_s);
+    for (int i = 0; i < 10; i++)
+    {
+        client_us_nb_if.stop(ctx_c[i]);
+    }
+}
+
+//
 // @brief Establish an inversed connection between server and client
 //          - start client
 //          - start the server
@@ -102,12 +148,12 @@ TEST_F(tu_socket_us_nb, connect_retry)
     server_us_nb_if.start(ctx_s);
     EXPECT_TRUE(ctx_s->fd_count == 1);
 
-    do
+    while (ctx_s->fd_count < 2)
     {
         // Lookup for something on the socket and make timer expire
         m_fd.select_fd();
         m_tm.check_exp();
-    } while (ctx_s->fd_count < 2);
+    }
 
     server_us_nb_if.stop(ctx_s);
     client_us_nb_if.stop(ctx_c);
@@ -129,32 +175,64 @@ TEST_F(tu_socket_us_nb, data)
     EXPECT_TRUE(ctx_c->connected == false);
     EXPECT_TRUE(ctx_s->fd_count == 0);
 
-    // Start server
+    // Bind client and server to 0
+    server_us_nb_if.bind(ctx_s, 0, 0);
+    client_us_nb_if.bind(ctx_c, 0, 0);
+
+    // Connect client and server
     server_us_nb_if.start(ctx_s);
-    EXPECT_TRUE(ctx_s->fd_count == 1);
-
-    // Start client
     client_us_nb_if.start(ctx_c);
-    EXPECT_TRUE(ctx_c->connected == false);
-
-    do
+    EXPECT_TRUE(ctx_s->fd_count == 1);
+    while (ctx_s->fd_count < 2)
     {
         // Lookup for something on the socket and make timer expire
         m_fd.select_fd();
         m_tm.check_exp();
-    } while (ctx_s->fd_count < 2);
+    }
+    EXPECT_TRUE(ctx_c->connected == true);
 
+    // Send data from client to server
     EXPECT_EQ(ctx_s->rx_pkt_count, (size_t)0);
-
     client_us_nb_if.tx(ctx_c, (void *)"hello world");
-
-    do
+    while (ctx_s->rx_pkt_count < 1)
     {
         // Lookup for something on the socket and make timer expire
         m_fd.select_fd();
         m_tm.check_exp();
-    } while (ctx_s->rx_pkt_count < 1);
+    }
+
+    // Send data from server to client
+    EXPECT_EQ(ctx_c->rx_pkt_count, (size_t)0);
+    server_us_nb_if.tx(ctx_s, (void *)"hello world");
+    while (ctx_c->rx_pkt_count < 1)
+    {
+        // Lookup for something on the socket and make timer expire
+        m_fd.select_fd();
+        m_tm.check_exp();
+    }
 
     server_us_nb_if.stop(ctx_s);
     client_us_nb_if.stop(ctx_c);
+}
+
+//
+// @brief Test error cases
+//
+TEST_F(tu_socket_us_nb, error)
+{
+    // Bind client and server to 0
+    server_us_nb_if.bind(NULL, 0, 0);
+    client_us_nb_if.bind(NULL, 0, 0);
+
+    // Connect client and server
+    server_us_nb_if.start(NULL);
+    client_us_nb_if.start(NULL);
+
+    // Connect client and server
+    server_us_nb_if.stop(NULL);
+    client_us_nb_if.stop(NULL);
+
+    // Connect client and server
+    server_us_nb_if.tx(NULL, NULL);
+    client_us_nb_if.tx(NULL, NULL);
 }

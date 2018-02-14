@@ -67,8 +67,6 @@ void manager_bk::block_add(int id, enum bk_type type)
         return;
     }
 
-    LOGGER_INFO("Add block [bk_id=%d ; bk_type=%s]", id, get_bk_type(type));
-
     switch (type)
     {
     case TYPE_HELLO:
@@ -96,6 +94,8 @@ void manager_bk::block_add(int id, enum bk_type type)
     block.id = id;
     block.type = type;
     block.state = STATE_STOP;
+
+    LOGGER_INFO("Add block [bk_id=%d ; bk_type=%s ; bk_state=%s]", block.id, get_bk_type(block.type), get_bk_state(block.state));
 
     block_del(id);
     bk_map_.insert({id, block});
@@ -135,7 +135,7 @@ void manager_bk::block_init(int id)
         break;
     }
 
-    LOGGER_INFO("Initialize block [bk_id=%d ; bk_type=%s]", it->second.id, get_bk_type(it->second.type));
+    LOGGER_INFO("Initialize block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second.id, get_bk_type(it->second.type), get_bk_state(STATE_INIT));
 
     if (it->second.bk.init != NULL)
     {
@@ -234,7 +234,7 @@ void manager_bk::block_start(int id)
         break;
     }
 
-    LOGGER_INFO("Start block [bk_id=%d ; bk_type=%s]", it->second.id, get_bk_type(it->second.type));
+    LOGGER_INFO("Start block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second.id, get_bk_type(it->second.type), get_bk_state(STATE_START));
 
     if (it->second.bk.start != NULL)
     {
@@ -277,7 +277,7 @@ void manager_bk::block_stop(int id)
         break;
     }
 
-    LOGGER_INFO("Stop block [bk_id=%d ; bk_type=%s]", id, get_bk_type(it->second.type));
+    LOGGER_INFO("Stop block [bk_id=%d ; bk_type=%s ; bk_state=%s]", id, get_bk_type(it->second.type), get_bk_state(STATE_STOP));
 
     if (it->second.bk.stop != NULL)
     {
@@ -444,22 +444,19 @@ void manager_bk::block_clear()
 //
 void manager_bk::exec_cmd()
 {
-    std::unordered_map<int, struct bk_info>::iterator it;
+    LOGGER_INFO("Execute block command [bk_id=%d ; bk_cmd=%s ; cmd_arg=%s]", cmd_.id, get_bk_cmd(cmd_.cmd), cmd_.arg);
 
-    // Add a new block, the only command that does not require to find the block
-    if (cmd_.cmd == CMD_ADD)
+    switch (cmd_.cmd)
+    {
+    case CMD_ADD:
     {
         unsigned long bk_type;
 
         bk_type = strtoul(cmd_.arg, NULL, 10);
 
         block_add(cmd_.id, (enum bk_type)bk_type);
-
-        return;
+        break;
     }
-
-    switch (cmd_.cmd)
-    {
     case CMD_INIT:
         block_init(cmd_.id);
         break;
@@ -478,7 +475,7 @@ void manager_bk::exec_cmd()
         nb_arg = sscanf(cmd_.arg, "%d:%d", &port, &bk_id);
         if (nb_arg != 2)
         {
-            LOGGER_WARNING("Cannot bind block: corrupted parameters [bk_id=%d ; cmd_arg=%s]", it->first, cmd_.arg);
+            LOGGER_WARNING("Cannot bind block: corrupted parameters [bk_id=%d ; cmd_arg=%s]", cmd_.id, cmd_.arg);
             break;
         }
 
@@ -495,7 +492,7 @@ void manager_bk::exec_cmd()
 
     default:
         // Ignore this entry
-        LOGGER_WARNING("Cannot execute command: unknown command [bk_id=%d ; bk_cmd=%d]", it->first, cmd_.cmd);
+        LOGGER_WARNING("Cannot execute block command: unknown command value [bk_id=%d ; bk_cmd=%d]", cmd_.id, cmd_.cmd);
         break;
     }
 }
