@@ -18,9 +18,6 @@ extern "C" {
 // Gtest library
 #include "gtest/gtest.h"
 
-// Managers shall be linked
-extern class manager_tm m_tm;
-
 char zozo_l_asticot[8];
 void tm_callback(void *arg)
 {
@@ -30,7 +27,8 @@ void tm_callback(void *arg)
     strncpy(zozo_l_asticot, (char *)arg, sizeof(zozo_l_asticot));
 }
 
-class tu_manager_tm : public testing::Test
+// Derive from the manager_tm class
+class tu_manager_tm : public testing::Test, public manager_tm
 {
   public:
     void SetUp();
@@ -61,7 +59,7 @@ TEST_F(tu_manager_tm, manager_tm_expiration)
     char arg[8] = "world";
 
     // Initialize manager and zozo
-    m_tm.clear();
+    clear();
     tm_callback(def);
 
     // Register a 40 ms timer
@@ -70,7 +68,7 @@ TEST_F(tu_manager_tm, manager_tm_expiration)
     t.arg = arg;
     t.time.tv_sec = 0;
     t.time.tv_nsec = 40 * 1000 * 1000;
-    EXPECT_EQ(m_tm.add(t), true);
+    EXPECT_EQ(add(t), true);
 
     // Verify timer expiration
     for (int i = 0; i < 4; i++)
@@ -83,7 +81,7 @@ TEST_F(tu_manager_tm, manager_tm_expiration)
         EXPECT_EQ(select(0, NULL, NULL, NULL, &sleep), 0);
 
         // Check timer expiration
-        m_tm.check_exp();
+        check_exp();
 
         if (i < 3)
         {
@@ -112,7 +110,7 @@ TEST_F(tu_manager_tm, manager_tm_order)
     char def[8] = "default";
 
     // Initialize manager and his friend zozo
-    m_tm.clear();
+    clear();
     tm_callback(def);
 
     // Get system time
@@ -138,9 +136,9 @@ TEST_F(tu_manager_tm, manager_tm_order)
     t_2.arg = arg[2];
     t_2.time.tv_sec = 0;
     t_2.time.tv_nsec = 120 * 1000 * 1000;
-    EXPECT_EQ(m_tm.add(t_2), true);
-    EXPECT_EQ(m_tm.add(t_0), true);
-    EXPECT_EQ(m_tm.add(t_1), true);
+    EXPECT_EQ(add(t_2), true);
+    EXPECT_EQ(add(t_0), true);
+    EXPECT_EQ(add(t_1), true);
 
     // Verify the order of expiration
     for (int i = 0; i < 6; i++)
@@ -155,7 +153,7 @@ TEST_F(tu_manager_tm, manager_tm_order)
 
         // Check timer expiration
         ASSERT_NE(clock_gettime(CLOCK_REALTIME, &time_cur), -1);
-        m_tm.check_exp();
+        check_exp();
 
         ASSERT_LT(time_start, time_cur);
 
@@ -201,7 +199,7 @@ TEST_F(tu_manager_tm, manager_tm_id)
     char arg[8] = "world";
 
     // Initialize manager and the global
-    m_tm.clear();
+    clear();
     tm_callback(def);
 
     // Register two timers with the same ID:
@@ -212,10 +210,10 @@ TEST_F(tu_manager_tm, manager_tm_id)
     t.arg = arg;
     t.time.tv_sec = 0;
     t.time.tv_nsec = 20 * 1000 * 1000;
-    EXPECT_EQ(m_tm.add(t), true);
+    EXPECT_EQ(add(t), true);
     t.time.tv_sec = 0;
     t.time.tv_nsec = 30 * 1000 * 1000;
-    EXPECT_EQ(m_tm.add(t), true);
+    EXPECT_EQ(add(t), true);
 
     // Verify only the 30ms is kept
     for (int i = 0; i < 4; i++)
@@ -229,7 +227,7 @@ TEST_F(tu_manager_tm, manager_tm_id)
         EXPECT_EQ(select(0, NULL, NULL, NULL, &sleep), 0);
 
         // Check timer expiration
-        m_tm.check_exp();
+        check_exp();
 
         if (i < 2)
         {
