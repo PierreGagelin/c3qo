@@ -18,9 +18,6 @@ extern "C" {
 // Gtest library
 #include "gtest/gtest.h"
 
-// Managers shall be linked
-extern class manager_fd m_fd;
-
 bool fd_called;
 void fd_callback(void *ctx, int fd)
 {
@@ -30,7 +27,8 @@ void fd_callback(void *ctx, int fd)
     fd_called = true;
 }
 
-class tu_manager_fd : public testing::Test
+// Derive from the manager_fd class
+class tu_manager_fd : public testing::Test, public manager_fd
 {
   public:
     void SetUp();
@@ -67,18 +65,18 @@ TEST_F(tu_manager_fd, manager_fd)
     ASSERT_NE(fd, -1);
 
     // Add a file descriptor to be managed for reading
-    EXPECT_EQ(m_fd.add(NULL, fd, &fd_callback, true), true);
+    EXPECT_EQ(add(NULL, fd, &fd_callback, true), true);
 
     // Write into the managed
     fprintf(file, "hello world!");
 
     // Verify something is ready to be read
-    EXPECT_GT(m_fd.select_fd(), 0);
+    EXPECT_GT(select_fd(), 0);
 
     // Verify that the callback was executed
     EXPECT_EQ(fd_called, true);
 
     // Clean the file descriptor manager
-    m_fd.remove(fd, true);
+    remove(fd, true);
     fclose(file);
 }
