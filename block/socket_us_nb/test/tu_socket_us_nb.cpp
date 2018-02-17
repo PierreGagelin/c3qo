@@ -35,6 +35,9 @@ void tu_socket_us_nb::SetUp()
 
 void tu_socket_us_nb::TearDown()
 {
+    // Remove every timer
+    m_tm.clear();
+
     LOGGER_CLOSE();
     logger_set_level(LOGGER_LEVEL_NONE);
 }
@@ -51,6 +54,7 @@ TEST_F(tu_socket_us_nb, connect)
 {
     struct server_us_nb_ctx *ctx_s; // server context
     struct client_us_nb_ctx *ctx_c; // client context
+    char stats[16];                 // buffer to retrieve statistics
     int fd_count;                   // count of file descriptor handled by the server
 
     ctx_s = (struct server_us_nb_ctx *)server_us_nb_if.init(1);
@@ -59,18 +63,16 @@ TEST_F(tu_socket_us_nb, connect)
     server_us_nb_if.start(ctx_s);
     client_us_nb_if.start(ctx_c);
 
-    do
-    {
-        char buf[16];
+    // Trigger client connection to the server
+    m_fd.select_fd();
 
-        m_fd.select_fd();
+    // Verify that server has a new client
+    server_us_nb_if.get_stats(ctx_s, stats, sizeof(stats));
+    fd_count = atoi(stats);
+    EXPECT_EQ(fd_count, 2);
 
-        server_us_nb_if.get_stats(ctx_s, buf, 16);
-        fd_count = atoi(buf);
-    } while (fd_count < 2);
-
-    server_us_nb_if.stop(ctx_s);
     client_us_nb_if.stop(ctx_c);
+    server_us_nb_if.stop(ctx_s);
 }
 
 //
@@ -93,23 +95,19 @@ TEST_F(tu_socket_us_nb, multi_connect)
         client_us_nb_if.start(ctx_c[i]);
     }
 
-    while (ctx_s->fd_count < 6)
+    // Wait for every connection to be acknowledged
+    // A loop takes at least 10ms and reconnection timers are 100ms long
+    for (int i = 0; i < 20; i++)
     {
         // Lookup for something on the socket and make timer expire
         m_fd.select_fd();
         m_tm.check_exp();
     }
+    EXPECT_EQ(ctx_s->fd_count, 11);
 
     for (int i = 0; i < 10; i++)
     {
-        if (i < 5)
-        {
-            EXPECT_EQ(ctx_c[i]->connected, true);
-        }
-        else
-        {
-            EXPECT_EQ(ctx_c[i]->connected, false);
-        }
+        EXPECT_EQ(ctx_c[i]->connected, true);
     }
 
     server_us_nb_if.stop(ctx_s);
@@ -135,7 +133,7 @@ TEST_F(tu_socket_us_nb, connect_retry)
     // Initialize client and server
     ctx_s = (struct server_us_nb_ctx *)server_us_nb_if.init(1);
     ctx_c = (struct client_us_nb_ctx *)client_us_nb_if.init(2);
-    ASSERT_TRUE(ctx_c != NULL);
+    ASSERT_TRUE(ctx_s != NULL);
     ASSERT_TRUE(ctx_c != NULL);
     EXPECT_TRUE(ctx_c->connected == false);
     EXPECT_TRUE(ctx_s->fd_count == 0);
@@ -148,12 +146,15 @@ TEST_F(tu_socket_us_nb, connect_retry)
     server_us_nb_if.start(ctx_s);
     EXPECT_TRUE(ctx_s->fd_count == 1);
 
-    while (ctx_s->fd_count < 2)
+    // Wait for every connection to be acknowledged
+    // A loop takes at least 10ms and reconnection timers are 100ms long
+    for (int i = 0; i < 11; i++)
     {
         // Lookup for something on the socket and make timer expire
         m_fd.select_fd();
         m_tm.check_exp();
     }
+    EXPECT_EQ(ctx_s->fd_count, 2);
 
     server_us_nb_if.stop(ctx_s);
     client_us_nb_if.stop(ctx_c);
@@ -170,10 +171,10 @@ TEST_F(tu_socket_us_nb, data)
     // Initialize client and server
     ctx_s = (struct server_us_nb_ctx *)server_us_nb_if.init(1);
     ctx_c = (struct client_us_nb_ctx *)client_us_nb_if.init(2);
-    ASSERT_TRUE(ctx_c != NULL);
-    ASSERT_TRUE(ctx_c != NULL);
-    EXPECT_TRUE(ctx_c->connected == false);
-    EXPECT_TRUE(ctx_s->fd_count == 0);
+    ASSERT_NE(ctx_s, (void *)NULL);
+    ASSERT_NE(ctx_c, (void *)NULL);
+    EXPECT_EQ(ctx_c->connected, false);
+    EXPECT_EQ(ctx_s->fd_count, 0);
 
     // Bind client and server to 0
     server_us_nb_if.bind(ctx_s, 0, 0);
@@ -182,34 +183,22 @@ TEST_F(tu_socket_us_nb, data)
     // Connect client and server
     server_us_nb_if.start(ctx_s);
     client_us_nb_if.start(ctx_c);
-    EXPECT_TRUE(ctx_s->fd_count == 1);
-    while (ctx_s->fd_count < 2)
-    {
-        // Lookup for something on the socket and make timer expire
-        m_fd.select_fd();
-        m_tm.check_exp();
-    }
-    EXPECT_TRUE(ctx_c->connected == true);
+    EXPECT_EQ(ctx_s->fd_count, 1);
+    EXPECT_EQ(ctx_c->connected, true);
+    m_fd.select_fd();
+    EXPECT_EQ(ctx_c->connected, true);
 
     // Send data from client to server
-    EXPECT_EQ(ctx_s->rx_pkt_count, (size_t)0);
     client_us_nb_if.tx(ctx_c, (void *)"hello world");
-    while (ctx_s->rx_pkt_count < 1)
-    {
-        // Lookup for something on the socket and make timer expire
-        m_fd.select_fd();
-        m_tm.check_exp();
-    }
+    EXPECT_EQ(ctx_s->rx_pkt_count, (size_t)0);
+    m_fd.select_fd();
+    EXPECT_EQ(ctx_s->rx_pkt_count, (size_t)1);
 
     // Send data from server to client
-    EXPECT_EQ(ctx_c->rx_pkt_count, (size_t)0);
     server_us_nb_if.tx(ctx_s, (void *)"hello world");
-    while (ctx_c->rx_pkt_count < 1)
-    {
-        // Lookup for something on the socket and make timer expire
-        m_fd.select_fd();
-        m_tm.check_exp();
-    }
+    EXPECT_EQ(ctx_c->rx_pkt_count, (size_t)0);
+    m_fd.select_fd();
+    EXPECT_EQ(ctx_c->rx_pkt_count, (size_t)1);
 
     server_us_nb_if.stop(ctx_s);
     client_us_nb_if.stop(ctx_c);
@@ -220,6 +209,9 @@ TEST_F(tu_socket_us_nb, data)
 //
 TEST_F(tu_socket_us_nb, error)
 {
+    // Ignore error log as it's expected to have some
+    logger_set_level(LOGGER_LEVEL_CRIT);
+
     // Bind client and server to 0
     server_us_nb_if.bind(NULL, 0, 0);
     client_us_nb_if.bind(NULL, 0, 0);
