@@ -27,8 +27,14 @@ if (${C3QO_COVERAGE})
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
 endif()
 
-# Add a flag to disable logs on Release
-if (${CMAKE_BUILD_TYPE} STREQUAL Release)
+#[=[
+Disable log:
+  - if asked
+  - if we are making code coverage
+  - if we are in release
+#]=]
+set(LOGGER_DISABLE off)
+if (${LOGGER_DISABLE} OR ${C3QO_COVERAGE} OR (${CMAKE_BUILD_TYPE} STREQUAL Release))
     add_definitions(-DLOGGER_DISABLE)
 endif()
 

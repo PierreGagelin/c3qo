@@ -8,6 +8,9 @@
 // Gtest library
 #include "gtest/gtest.h"
 
+// Logger library should be linked
+extern enum logger_level logger_level;
+
 class tu_logger : public testing::Test
 {
   public:

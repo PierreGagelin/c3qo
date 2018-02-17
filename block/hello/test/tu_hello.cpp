@@ -32,51 +32,93 @@ void tu_hello::TearDown()
     LOGGER_CLOSE();
 }
 
+/**
+ * @brief Basic usage of block hello
+ */
 TEST_F(tu_hello, hello)
 {
     void *ctx;
     char conf[] = "hello from TU";
+    char stats[] = "useless value";
+    int count;
 
-    // Should return a context
+    // Initialize, configure and start the block
     ctx = hello_if.init(1);
-    EXPECT_TRUE(ctx != NULL);
-
-    // Configure block name
+    ASSERT_NE(ctx, (void *)NULL);
     hello_if.conf(ctx, conf);
-    hello_if.conf(NULL, NULL);
-
-    // Start with good and bad value
     hello_if.start(ctx);
-    hello_if.start(NULL);
-
-    // Block not binded (or called without context) should return 0 to drop
-    for (int i = 0; i < 8; i++)
-    {
-        EXPECT_TRUE(hello_if.rx(ctx, NULL) == 0);
-        EXPECT_TRUE(hello_if.rx(NULL, NULL) == 0);
-
-        EXPECT_TRUE(hello_if.tx(ctx, NULL) == 0);
-        EXPECT_TRUE(hello_if.tx(NULL, NULL) == 0);
-    }
 
     // Bind block (0 -> 0, 1 -> 1... 7 -> 7)
     for (int i = 0; i < 8; i++)
     {
-        hello_if.bind(NULL, 0, 0); // Should do nothing
-        hello_if.bind(ctx, i, i);  // Should do a bind
+        hello_if.bind(ctx, i, i);
     }
 
     // Verify binding (block hello only increment port output)
     for (int i = 0; i < 8; i++)
     {
-        EXPECT_TRUE(hello_if.rx(ctx, NULL) == i);
+        EXPECT_EQ(hello_if.rx(ctx, NULL), i);
     }
     for (int i = 0; i < 8; i++)
     {
-        EXPECT_TRUE(hello_if.tx(ctx, NULL) == i);
+        EXPECT_EQ(hello_if.tx(ctx, NULL), i);
     }
 
-    // Stop with good and bad value
+    // Do not forward notification
+    EXPECT_EQ(hello_if.ctrl(ctx, NULL), 0);
+
+    // Block should count 16 data (2 characters)
+    EXPECT_EQ(hello_if.get_stats(ctx, stats, sizeof(stats)), (size_t)2);
+    count = atoi(stats);
+    EXPECT_EQ(count, 16);
+
+    // Stop block
     hello_if.stop(ctx);
+}
+
+/**
+ * @brief Edge cases
+ */
+TEST_F(tu_hello, error)
+{
+    void *ctx;
+    char conf[] = "hello";
+    char stats[] = "lol";
+
+    // We do not want to see ERROR level as it's expected
+    logger_set_level(LOGGER_LEVEL_CRIT);
+
+    ctx = hello_if.init(1);
+    ASSERT_NE(ctx, (void *)NULL);
+
+    hello_if.conf(NULL, conf);
+    hello_if.conf(ctx, NULL);
+
+    // Bind without context of to unknown port
+    hello_if.bind(NULL, 4, 0); // port available
+    hello_if.bind(ctx, 42, 0); // port unavailable
+
+    // Bind every port to 1 (0 -> 1, 1 -> 1... 7 -> 1)
+    for (int i = 0; i < 8; i++)
+    {
+        hello_if.bind(ctx, i, 1);
+    }
+
+    hello_if.start(NULL);
+
+    // Flow without context should return 0 to drop
+    EXPECT_EQ(hello_if.rx(NULL, NULL), 0);
+    EXPECT_EQ(hello_if.tx(NULL, NULL), 0);
+    EXPECT_EQ(hello_if.ctrl(NULL, NULL), 0);
+
+    // Get statistics without buffer or context
+    EXPECT_EQ(hello_if.get_stats(NULL, stats, 12), (size_t)0);
+    EXPECT_EQ(hello_if.get_stats(ctx, NULL, 12), (size_t)0);
+    EXPECT_EQ(hello_if.get_stats(ctx, stats, 0), (size_t)0);
+
+    // Get statistics with a short buffer
+    EXPECT_EQ(hello_if.get_stats(ctx, stats, 1), (size_t)0);
+
     hello_if.stop(NULL);
+    hello_if.stop(ctx);
 }

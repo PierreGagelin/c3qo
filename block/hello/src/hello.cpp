@@ -169,37 +169,35 @@ int hello_ctrl(void *vctx, void *vnotif)
 size_t hello_get_stats(void *vctx, char *buf, size_t len)
 {
     int ret;
-    size_t count;
+    size_t written;
     struct hello_ctx *ctx;
 
-    if (vctx == NULL)
+    if ((vctx == NULL) || (buf == NULL) || (len == 0))
     {
-        LOGGER_ERR("Failed to get block statistics: NULL context");
+        LOGGER_ERR("Failed to get block statistics: NULL context or NULL buffer");
         return 0;
     }
     ctx = (struct hello_ctx *)vctx;
 
     LOGGER_DEBUG("Get block statistics [ctx=%p ; buf=%p ; len=%lu]", ctx, buf, len);
 
+    written = 0;
     ret = snprintf(buf, len, "%d", ctx->count);
     if (ret < 0)
     {
         LOGGER_ERR("Failed snprintf [ctx=%p ; buf=%p ; len=%lu]", ctx, buf, len);
         return 0;
     }
+    else if ((size_t)ret >= len)
+    {
+        return written;
+    }
     else
     {
-        count = (size_t)ret;
+        written = (size_t)ret;
     }
 
-    if (count > len)
-    {
-        return len;
-    }
-    else
-    {
-        return count;
-    }
+    return written;
 }
 
 //
