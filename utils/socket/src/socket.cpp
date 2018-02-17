@@ -3,7 +3,8 @@
 //
 
 // C++ library headers
-#include <cerrno>
+#include <cerrno>  // errno
+#include <cstring> // strerror
 
 // System library headers
 extern "C" {
@@ -68,12 +69,12 @@ ssize_t socket_nb_write(int fd, const char *buff, size_t size)
     {
     case EAGAIN:
     {
-        LOGGER_DEBUG("Socket not ready to send data [fd=%d]", fd);
+        LOGGER_DEBUG("Cannot write on non-blocking socket: %s [fd=%d ; errno=%d]", strerror(errno), fd, errno);
         break;
     }
     default:
     {
-        LOGGER_ERR("Failed non-blocking write on socket [fd=%d]", fd);
+        LOGGER_ERR("Failed to write on non-blocking socket: %s [fd=%d ; errno=%d]", strerror(errno), fd, errno);
         break;
     }
     }
@@ -100,12 +101,12 @@ ssize_t socket_nb_read(int fd, char *buff, size_t size)
     {
     case EAGAIN:
     {
-        LOGGER_DEBUG("Socket not ready to receive data [fd=%d]", fd);
+        LOGGER_DEBUG("Cannot read on non-blocking socket: %s [fd=%d ; errno=%d]", strerror(errno), fd, errno);
         break;
     }
     default:
     {
-        LOGGER_ERR("Failed non-blocking read on socket [fd=%d]", fd);
+        LOGGER_ERR("Failed to read on non-blocking socket: %s [fd=%d ; errno=%d]", strerror(errno), fd, errno);
         break;
     }
     }
@@ -158,7 +159,7 @@ int socket_nb_connect(int fd, const struct sockaddr *addr, socklen_t len)
     ret = connect(fd, addr, len);
     if (ret == 0)
     {
-        LOGGER_DEBUG("Connect non-blocking socket: success [fd=%d]", fd);
+        LOGGER_DEBUG("Connected non-blocking socket [fd=%d]", fd);
         return 0;
     }
 
@@ -172,17 +173,21 @@ int socket_nb_connect(int fd, const struct sockaddr *addr, socklen_t len)
     case EALREADY:
         // EINPROGRESS: server is listening but not answering, waiting for getsockopt
         // EALREADY   : socket was already in EINPROGRESS, waiting for getsockopt
-        LOGGER_DEBUG("Connect non-blocking socket: in progress [fd=%d]", fd);
+        LOGGER_DEBUG("Cannot connect non-blocking socket: %s [fd=%d ; errno=%d]", strerror(errno), fd, errno);
         return 1;
 
     case ECONNREFUSED:
-        LOGGER_DEBUG("Connect non-blocking socket: no one listening on socket [fd=%d]", fd);
+        LOGGER_DEBUG("Cannot connect non-blocking socket: %s [fd=%d ; errno=%d]", strerror(errno), fd, errno);
+        return 2;
+
+    case EAGAIN:
+        LOGGER_DEBUG("Cannot connect non-blocking socket: %s [fd=%d ; errno=%d]", strerror(errno), fd, errno);
         return 2;
 
     case EADDRNOTAVAIL:
     default:
         // La pauvre socket n'a pas de travail, dommage pour elle
-        LOGGER_ERR("Failed to connect non-blocking socket: unknown error [fd=%d ; errno=%d]", fd, errno);
+        LOGGER_ERR("Failed to connect non-blocking socket: %s [fd=%d ; errno=%d]", strerror(errno), fd, errno);
         return -1;
     }
 }
