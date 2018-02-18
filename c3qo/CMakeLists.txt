@@ -1,24 +1,59 @@
 
 
 # Build manager as a static library
+## Block manager
+set(SOURCES_MANAGER_BK)
+set(SOURCES_MANAGER_BK ${SOURCES_MANAGER_BK} src/manager_bk.cpp)
+set(SOURCES_MANAGER_BK ${SOURCES_MANAGER_BK} src/block.cpp)
+
+add_library(manager_bk STATIC ${SOURCES_MANAGER_BK})
+
+### Give a platform to host the blocks
+target_link_libraries(manager_bk logger)
+target_link_libraries(manager_bk socket)
+target_include_directories(manager_bk PUBLIC ${BLOCK_INCLUDE_DIR})
+target_include_directories(manager_bk PUBLIC ${C3QO_INCLUDE_DIR})
+target_include_directories(manager_bk PUBLIC ${UTILS_INCLUDE_DIR})
+
+target_link_libraries(manager_bk hello)
+target_link_libraries(manager_bk client_us_nb)
+target_link_libraries(manager_bk server_us_nb)
+
+
+## File descriptor manager
+set(SOURCES_MANAGER_FD)
+set(SOURCES_MANAGER_FD ${SOURCES_MANAGER_FD} src/manager_fd.cpp)
+
+add_library(manager_fd STATIC ${SOURCES_MANAGER_FD})
+
+target_include_directories(manager_fd PRIVATE ${BLOCK_INCLUDE_DIR})
+target_include_directories(manager_fd PRIVATE ${C3QO_INCLUDE_DIR})
+target_include_directories(manager_fd PRIVATE ${UTILS_INCLUDE_DIR})
+
+target_link_libraries(manager_fd logger)
+
+
+## Timer manager
+set(SOURCES_MANAGER_TM)
+set(SOURCES_MANAGER_TM ${SOURCES_MANAGER_TM} src/manager_tm.cpp)
+
+add_library(manager_tm STATIC ${SOURCES_MANAGER_TM})
+
+target_include_directories(manager_tm PRIVATE ${BLOCK_INCLUDE_DIR})
+target_include_directories(manager_tm PRIVATE ${C3QO_INCLUDE_DIR})
+target_include_directories(manager_tm PRIVATE ${UTILS_INCLUDE_DIR})
+
+target_link_libraries(manager_tm logger)
+
+## Global manager
 set(SOURCES_MANAGER)
-set(SOURCES_MANAGER ${SOURCES_MANAGER} src/block.cpp)
-set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_bk.cpp)
-set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_fd.cpp)
-set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_tm.cpp)
+set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager.cpp)
 
 add_library(manager STATIC ${SOURCES_MANAGER})
 
-# Give a platform to host the blocks
-target_include_directories(manager PUBLIC ${BLOCK_INCLUDE_DIR})
-target_include_directories(manager PUBLIC ${C3QO_INCLUDE_DIR})
-target_include_directories(manager PUBLIC ${UTILS_INCLUDE_DIR})
-
-target_link_libraries(manager hello)
-target_link_libraries(manager client_us_nb)
-target_link_libraries(manager server_us_nb)
-target_link_libraries(manager logger)
-target_link_libraries(manager socket)
+target_link_libraries(manager manager_bk)
+target_link_libraries(manager manager_fd)
+target_link_libraries(manager manager_tm)
 
 
 # Build c3qo main executable

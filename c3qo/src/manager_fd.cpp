@@ -14,11 +14,8 @@
 #include <cstring> // memset
 
 // Project headers
-#include "c3qo/manager_fd.hpp"
+#include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
-
-// One static instance of timer manager
-class manager_fd m_fd;
 
 //
 // @brief Constructor

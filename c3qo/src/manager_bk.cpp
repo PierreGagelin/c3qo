@@ -14,9 +14,6 @@ extern struct bk_if hello_if;
 extern struct bk_if client_us_nb_if;
 extern struct bk_if server_us_nb_if;
 
-// One block manager to rule them all
-class manager_bk m_bk;
-
 //
 // @brief Convert flow type into a string
 //

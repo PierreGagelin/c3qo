@@ -9,15 +9,8 @@ extern "C" {
 }
 
 // Project headers
-#include "c3qo/manager_bk.hpp"
-#include "c3qo/manager_fd.hpp"
-#include "c3qo/manager_tm.hpp"
+#include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
-
-// Managers shall be linked
-extern class manager_bk m_bk;
-extern class manager_tm m_tm;
-extern class manager_fd m_fd;
 
 extern char *optarg; // Comes with getopt
 
@@ -25,12 +18,12 @@ int main(int argc, char **argv)
 {
     bool conf;
     int opt;
-    const char *filename = "/tmp/config.txt";
-    int ret = 0;
+    char *filename;
 
     LOGGER_OPEN("c3qo");
     logger_set_level(LOGGER_LEVEL_DEBUG);
 
+    filename = NULL;
     while ((opt = getopt(argc, argv, "hf:l:")) != -1)
     {
         switch (opt)
@@ -65,21 +58,29 @@ int main(int argc, char **argv)
         }
     }
 
+    // Export the manager
+    m = new struct manager;
+
     // Parse configuration file
-    conf = m_bk.conf_parse(filename);
-    if (conf == false)
+    if (filename != NULL)
     {
-        ret = -1;
+        conf = m->bk.conf_parse(filename);
+        if (conf == false)
+        {
+            // We don't care, it will be configured from socket
+        }
     }
 
     // Main loop
     while (true)
     {
-        m_fd.select_fd();
-        m_tm.check_exp();
+        m->fd.select_fd();
+        m->tm.check_exp();
     }
 
     LOGGER_CLOSE();
 
-    return ret;
+    delete m;
+
+    return 0;
 }

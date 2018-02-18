@@ -12,11 +12,14 @@ extern "C" {
 
 // Project headers
 #include "c3qo/block.hpp"
-#include "c3qo/manager_tm.hpp"
+#include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
 
 // Gtest library
 #include "gtest/gtest.h"
+
+// Managers shall be linked
+extern struct manager *m;
 
 char zozo_l_asticot[8];
 void tm_callback(void *arg)
@@ -40,11 +43,17 @@ void tu_manager_tm::SetUp()
     LOGGER_OPEN("tu_manager_tm");
     logger_set_level(LOGGER_LEVEL_DEBUG);
 
+    // Populate the managers
+    m = new struct manager;
+
     strncpy(zozo_l_asticot, "hello", sizeof("hello"));
 }
 
 void tu_manager_tm::TearDown()
 {
+    // Clear the managers
+    delete m;
+    
     logger_set_level(LOGGER_LEVEL_NONE);
     LOGGER_CLOSE();
 }

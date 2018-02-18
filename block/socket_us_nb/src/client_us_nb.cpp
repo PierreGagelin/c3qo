@@ -20,9 +20,7 @@ extern "C" {
 
 // Project headers
 #include "block/client_us_nb.hpp"
-#include "c3qo/manager_bk.hpp"
-#include "c3qo/manager_fd.hpp"
-#include "c3qo/manager_tm.hpp"
+#include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
 #include "utils/socket.hpp"
 
@@ -31,9 +29,7 @@ static void client_us_nb_connect(struct client_us_nb_ctx *ctx);
 static void client_us_nb_connect_retry(void *vctx);
 
 // Managers shall be linked
-extern class manager_bk m_bk;
-extern class manager_tm m_tm;
-extern class manager_fd m_fd;
+extern struct manager *m;
 
 #define SOCKET_NAME "/tmp/server_us_nb"
 #define SOCKET_READ_SIZE 256
@@ -45,8 +41,8 @@ static void client_us_nb_clean(struct client_us_nb_ctx *ctx)
 {
     LOGGER_INFO("Remove socket from block context [bk_id=%d ; fd=%d]", ctx->bk_id, ctx->fd);
 
-    m_fd.remove(ctx->fd, true);
-    m_fd.remove(ctx->fd, false);
+    m->fd.remove(ctx->fd, true);
+    m->fd.remove(ctx->fd, false);
     close(ctx->fd);
     ctx->fd = -1;
 }
@@ -87,7 +83,7 @@ static void client_us_nb_callback(void *vctx, int fd)
 
             // For the moment this is OK because the data flow is synchronous
             // Need to fix it if asynchronous data flow arrives
-            m_bk.process_rx(ctx->bind, buf);
+            m->bk.process_rx(ctx->bind, buf);
         }
     } while (ret > 0);
 }
@@ -115,8 +111,8 @@ static void client_us_nb_connect_check(void *vctx, int fd)
     {
         // Socket is connected, no need to look for write occasion anymore
         ctx->connected = true;
-        m_fd.remove(ctx->fd, false);
-        m_fd.add(ctx, ctx->fd, &client_us_nb_callback, true);
+        m->fd.remove(ctx->fd, false);
+        m->fd.add(ctx, ctx->fd, &client_us_nb_callback, true);
     }
 }
 
@@ -178,7 +174,7 @@ static void client_us_nb_connect(struct client_us_nb_ctx *ctx)
     {
     case 1:
         // Connection in progress, register file descriptor for writing to check the connection when it's ready
-        m_fd.add(ctx, ctx->fd, &client_us_nb_connect_check, false);
+        m->fd.add(ctx, ctx->fd, &client_us_nb_connect_check, false);
         break;
 
     case -1:
@@ -193,12 +189,12 @@ static void client_us_nb_connect(struct client_us_nb_ctx *ctx)
         tm.arg = ctx;
         tm.time.tv_sec = 0;
         tm.time.tv_nsec = 100 * 1000 * 1000;
-        m_tm.add(tm);
+        m->tm.add(tm);
         break;
 
     case 0:
         // Success: register the file descriptor with a callback for data reception
-        if (m_fd.add(ctx, ctx->fd, &client_us_nb_callback, true) == false)
+        if (m->fd.add(ctx, ctx->fd, &client_us_nb_callback, true) == false)
         {
             LOGGER_ERR("Failed to register callback on client socket [fd=%d ; callback=%p]", ctx->fd, &client_us_nb_callback);
             client_us_nb_clean(ctx);

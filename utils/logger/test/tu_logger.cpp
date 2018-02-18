@@ -25,7 +25,7 @@ void tu_logger::SetUp()
 }
 
 void tu_logger::TearDown()
-{
+{   
     logger_set_level(LOGGER_LEVEL_NONE);
     LOGGER_CLOSE();
 }
