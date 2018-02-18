@@ -5,14 +5,11 @@
 
 // Project headers
 #include "block/hello.hpp"
-#include "c3qo/manager_bk.hpp"
+#include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
 
-// Get an access to the block manager for:
-//   - process_notif
-//   - process_rx
-//   - process_tx
-extern class manager_bk m_bk;
+// Managers shall be linked
+extern struct manager *m;
 
 void *hello_init(int bk_id)
 {
@@ -160,7 +157,7 @@ int hello_ctrl(void *vctx, void *vnotif)
     ctx = (struct hello_ctx *)vctx;
 
     // Send a message
-    m_bk.process_tx(ctx->bind.id[ctx->count % 8], vnotif);
+    m->bk.process_tx(ctx->bind.id[ctx->count % 8], vnotif);
 
     // No forwarding
     return 0;

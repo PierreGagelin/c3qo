@@ -9,11 +9,8 @@
 #include <cstdlib> // NULL, abs
 
 // Project headers
-#include "c3qo/manager_tm.hpp"
+#include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
-
-// One static instance of the timer manager
-class manager_tm m_tm;
 
 //
 // @brief Add or replace an entry in the timer list

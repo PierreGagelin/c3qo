@@ -7,10 +7,14 @@
 
 //Project headers
 #include "c3qo/block.hpp"
+#include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
 
 // Gtest library
 #include "gtest/gtest.h"
+
+// Managers shall be linked
+extern struct manager *m;
 
 // TU should be linked with the block
 extern struct bk_if hello_if;
@@ -25,10 +29,17 @@ void tu_hello::SetUp()
 {
     LOGGER_OPEN("tu_hello");
     logger_set_level(LOGGER_LEVEL_DEBUG);
+
+    // Populate the managers
+    m = new struct manager;
 }
 
 void tu_hello::TearDown()
 {
+    // Clear the managers
+    delete m;
+    
+    logger_set_level(LOGGER_LEVEL_NONE);
     LOGGER_CLOSE();
 }
 

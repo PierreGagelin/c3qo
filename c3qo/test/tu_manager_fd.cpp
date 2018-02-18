@@ -12,11 +12,14 @@ extern "C" {
 
 // Project headers
 #include "c3qo/block.hpp"
-#include "c3qo/manager_fd.hpp"
+#include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
 
 // Gtest library
 #include "gtest/gtest.h"
+
+// Managers shall be linked
+extern struct manager *m;
 
 bool fd_called;
 void fd_callback(void *ctx, int fd)
@@ -40,11 +43,17 @@ void tu_manager_fd::SetUp()
     LOGGER_OPEN("tu_manager_fd");
     logger_set_level(LOGGER_LEVEL_DEBUG);
 
+    // Populate the managers
+    m = new struct manager;
+
     fd_called = false;
 }
 
 void tu_manager_fd::TearDown()
 {
+    // Clear the managers
+    delete m;
+    
     logger_set_level(LOGGER_LEVEL_NONE);
     LOGGER_CLOSE();
 }

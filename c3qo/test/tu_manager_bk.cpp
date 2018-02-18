@@ -14,14 +14,14 @@ extern "C" {
 
 // Project headers
 #include "c3qo/block.hpp"
-#include "c3qo/manager_bk.hpp"
+#include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
 
 // Gtest library
 #include "gtest/gtest.h"
 
 // Managers shall be linked
-extern class manager_bk m_bk;
+extern struct manager *m;
 
 class tu_manager_bk : public testing::Test, public manager_bk
 {
@@ -34,10 +34,16 @@ void tu_manager_bk::SetUp()
 {
     LOGGER_OPEN("tu_manager_bk");
     logger_set_level(LOGGER_LEVEL_DEBUG);
+
+    // Populate the managers
+    m = new struct manager;
 }
 
 void tu_manager_bk::TearDown()
 {
+    // Clear the managers
+    delete m;
+    
     logger_set_level(LOGGER_LEVEL_NONE);
     LOGGER_CLOSE();
 }
@@ -156,8 +162,8 @@ TEST_F(tu_manager_bk, manager_bk_flow)
     // Add, initialize, configure and start 2 blocks
     for (int i = 1; i < 3; i++)
     {
-        m_bk.block_add(i, TYPE_HELLO);
-        m_bk.block_start(i);
+        m->bk.block_add(i, TYPE_HELLO);
+        m->bk.block_start(i);
     }
 
     // Bind:
@@ -165,13 +171,13 @@ TEST_F(tu_manager_bk, manager_bk_flow)
     //   - block 2 to block 0 (trash)
     for (int i = 0; i < 8; i++)
     {
-        m_bk.block_bind(1, i, 2);
-        m_bk.block_bind(2, i, 0);
+        m->bk.block_bind(1, i, 2);
+        m->bk.block_bind(2, i, 0);
     }
 
     // Retrieve block 1 and block 2
-    bk_1 = m_bk.block_get(1);
-    bk_2 = m_bk.block_get(2);
+    bk_1 = m->bk.block_get(1);
+    bk_2 = m->bk.block_get(2);
     ASSERT_NE(bk_1, (void *)NULL);
     ASSERT_NE(bk_2, (void *)NULL);
 
@@ -195,5 +201,5 @@ TEST_F(tu_manager_bk, manager_bk_flow)
     EXPECT_EQ(count, 1);
 
     // Clear blocks
-    m_bk.block_clear();
+    m->bk.block_clear();
 }

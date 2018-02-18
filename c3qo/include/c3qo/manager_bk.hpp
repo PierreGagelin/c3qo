@@ -1,5 +1,5 @@
-#ifndef C3QO_MANAGER_HPP
-#define C3QO_MANAGER_HPP
+#ifndef C3QO_MANAGER_BK_HPP
+#define C3QO_MANAGER_BK_HPP
 
 // C++ library headers
 #include <unordered_map> // unordered_map container
@@ -89,4 +89,4 @@ class manager_bk
     size_t conf_get(char *buf, size_t len);
 };
 
-#endif // C3QO_MANAGER_HPP
+#endif // C3QO_MANAGER_BK_HPP

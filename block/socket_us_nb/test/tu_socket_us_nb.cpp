@@ -6,8 +6,7 @@
 #include "block/client_us_nb.hpp"
 #include "block/server_us_nb.hpp"
 #include "c3qo/block.hpp"
-#include "c3qo/manager_fd.hpp"
-#include "c3qo/manager_tm.hpp"
+#include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
 
 // Gtest library
@@ -18,8 +17,7 @@ extern struct bk_if client_us_nb_if;
 extern struct bk_if server_us_nb_if;
 
 // Managers shall be linked
-extern class manager_tm m_tm;
-extern class manager_fd m_fd;
+extern struct manager *m;
 
 class tu_socket_us_nb : public testing::Test
 {
@@ -31,12 +29,18 @@ void tu_socket_us_nb::SetUp()
 {
     LOGGER_OPEN("tu_socket_us_nb");
     logger_set_level(LOGGER_LEVEL_DEBUG);
+
+    // Populate the managers
+    m = new struct manager;
 }
 
 void tu_socket_us_nb::TearDown()
 {
     // Remove every timer
-    m_tm.clear();
+    m->tm.clear();
+
+    // Clear the managers
+    delete m;
 
     LOGGER_CLOSE();
     logger_set_level(LOGGER_LEVEL_NONE);
@@ -64,7 +68,7 @@ TEST_F(tu_socket_us_nb, connect)
     client_us_nb_if.start(ctx_c);
 
     // Trigger client connection to the server
-    m_fd.select_fd();
+    m->fd.select_fd();
 
     // Verify that server has a new client
     server_us_nb_if.get_stats(ctx_s, stats, sizeof(stats));
@@ -100,8 +104,8 @@ TEST_F(tu_socket_us_nb, multi_connect)
     for (int i = 0; i < 20; i++)
     {
         // Lookup for something on the socket and make timer expire
-        m_fd.select_fd();
-        m_tm.check_exp();
+        m->fd.select_fd();
+        m->tm.check_exp();
     }
     EXPECT_EQ(ctx_s->fd_count, 11);
 
@@ -151,8 +155,8 @@ TEST_F(tu_socket_us_nb, connect_retry)
     for (int i = 0; i < 11; i++)
     {
         // Lookup for something on the socket and make timer expire
-        m_fd.select_fd();
-        m_tm.check_exp();
+        m->fd.select_fd();
+        m->tm.check_exp();
     }
     EXPECT_EQ(ctx_s->fd_count, 2);
 
@@ -185,19 +189,19 @@ TEST_F(tu_socket_us_nb, data)
     client_us_nb_if.start(ctx_c);
     EXPECT_EQ(ctx_s->fd_count, 1);
     EXPECT_EQ(ctx_c->connected, true);
-    m_fd.select_fd();
+    m->fd.select_fd();
     EXPECT_EQ(ctx_c->connected, true);
 
     // Send data from client to server
     client_us_nb_if.tx(ctx_c, (void *)"hello world");
     EXPECT_EQ(ctx_s->rx_pkt_count, (size_t)0);
-    m_fd.select_fd();
+    m->fd.select_fd();
     EXPECT_EQ(ctx_s->rx_pkt_count, (size_t)1);
 
     // Send data from server to client
     server_us_nb_if.tx(ctx_s, (void *)"hello world");
     EXPECT_EQ(ctx_c->rx_pkt_count, (size_t)0);
-    m_fd.select_fd();
+    m->fd.select_fd();
     EXPECT_EQ(ctx_c->rx_pkt_count, (size_t)1);
 
     server_us_nb_if.stop(ctx_s);
