@@ -53,7 +53,7 @@ manager_bk::~manager_bk()
 // @param id   : Block ID
 // @param type : Block type
 //
-void manager_bk::block_add(int id, enum bk_type type)
+bool manager_bk::block_add(int id, enum bk_type type)
 {
     std::pair<std::unordered_map<int, struct bk_info>::iterator, bool> ret;
     struct bk_info block;
@@ -61,31 +61,26 @@ void manager_bk::block_add(int id, enum bk_type type)
     if (id == 0)
     {
         LOGGER_ERR("Failed to add block: forbidden block ID [bk_id=%d ; bk_type=%s]", id, get_bk_type(type));
-        return;
+        return false;
     }
 
     switch (type)
     {
     case TYPE_HELLO:
-    {
         block.bk = hello_if;
         break;
-    }
+
     case TYPE_CLIENT_US_NB:
-    {
         block.bk = client_us_nb_if;
         break;
-    }
+
     case TYPE_SERVER_US_NB:
-    {
         block.bk = server_us_nb_if;
         break;
-    }
+
     default:
-    {
         LOGGER_ERR("Failed to add block: unknown block type value [bk_id=%d ; bk_type=%d]", id, type);
-        return;
-    }
+        return false;
     }
 
     block.id = id;
@@ -96,6 +91,8 @@ void manager_bk::block_add(int id, enum bk_type type)
 
     block_del(id);
     bk_map_.insert({id, block});
+
+    return true;
 }
 
 //
@@ -103,7 +100,7 @@ void manager_bk::block_add(int id, enum bk_type type)
 //
 // @param bki : Block information
 //
-void manager_bk::block_init(int id)
+bool manager_bk::block_init(int id)
 {
     std::unordered_map<int, struct bk_info>::iterator it;
 
@@ -111,8 +108,8 @@ void manager_bk::block_init(int id)
     it = bk_map_.find(id);
     if (it == bk_map_.end())
     {
-        LOGGER_WARNING("Cannot stop block: unknown block ID [bk_id=%d]", id);
-        return;
+        LOGGER_WARNING("Cannot initialize block: unknown block ID [bk_id=%d]", id);
+        return false;
     }
 
     // Verify block state
@@ -123,13 +120,9 @@ void manager_bk::block_init(int id)
         break;
 
     case STATE_INIT:
-        block_start(id);
-        block_stop(id);
-        break;
-
     case STATE_START:
-        block_stop(id);
-        break;
+        LOGGER_WARNING("Cannot initialize block: block no stopped [bk_id=%d ; bk_state=%s]", id, get_bk_state(it->second.state));
+        return false;
     }
 
     LOGGER_INFO("Initialize block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second.id, get_bk_type(it->second.type), get_bk_state(STATE_INIT));
@@ -139,12 +132,14 @@ void manager_bk::block_init(int id)
         it->second.ctx = it->second.bk.init(it->second.id);
     }
     it->second.state = STATE_INIT;
+
+    return true;
 }
 
 //
 // @brief Configure a block
 //
-void manager_bk::block_conf(int id, char *conf)
+bool manager_bk::block_conf(int id, char *conf)
 {
     std::unordered_map<int, struct bk_info>::iterator it;
 
@@ -153,12 +148,13 @@ void manager_bk::block_conf(int id, char *conf)
     if (it == bk_map_.end())
     {
         LOGGER_WARNING("Cannot configure block: unknown block ID [bk_id=%d]", id);
-        return;
+        return false;
     }
 
     if (it->second.state == STATE_STOP)
     {
-        block_init(id);
+        LOGGER_WARNING("Cannot configure block: block stopped [bk_id=%d]", id);
+        return false;
     }
 
     LOGGER_INFO("Configure block [bk_id=%d ; bk_type=%s ; conf=%s]", id, get_bk_type(it->second.type), conf);
@@ -167,12 +163,14 @@ void manager_bk::block_conf(int id, char *conf)
     {
         it->second.bk.conf(it->second.ctx, conf);
     }
+
+    return true;
 }
 
 //
 // @brief Bind a block
 //
-void manager_bk::block_bind(int id, int port, int bk_id)
+bool manager_bk::block_bind(int id, int port, int bk_id)
 {
     std::unordered_map<int, struct bk_info>::iterator it;
 
@@ -181,12 +179,13 @@ void manager_bk::block_bind(int id, int port, int bk_id)
     if (it == bk_map_.end())
     {
         LOGGER_WARNING("Cannot bind block: unknown block ID [bk_id=%d]", id);
-        return;
+        return false;
     }
 
     if (it->second.state == STATE_STOP)
     {
-        block_init(id);
+        LOGGER_WARNING("Cannot bind block: block stopped [bk_id=%d]", id);
+        return false;
     }
 
     LOGGER_INFO("Bind block [bk_id=%d ; bk_type=%s ; port=%d ; bk_id_dest=%d]", it->first, get_bk_type(it->second.type), port, bk_id);
@@ -195,6 +194,8 @@ void manager_bk::block_bind(int id, int port, int bk_id)
     {
         it->second.bk.bind(it->second.ctx, port, bk_id);
     }
+
+    return true;
 }
 
 //
@@ -202,7 +203,7 @@ void manager_bk::block_bind(int id, int port, int bk_id)
 //
 // @param bki : Block information
 //
-void manager_bk::block_start(int id)
+bool manager_bk::block_start(int id)
 {
     std::unordered_map<int, struct bk_info>::iterator it;
 
@@ -210,24 +211,20 @@ void manager_bk::block_start(int id)
     it = bk_map_.find(id);
     if (it == bk_map_.end())
     {
-        LOGGER_WARNING("Cannot stop block: unknown block ID [bk_id=%d]", id);
-        return;
+        LOGGER_WARNING("Cannot start block: unknown block ID [bk_id=%d]", id);
+        return false;
     }
 
     // Verify block state
     switch (it->second.state)
     {
+    case STATE_START:
     case STATE_STOP:
-        block_init(id);
-        break;
+        LOGGER_WARNING("Cannot start block: block not initialized [bk_id=%d ; bk_state=%s]", id, get_bk_state(it->second.state));
+        return false;
 
     case STATE_INIT:
         // Normal case
-        break;
-
-    case STATE_START:
-        block_stop(id);
-        block_init(id);
         break;
     }
 
@@ -238,6 +235,8 @@ void manager_bk::block_start(int id)
         it->second.bk.start(it->second.ctx);
     }
     it->second.state = STATE_START;
+
+    return true;
 }
 
 //
@@ -245,7 +244,7 @@ void manager_bk::block_start(int id)
 //
 // @param bki : Block information
 //
-void manager_bk::block_stop(int id)
+bool manager_bk::block_stop(int id)
 {
     std::unordered_map<int, struct bk_info>::iterator it;
 
@@ -254,20 +253,16 @@ void manager_bk::block_stop(int id)
     if (it == bk_map_.end())
     {
         LOGGER_WARNING("Cannot stop block: unknown block ID [bk_id=%d]", id);
-        return;
+        return false;
     }
 
     // Verify block state
     switch (it->second.state)
     {
-    case STATE_STOP:
-        block_init(id);
-        block_start(id);
-        break;
-
     case STATE_INIT:
-        block_start(id);
-        break;
+    case STATE_STOP:
+        LOGGER_WARNING("Cannot stop block: block not started [bk_id=%d ; bk_state=%s]", id, get_bk_state(it->second.state));
+        return false;
 
     case STATE_START:
         // Normal case
@@ -281,6 +276,8 @@ void manager_bk::block_stop(int id)
         it->second.bk.stop(it->second.ctx);
     }
     it->second.state = STATE_STOP;
+
+    return true;
 }
 
 //
@@ -439,7 +436,7 @@ void manager_bk::block_clear()
 // @brief Execute the global manager command
 //        Some of them are directly executed by a block
 //
-void manager_bk::exec_cmd()
+bool manager_bk::exec_cmd()
 {
     LOGGER_INFO("Execute block command [bk_id=%d ; bk_cmd=%s ; cmd_arg=%s]", cmd_.id, get_bk_cmd(cmd_.cmd), cmd_.arg);
 
@@ -451,16 +448,13 @@ void manager_bk::exec_cmd()
 
         bk_type = strtoul(cmd_.arg, NULL, 10);
 
-        block_add(cmd_.id, (enum bk_type)bk_type);
-        break;
+        return block_add(cmd_.id, (enum bk_type)bk_type);
     }
     case CMD_INIT:
-        block_init(cmd_.id);
-        break;
+        return block_init(cmd_.id);
 
     case CMD_CONF:
-        block_conf(cmd_.id, cmd_.arg);
-        break;
+        return block_conf(cmd_.id, cmd_.arg);
 
     case CMD_BIND:
     {
@@ -473,24 +467,21 @@ void manager_bk::exec_cmd()
         if (nb_arg != 2)
         {
             LOGGER_WARNING("Cannot bind block: corrupted parameters [bk_id=%d ; cmd_arg=%s]", cmd_.id, cmd_.arg);
-            break;
+            return false;
         }
 
-        block_bind(cmd_.id, port, bk_id);
-        break;
+        return block_bind(cmd_.id, port, bk_id);
     }
     case CMD_START:
-        block_start(cmd_.id);
-        break;
+        return block_start(cmd_.id);
 
     case CMD_STOP:
-        block_stop(cmd_.id);
-        break;
+        return block_stop(cmd_.id);
 
     default:
         // Ignore this entry
         LOGGER_WARNING("Cannot execute block command: unknown command value [bk_id=%d ; bk_cmd=%d]", cmd_.id, cmd_.cmd);
-        break;
+        return false;
     }
 }
 
@@ -563,7 +554,11 @@ bool manager_bk::conf_parse(const char *filename)
             break;
         }
 
-        exec_cmd();
+        if ((exec_cmd() == false) && (ret == true))
+        {
+            // One corrupted entry, but the next ones can be good
+            ret = false;
+        }
     }
 
     fclose(file);

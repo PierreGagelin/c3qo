@@ -64,20 +64,21 @@ TEST_F(tu_perf, commutation)
     //   - bk_1 -> bk_2 -> bk_3 -> bk_4... -> bk_100 -> bk_101
     for (int i = 1; i < 101; i++)
     {
-        m->bk.block_add(i, TYPE_HELLO);
-        m->bk.block_start(i);
+        EXPECT_EQ(m->bk.block_add(i, TYPE_HELLO), true);
+        EXPECT_EQ(m->bk.block_init(i), true);
+        EXPECT_EQ(m->bk.block_start(i), true);
 
         for (int j = 0; j < 8; j++)
         {
             // Bind port j of bk_i to bk_i+1
-            m->bk.block_bind(i, j, i + 1);
+            EXPECT_EQ(m->bk.block_bind(i, j, i + 1), true);
         }
     }
 
     // Modify binds of bk_100 to point to 0
     for (int j = 0; j < 8; j++)
     {
-        m->bk.block_bind(100, j, 0);
+        EXPECT_EQ(m->bk.block_bind(100, j, 0), true);
     }
 
     // Send data from bk_1

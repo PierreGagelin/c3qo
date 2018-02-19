@@ -68,12 +68,12 @@ class manager_bk
     void process_notif(int bk_id, void *notif);
 
   public:
-    void block_add(int id, enum bk_type type);
-    void block_init(int id);
-    void block_conf(int id, char *conf);
-    void block_bind(int id, int port, int bk_id);
-    void block_start(int id);
-    void block_stop(int id);
+    bool block_add(int id, enum bk_type type);
+    bool block_init(int id);
+    bool block_conf(int id, char *conf);
+    bool block_bind(int id, int port, int bk_id);
+    bool block_start(int id);
+    bool block_stop(int id);
 
   public:
     const struct bk_info *block_get(int id);
@@ -82,7 +82,7 @@ class manager_bk
 
   protected:
     int conf_parse_line(FILE *file);
-    void exec_cmd();
+    bool exec_cmd();
 
   public:
     bool conf_parse(const char *filename);

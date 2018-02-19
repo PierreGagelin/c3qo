@@ -43,7 +43,7 @@ void tu_manager_bk::TearDown()
 {
     // Clear the managers
     delete m;
-    
+
     logger_set_level(LOGGER_LEVEL_NONE);
     LOGGER_CLOSE();
 }
@@ -159,11 +159,12 @@ TEST_F(tu_manager_bk, manager_bk_flow)
     char stats[] = "useless value";
     int count;
 
-    // Add, initialize, configure and start 2 blocks
+    // Add, initialize and start 2 blocks
     for (int i = 1; i < 3; i++)
     {
-        m->bk.block_add(i, TYPE_HELLO);
-        m->bk.block_start(i);
+        EXPECT_EQ(m->bk.block_add(i, TYPE_HELLO), true);
+        EXPECT_EQ(m->bk.block_init(i), true);
+        EXPECT_EQ(m->bk.block_start(i), true);
     }
 
     // Bind:
@@ -171,8 +172,8 @@ TEST_F(tu_manager_bk, manager_bk_flow)
     //   - block 2 to block 0 (trash)
     for (int i = 0; i < 8; i++)
     {
-        m->bk.block_bind(1, i, 2);
-        m->bk.block_bind(2, i, 0);
+        EXPECT_EQ(m->bk.block_bind(1, i, 2), true);
+        EXPECT_EQ(m->bk.block_bind(2, i, 0), true);
     }
 
     // Retrieve block 1 and block 2
@@ -202,4 +203,73 @@ TEST_F(tu_manager_bk, manager_bk_flow)
 
     // Clear blocks
     m->bk.block_clear();
+}
+
+//
+// @brief Edge cases
+//
+TEST_F(tu_manager_bk, errors)
+{
+    char fname[] = "/tmp/tu_manager_bk.txt";
+    std::fstream file;
+
+    // Do not display error messages as we known there will be
+    logger_set_level(LOGGER_LEVEL_CRIT);
+
+    for (int i = 0; i < 8; i++)
+    {
+        file.open(fname, std::ios::out | std::ios::trunc);
+        ASSERT_EQ(file.is_open(), true);
+
+        switch (i)
+        {
+        case 0:
+            // Undefined block ID
+            file << CMD_ADD << " 0 " << TYPE_HELLO << std::endl;
+            break;
+
+        case 1:
+            // Undefined block type
+            file << CMD_ADD << " 1 " << 42 << std::endl;
+            break;
+
+        case 2:
+            // Initialize an unexisting block
+            file << CMD_INIT << " 4 no_arg" << std::endl;
+            break;
+
+        case 3:
+            // Configure an unexisting block
+            file << CMD_CONF << " 4 hello_1" << std::endl;
+            break;
+
+        case 4:
+            // Bind an unexisting block
+            file << CMD_BIND << " 4  0:2" << std::endl;
+            break;
+
+        case 5:
+            // Start an unexisting block
+            file << CMD_START << " 4 no_arg" << std::endl;
+            break;
+
+        case 6:
+            // Too many entries
+            file << "I like to try out fancy entries in configuration" << std::endl;
+            break;
+
+        case 7:
+            // Not enough entries
+            file << "Both ways " << std::endl;
+            break;
+
+        default:
+            // Incorrect test
+            ASSERT_TRUE(false);
+            break;
+        }
+
+        file.close();
+        EXPECT_EQ(conf_parse(fname), false);
+    }
 }
