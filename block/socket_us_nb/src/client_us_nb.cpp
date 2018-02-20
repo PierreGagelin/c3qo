@@ -211,7 +211,7 @@ static void client_us_nb_connect(struct client_us_nb_ctx *ctx)
 //
 // @brief Initialize the block
 //
-void *client_us_nb_init(int bk_id)
+static void *client_us_nb_init(int bk_id)
 {
     struct client_us_nb_ctx *ctx;
 
@@ -241,7 +241,7 @@ void *client_us_nb_init(int bk_id)
 //
 // This block only has one port
 //
-void client_us_nb_bind(void *vctx, int port, int bk_id)
+static void client_us_nb_bind(void *vctx, int port, int bk_id)
 {
     struct client_us_nb_ctx *ctx;
 
@@ -260,7 +260,7 @@ void client_us_nb_bind(void *vctx, int port, int bk_id)
 //
 // @brief Start the block
 //
-void client_us_nb_start(void *vctx)
+static void client_us_nb_start(void *vctx)
 {
     struct client_us_nb_ctx *ctx;
 
@@ -287,7 +287,7 @@ void client_us_nb_start(void *vctx)
 //
 // @brief Stop the block
 //
-void client_us_nb_stop(void *vctx)
+static void client_us_nb_stop(void *vctx)
 {
     struct client_us_nb_ctx *ctx;
 
@@ -309,7 +309,7 @@ void client_us_nb_stop(void *vctx)
     free(ctx);
 }
 
-int client_us_nb_tx(void *vctx, void *vdata)
+static int client_us_nb_tx(void *vctx, void *vdata)
 {
     struct client_us_nb_ctx *ctx;
 

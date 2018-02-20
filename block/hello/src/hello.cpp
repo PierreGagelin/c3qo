@@ -11,7 +11,7 @@
 // Managers shall be linked
 extern struct manager *m;
 
-void *hello_init(int bk_id)
+static void *hello_init(int bk_id)
 {
     struct hello_ctx *ctx;
 
@@ -36,7 +36,7 @@ void *hello_init(int bk_id)
     return ctx;
 }
 
-void hello_conf(void *vctx, char *conf)
+static void hello_conf(void *vctx, char *conf)
 {
     struct hello_ctx *ctx;
     size_t len;
@@ -61,7 +61,7 @@ void hello_conf(void *vctx, char *conf)
     memcpy(ctx->conf.name, conf, len + 1);
 }
 
-void hello_bind(void *vctx, int port, int bk_id)
+static void hello_bind(void *vctx, int port, int bk_id)
 {
     struct hello_ctx *ctx;
 
@@ -77,14 +77,14 @@ void hello_bind(void *vctx, int port, int bk_id)
     ctx->bind.id[port] = bk_id;
 }
 
-void hello_start(void *vctx)
+static void hello_start(void *vctx)
 {
     (void)vctx;
 
     LOGGER_DEBUG("Hello world");
 }
 
-void hello_stop(void *vctx)
+static void hello_stop(void *vctx)
 {
     struct hello_ctx *ctx;
 
@@ -99,7 +99,7 @@ void hello_stop(void *vctx)
     free(ctx);
 }
 
-int hello_rx(void *vctx, void *vdata)
+static int hello_rx(void *vctx, void *vdata)
 {
     struct hello_ctx *ctx;
     int ret;
@@ -122,7 +122,7 @@ int hello_rx(void *vctx, void *vdata)
     return ret;
 }
 
-int hello_tx(void *vctx, void *vdata)
+static int hello_tx(void *vctx, void *vdata)
 {
     struct hello_ctx *ctx;
     int ret;
@@ -145,7 +145,7 @@ int hello_tx(void *vctx, void *vdata)
     return ret;
 }
 
-int hello_ctrl(void *vctx, void *vnotif)
+static int hello_ctrl(void *vctx, void *vnotif)
 {
     struct hello_ctx *ctx;
 
@@ -163,7 +163,7 @@ int hello_ctrl(void *vctx, void *vnotif)
     return 0;
 }
 
-size_t hello_get_stats(void *vctx, char *buf, size_t len)
+static size_t hello_get_stats(void *vctx, char *buf, size_t len)
 {
     int ret;
     size_t written;
@@ -211,5 +211,5 @@ struct bk_if hello_if = {
 
     .rx = hello_rx,
     .tx = hello_tx,
-    .ctrl = &hello_ctrl,
+    .ctrl = hello_ctrl,
 };

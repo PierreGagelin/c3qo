@@ -206,6 +206,19 @@ TEST_F(tu_manager_bk, manager_bk_flow)
 }
 
 //
+// @brief String version of the block enumerates
+//
+TEST_F(tu_manager_bk, strings)
+{
+    for (int i = 0; i < 10; i++)
+    {
+        get_bk_cmd((enum bk_cmd)i);
+        get_bk_state((enum bk_state)i);
+        get_bk_type((enum bk_type)i);
+    }
+}
+
+//
 // @brief Edge cases
 //
 TEST_F(tu_manager_bk, errors)
