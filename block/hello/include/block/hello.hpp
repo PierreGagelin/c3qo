@@ -48,14 +48,6 @@ struct hello_ctx
     int count; // Number of packets processed
 };
 
-size_t hello_get_stats(void *vctx, char *buf, size_t len);
-int hello_ctrl(void *vctx, void *vnotif);
-int hello_tx(void *vctx, void *vdata);
-int hello_rx(void *vctx, void *vdata);
-void hello_stop(void *vctx);
-void hello_start(void *vctx);
-void hello_bind(void *vctx, int port, int bk_id);
-void hello_conf(void *vctx, char *conf);
-void *hello_init(int bk_id);
+extern struct bk_if hello_if;
 
 #endif

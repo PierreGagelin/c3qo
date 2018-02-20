@@ -211,7 +211,7 @@ static void server_us_nb_handler(void *vctx, int fd)
 //
 // @brief Initialize the block
 //
-void *server_us_nb_init(int bk_id)
+static void *server_us_nb_init(int bk_id)
 {
     struct server_us_nb_ctx *ctx;
 
@@ -243,7 +243,7 @@ void *server_us_nb_init(int bk_id)
 //
 // This block only has one port
 //
-void server_us_nb_bind(void *vctx, int port, int bk_id)
+static void server_us_nb_bind(void *vctx, int port, int bk_id)
 {
     struct server_us_nb_ctx *ctx;
 
@@ -262,7 +262,7 @@ void server_us_nb_bind(void *vctx, int port, int bk_id)
 //
 // @brief Start the block
 //
-void server_us_nb_start(void *vctx)
+static void server_us_nb_start(void *vctx)
 {
     struct server_us_nb_ctx *ctx;
     struct sockaddr_un srv_addr;
@@ -324,7 +324,7 @@ void server_us_nb_start(void *vctx)
 //
 // @brief Stop the block
 //
-void server_us_nb_stop(void *vctx)
+static void server_us_nb_stop(void *vctx)
 {
     struct server_us_nb_ctx *ctx;
     int i;
@@ -365,7 +365,7 @@ void server_us_nb_stop(void *vctx)
 //
 // @return Actual size written
 //
-size_t server_us_nb_get_stats(void *vctx, char *buf, size_t len)
+static size_t server_us_nb_get_stats(void *vctx, char *buf, size_t len)
 {
     int ret;
     size_t count;
@@ -401,7 +401,7 @@ size_t server_us_nb_get_stats(void *vctx, char *buf, size_t len)
     }
 }
 
-int server_us_nb_tx(void *vctx, void *vdata)
+static int server_us_nb_tx(void *vctx, void *vdata)
 {
     struct server_us_nb_ctx *ctx;
 

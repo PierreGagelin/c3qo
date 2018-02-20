@@ -30,11 +30,6 @@ struct server_us_nb_ctx
     size_t tx_pkt_bytes; // TX: Total size sent
 };
 
-void *server_us_nb_init(int bk_id);
-void server_us_nb_bind(void *vctx, int port, int bk_id);
-void server_us_nb_start(void *vctx);
-void server_us_nb_stop(void *vctx);
-size_t server_us_nb_get_stats(void *vctx, char *buf, size_t len);
-int server_us_nb_tx(void *vctx, void *vdata);
+extern struct bk_if server_us_nb_if;
 
 #endif // BLOCK_SERVER_US_NB_HPP
