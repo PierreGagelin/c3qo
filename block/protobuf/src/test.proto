@@ -1,0 +1,14 @@
+
+syntax = "proto3";
+
+option optimize_for = LITE_RUNTIME;
+
+message person
+{
+    int32 id1 = 1;
+    int32 id2 = 2;
+    int32 id3 = 3;
+    int32 id4 = 4;
+    int32 id5 = 5;
+    string toto = 6;
+}
