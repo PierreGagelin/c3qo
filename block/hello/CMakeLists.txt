@@ -5,6 +5,8 @@ set(SOURCES src/hello.cpp)
 
 add_library(hello STATIC ${SOURCES})
 
+C3QO_TARGET_COMPILE_FLAGS(hello)
+
 target_link_libraries(hello manager)
 
 
@@ -12,6 +14,8 @@ target_link_libraries(hello manager)
 set(SOURCES_TEST test/tu_hello.cpp)
 
 add_executable(tu_hello ${SOURCES_TEST})
+
+C3QO_TARGET_LINK_FLAGS(tu_hello)
 
 add_test(NAME tu_hello COMMAND tu_hello)
 
