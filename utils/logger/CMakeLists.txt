@@ -5,6 +5,8 @@ set(SOURCES src/logger.cpp)
 
 add_library(logger STATIC ${SOURCES})
 
+C3QO_TARGET_COMPILE_FLAGS(logger)
+
 target_include_directories(logger PUBLIC ${UTILS_INCLUDE_DIR})
 
 
@@ -12,9 +14,10 @@ target_include_directories(logger PUBLIC ${UTILS_INCLUDE_DIR})
 set(SOURCES_TU_LOGGER test/tu_logger.cpp)
 
 add_executable(tu_logger ${SOURCES_TU_LOGGER})
-add_test(NAME tu_logger COMMAND tu_logger)
 
-target_include_directories(tu_logger PUBLIC ${UTILS_INCLUDE_DIR})
+C3QO_TARGET_LINK_FLAGS(tu_logger)
+
+add_test(NAME tu_logger COMMAND tu_logger)
 
 target_link_libraries(tu_logger logger)
 target_link_libraries(tu_logger gtest)
