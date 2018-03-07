@@ -80,7 +80,7 @@ TEST_F(tu_manager_fd, manager_fd)
     fprintf(file, "hello world!");
 
     // Verify something is ready to be read
-    EXPECT_GT(select_fd(), 0);
+    EXPECT_GT(poll_fd(), 0);
 
     // Verify that the callback was executed
     EXPECT_EQ(fd_called, true);

@@ -11,26 +11,40 @@
 
 // C++ library headers
 #include <cstdlib> // NULL
-#include <cstring> // memset
+#include <cstring> // memset, strerror
+#include <cerrno>  // errno
 
 // Project headers
 #include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
 
 //
-// @brief Constructor
+// @brief Find the index where the file descriptor fd is
 //
-// We size vector to maximum, it allows to have a small binary footprint
+// @return Index of the file descriptor on success, -1 on failure
 //
-manager_fd::manager_fd()
+int manager_fd::find(int fd)
 {
-    struct fd_call def;
+    size_t end;
+    size_t i;
 
-    def.ctx = NULL;
-    def.callback = NULL;
+    // Verify input
+    if (fd < 0)
+    {
+        return -1;
+    }
 
-    list_r_.assign(FD_SETSIZE, def);
-    list_w_.assign(FD_SETSIZE, def);
+    // Look for the file descriptor fd
+    end = fd_.size();
+    for (i = 0; i < end; i++)
+    {
+        if (fd_[i].fd == fd)
+        {
+            return i;
+        }
+    }
+
+    return -1;
 }
 
 //
@@ -44,15 +58,16 @@ manager_fd::manager_fd()
 //
 bool manager_fd::add(void *ctx, int fd, void (*callback)(void *ctx, int fd), bool read)
 {
+    struct fd_call new_callback;
+    struct fd_call *new_callback_p;
+    zmq_pollitem_t new_fd;
+    zmq_pollitem_t *new_fd_p;
+    int index;
+
     // Verify user input
     if (callback == NULL)
     {
         LOGGER_WARNING("Cannot add file descriptor without callback [fd=%d ; callback=%p]", fd, callback);
-        return false;
-    }
-    if (fd >= FD_SETSIZE)
-    {
-        LOGGER_CRIT("File descriptor value too high for select, need to use poll [fd=%d ; callback=%p]", fd, callback);
         return false;
     }
     if (fd < 0)
@@ -61,84 +76,84 @@ bool manager_fd::add(void *ctx, int fd, void (*callback)(void *ctx, int fd), boo
         return false;
     }
 
-    // Work either on read or write for this file descriptor
-    if (read == true)
+    // Update or create a new entry
+    index = find(fd);
+    if (index == -1)
     {
-        list_r_[fd].ctx = ctx;
-        list_r_[fd].callback = callback;
+        new_callback_p = &new_callback;
+        new_fd_p = &new_fd;
+
+        // Initialize the flag
+        new_fd_p->events = 0;
     }
     else
     {
-        list_w_[fd].ctx = ctx;
-        list_w_[fd].callback = callback;
+        new_callback_p = callback_.data();
+        new_fd_p = fd_.data();
+
+        new_callback_p += index;
+        new_fd_p += index;
+    }
+
+    // Keep the callback context
+    new_callback_p->ctx = ctx;
+    new_callback_p->callback = callback;
+
+    // Specify we want to poll on the file descriptor rather than the socket
+    new_fd_p->fd = fd;
+    new_fd_p->socket = NULL;
+
+    // Add a flag to read or write
+    new_fd_p->events |= (read == true) ? ZMQ_POLLIN : ZMQ_POLLOUT;
+
+    // Store the new entry
+    if (index == -1)
+    {
+        callback_.push_back(new_callback);
+        fd_.push_back(new_fd);
     }
 
     return true;
 }
 
 //
-// @brief Remove a file descriptor from the reading list
+// @brief Remove a flag from the entry. If there are no more flag, the entry is removed
 //
 void manager_fd::remove(int fd, bool read)
 {
-    // Verify user input
-    if ((fd >= FD_SETSIZE) || (fd < 0))
+    zmq_pollitem_t *entry;
+    int index;
+    short flag;
+
+    // Look for the entry
+    index = find(fd);
+    if (index == -1)
     {
+        // Nothing to do
         return;
     }
+    entry = fd_.data();
+    entry += index;
 
-    // Work either on read or write for this file descriptor
-    if (read == true)
+    // Remove the desired flag
+    flag = (read == true) ? ZMQ_POLLIN : ZMQ_POLLOUT;
+    entry->events &= ~flag;
+
+    // Verify that the entry still has a flag
+    if (entry->events == 0)
     {
-        list_r_[fd].callback = NULL;
-        list_r_[fd].ctx = NULL;
+        std::vector<zmq_pollitem_t>::const_iterator it_fd;
+        std::vector<struct fd_call>::const_iterator it_cb;
+
+        // Remove file descriptor and callback
+        it_cb = callback_.begin();
+        it_cb += index;
+        callback_.erase(it_cb);
+
+        it_fd = fd_.begin();
+        it_fd += index;
+        fd_.erase(it_fd);
     }
-    else
-    {
-        list_w_[fd].callback = NULL;
-        list_w_[fd].ctx = NULL;
-    }
-}
-
-//
-// @brief Prepare the read and write sets of file descriptor
-//
-// @param set_r : file descriptor set to fill for read
-// @param set_w : file descriptor set to fill for write
-//
-// @return maximum file descriptor value
-//
-int manager_fd::prepare_set(fd_set *set_r, fd_set *set_w)
-{
-    int max;
-
-    FD_ZERO(set_r);
-    FD_ZERO(set_w);
-
-    max = 0;
-    for (int fd = 0; fd < FD_SETSIZE; fd++)
-    {
-        if (list_r_[fd].callback != NULL)
-        {
-            FD_SET(fd, set_r);
-
-            if (fd > max)
-            {
-                max = fd;
-            }
-        }
-        if (list_w_[fd].callback != NULL)
-        {
-            FD_SET(fd, set_w);
-
-            if (fd > max)
-            {
-                max = fd;
-            }
-        }
-    }
-
-    return max;
 }
 
 //
@@ -146,56 +161,72 @@ int manager_fd::prepare_set(fd_set *set_r, fd_set *set_w)
 //
 // @return Return code of select
 //
-int manager_fd::select_fd()
+int manager_fd::poll_fd()
 {
-    struct timeval tv;
-    fd_set set_r;
-    fd_set set_w;
-    int set_max;
     int ret;
+    long timeout;
 
-    // Wait up to 10ms
-    tv.tv_sec = 0;
-    tv.tv_usec = 10 * 1000;
-
-    set_max = prepare_set(&set_r, &set_w);
-
-    ret = select(set_max + 1, &set_r, &set_w, NULL, &tv);
-    if (ret == 0)
+    // Poll sockets for 10ms
+    timeout = 10;
+    ret = zmq_poll(fd_.data(), fd_.size(), timeout);
+    if (ret == -1)
     {
-        // Nothing to read, select timed out
+        LOGGER_ERR("Failed to poll socket: %s [errno=%d]", strerror(errno), errno);
+        return -1;
     }
-    else if (ret == -1)
+    else if (ret == 0)
     {
-        LOGGER_ERR("Failed to select on file descriptor set");
+        // Timeout expired, nothing to do
     }
-    else if (ret > 0)
+    else
     {
-        int j; // Number of executed callbacks
+        std::vector<zmq_pollitem_t>::const_iterator it_fd;
+        std::vector<zmq_pollitem_t>::const_iterator end;
+        std::vector<struct fd_call>::const_iterator it_cb;
+        int count;
 
-        // There are 'ret' fd ready for reading
-
-        j = 0;
-        for (int fd = 0; fd <= set_max; fd++)
+        // There are 'ret' file descriptors ready
+        it_fd = fd_.begin();
+        end = fd_.end();
+        it_cb = callback_.begin();
+        count = 0;
+        while (it_fd != end)
         {
-            if ((FD_ISSET(fd, &set_r) != 0) && (list_r_[fd].callback != NULL))
+            // Look if the file descriptor is ready
+            if ((it_fd->revents & (ZMQ_POLLIN | ZMQ_POLLOUT)) != 0)
             {
-                // Data ready for reading
-                list_r_[fd].callback(list_r_[fd].ctx, fd);
-                j++;
-            }
-            if ((FD_ISSET(fd, &set_w) != 0) && (list_w_[fd].callback != NULL))
-            {
-                // Data ready for writing
-                list_w_[fd].callback(list_r_[fd].ctx, fd);
-                j++;
+                count++;
+
+                if (it_fd->socket != NULL)
+                {
+                    int fd;
+                    size_t fd_len;
+                    int opt_ret;
+
+                    fd_len = sizeof(fd);
+                    opt_ret = zmq_getsockopt(it_fd->socket, ZMQ_FD, &fd, &fd_len);
+                    if (opt_ret == 0)
+                    {
+                        it_cb->callback(it_cb->ctx, fd);
+                    }
+                    else
+                    {
+                        LOGGER_ERR("Failed to retrieve file descriptor from ZMQ socket: %s [errno=%d]", strerror(errno), errno);
+                    }
+                }
+                else
+                {
+                    it_cb->callback(it_cb->ctx, it_fd->fd);
+                }
             }
 
-            if (j >= ret)
+            if (count == ret)
             {
-                // Finished to read
                 break;
             }
+
+            ++it_fd;
+            ++it_cb;
         }
     }
 

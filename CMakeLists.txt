@@ -9,7 +9,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
 
 # Build type: either Debug or Release
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 
 
 # Compilation flags
@@ -52,8 +52,9 @@ enable_testing()
 
 # Include directories for blocks
 set(BLOCK_INCLUDE_DIR)
-set(BLOCK_INCLUDE_DIR ${BLOCK_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/block/socket_us_nb/include)
 set(BLOCK_INCLUDE_DIR ${BLOCK_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/block/hello/include)
+set(BLOCK_INCLUDE_DIR ${BLOCK_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/block/socket_us_nb/include)
+set(BLOCK_INCLUDE_DIR ${BLOCK_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/block/socket_zmq/include)
 
 # Include directories for c3qo engine
 set(C3QO_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/c3qo/include)
@@ -75,6 +76,7 @@ endfunction(C3QO_TARGET_COMPILE_FLAGS)
 
 # Function to add link flags
 function(C3QO_TARGET_LINK_FLAGS t_name)
+    set_target_properties(${t_name} PROPERTIES LINK_FLAGS "-lzmq")
     if(${C3QO_COVERAGE})    
         set_target_properties(${t_name} PROPERTIES LINK_FLAGS "--coverage")
     endif()

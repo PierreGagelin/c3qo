@@ -50,4 +50,4 @@ struct hello_ctx
 
 extern struct bk_if hello_if;
 
-#endif
+#endif // BLOCK_HELLO_HPP

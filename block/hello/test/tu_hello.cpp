@@ -5,7 +5,7 @@
 // C++ library headers
 #include <cstdlib> // NULL
 
-//Project headers
+// Project headers
 #include "c3qo/block.hpp"
 #include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
@@ -43,9 +43,9 @@ void tu_hello::TearDown()
     LOGGER_CLOSE();
 }
 
-/**
- * @brief Basic usage of block hello
- */
+//
+// @brief Basic usage of block hello
+//
 TEST_F(tu_hello, hello)
 {
     void *ctx;
@@ -87,9 +87,9 @@ TEST_F(tu_hello, hello)
     hello_if.stop(ctx);
 }
 
-/**
- * @brief Edge cases
- */
+///
+// @brief Edge cases
+//
 TEST_F(tu_hello, error)
 {
     void *ctx;
