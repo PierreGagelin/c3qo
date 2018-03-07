@@ -74,7 +74,7 @@ int main(int argc, char **argv)
     // Main loop
     while (true)
     {
-        m->fd.select_fd();
+        m->fd.poll_fd();
         m->tm.check_exp();
     }
 
