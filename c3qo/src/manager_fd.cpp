@@ -19,17 +19,17 @@
 #include "utils/logger.hpp"
 
 //
-// @brief Find the index where the file descriptor fd is
+// @brief Find index of an entry
 //
 // @return Index of the file descriptor on success, -1 on failure
 //
-int manager_fd::find(int fd)
+int manager_fd::find(int fd, void *socket)
 {
     size_t end;
     size_t i;
 
     // Verify input
-    if (fd < 0)
+    if ((fd < 0) && (socket == NULL))
     {
         return -1;
     }
@@ -38,7 +38,7 @@ int manager_fd::find(int fd)
     end = fd_.size();
     for (i = 0; i < end; i++)
     {
-        if (fd_[i].fd == fd)
+        if ((fd_[i].fd == fd) && (fd_[i].socket == socket))
         {
             return i;
         }
@@ -48,15 +48,18 @@ int manager_fd::find(int fd)
 }
 
 //
-// @brief Add a file descriptor
+// @brief Add an entry to the polling set
 //
-// @param fd       : file descriptor
-// @param callback : function to call when fd is ready
+// @param callback : function to call when file descriptor or socket is ready
+// @param fd       : file descriptor to register
+// @param socket   : ZMQ socket to register
 // @param read     : register into reading list
 //
 // @return true on success, false on failure
 //
-bool manager_fd::add(void *ctx, int fd, void (*callback)(void *ctx, int fd), bool read)
+// If both a file descriptor and a socket are set, the socket will prevale when polling
+//
+bool manager_fd::add(void *ctx, void (*callback)(void *, int, void *), int fd, void *socket, bool read)
 {
     struct fd_call new_callback;
     struct fd_call *new_callback_p;
@@ -65,19 +68,19 @@ bool manager_fd::add(void *ctx, int fd, void (*callback)(void *ctx, int fd), boo
     int index;
 
     // Verify user input
-    if (callback == NULL)
+    if ((fd < 0) && (socket == NULL))
     {
-        LOGGER_WARNING("Cannot add file descriptor without callback [fd=%d ; callback=%p]", fd, callback);
+        LOGGER_WARNING("Cannot add entry: negative file descriptor or NULL socket [fd=%d ; socket=%p]", fd, socket);
         return false;
     }
-    if (fd < 0)
+    if (callback == NULL)
     {
-        LOGGER_WARNING("Cannot add negative file descriptor [fd=%d ; callback=%p]", fd, callback);
+        LOGGER_WARNING("Cannot add entry: NULL callback [fd=%d ; socket=%p ; callback=%p]", fd, socket, callback);
         return false;
     }
 
     // Update or create a new entry
-    index = find(fd);
+    index = find(fd, socket);
     if (index == -1)
     {
         new_callback_p = &new_callback;
@@ -95,13 +98,11 @@ bool manager_fd::add(void *ctx, int fd, void (*callback)(void *ctx, int fd), boo
         new_fd_p += index;
     }
 
-    // Keep the callback context
     new_callback_p->ctx = ctx;
     new_callback_p->callback = callback;
 
-    // Specify we want to poll on the file descriptor rather than the socket
     new_fd_p->fd = fd;
-    new_fd_p->socket = NULL;
+    new_fd_p->socket = socket;
 
     // Add a flag to read or write
     new_fd_p->events |= (read == true) ? ZMQ_POLLIN : ZMQ_POLLOUT;
@@ -119,14 +120,14 @@ bool manager_fd::add(void *ctx, int fd, void (*callback)(void *ctx, int fd), boo
 //
 // @brief Remove a flag from the entry. If there are no more flag, the entry is removed
 //
-void manager_fd::remove(int fd, bool read)
+void manager_fd::remove(int fd, void *socket, bool read)
 {
     zmq_pollitem_t *entry;
     int index;
     short flag;
 
     // Look for the entry
-    index = find(fd);
+    index = find(fd, socket);
     if (index == -1)
     {
         // Nothing to do
@@ -185,6 +186,8 @@ int manager_fd::poll_fd()
         std::vector<struct fd_call>::const_iterator it_cb;
         int count;
 
+        LOGGER_DEBUG("Sockets are ready for I/O [poll_size=%zu ; ready_count=%d]", fd_.size(), ret);
+
         // There are 'ret' file descriptors ready
         it_fd = fd_.begin();
         end = fd_.end();
@@ -195,33 +198,13 @@ int manager_fd::poll_fd()
             // Look if the file descriptor is ready
             if ((it_fd->revents & (ZMQ_POLLIN | ZMQ_POLLOUT)) != 0)
             {
+                it_cb->callback(it_cb->ctx, it_fd->fd, it_fd->socket);
                 count++;
-
-                if (it_fd->socket != NULL)
-                {
-                    int fd;
-                    size_t fd_len;
-                    int opt_ret;
-
-                    fd_len = sizeof(fd);
-                    opt_ret = zmq_getsockopt(it_fd->socket, ZMQ_FD, &fd, &fd_len);
-                    if (opt_ret == 0)
-                    {
-                        it_cb->callback(it_cb->ctx, fd);
-                    }
-                    else
-                    {
-                        LOGGER_ERR("Failed to retrieve file descriptor from ZMQ socket: %s [errno=%d]", strerror(errno), errno);
-                    }
-                }
-                else
-                {
-                    it_cb->callback(it_cb->ctx, it_fd->fd);
-                }
             }
 
             if (count == ret)
             {
+                // There is no need to check further entries
                 break;
             }
 

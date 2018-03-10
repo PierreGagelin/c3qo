@@ -22,11 +22,8 @@ extern "C" {
 extern struct manager *m;
 
 bool fd_called;
-void fd_callback(void *ctx, int fd)
+void fd_callback(void *ctx, int fd, void *socket)
 {
-    (void)fd;
-    (void)ctx;
-
     fd_called = true;
 }
 
@@ -74,7 +71,7 @@ TEST_F(tu_manager_fd, manager_fd)
     ASSERT_NE(fd, -1);
 
     // Add a file descriptor to be managed for reading
-    EXPECT_EQ(add(NULL, fd, &fd_callback, true), true);
+    EXPECT_EQ(add(NULL, &fd_callback, fd, NULL, true), true);
 
     // Write into the managed
     fprintf(file, "hello world!");
@@ -86,6 +83,6 @@ TEST_F(tu_manager_fd, manager_fd)
     EXPECT_EQ(fd_called, true);
 
     // Clean the file descriptor manager
-    remove(fd, true);
+    remove(fd, NULL, true);
     fclose(file);
 }

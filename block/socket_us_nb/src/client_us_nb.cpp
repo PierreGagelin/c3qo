@@ -41,8 +41,8 @@ static void client_us_nb_clean(struct client_us_nb_ctx *ctx)
 {
     LOGGER_INFO("Remove socket from block context [bk_id=%d ; fd=%d]", ctx->bk_id, ctx->fd);
 
-    m->fd.remove(ctx->fd, true);
-    m->fd.remove(ctx->fd, false);
+    m->fd.remove(ctx->fd, NULL, true);
+    m->fd.remove(ctx->fd, NULL, false);
     close(ctx->fd);
     ctx->fd = -1;
 }
@@ -50,11 +50,13 @@ static void client_us_nb_clean(struct client_us_nb_ctx *ctx)
 //
 // @brief Callback function when data is received
 //
-static void client_us_nb_callback(void *vctx, int fd)
+static void client_us_nb_callback(void *vctx, int fd, void *socket)
 {
     struct client_us_nb_ctx *ctx;
     char buf[SOCKET_READ_SIZE];
     ssize_t ret;
+
+    (void) socket;
 
     // Verify input
     if (vctx == NULL)
@@ -91,9 +93,11 @@ static void client_us_nb_callback(void *vctx, int fd)
 //
 // @brief Check if the socket is connected
 //
-static void client_us_nb_connect_check(void *vctx, int fd)
+static void client_us_nb_connect_check(void *vctx, int fd, void *socket)
 {
     struct client_us_nb_ctx *ctx;
+
+    (void) socket;
 
     // Verify input
     if (vctx == NULL)
@@ -111,8 +115,8 @@ static void client_us_nb_connect_check(void *vctx, int fd)
     {
         // Socket is connected, no need to look for write occasion anymore
         ctx->connected = true;
-        m->fd.remove(ctx->fd, false);
-        m->fd.add(ctx, ctx->fd, &client_us_nb_callback, true);
+        m->fd.remove(ctx->fd, NULL, false);
+        m->fd.add(ctx, &client_us_nb_callback, ctx->fd, NULL, true);
     }
 }
 
@@ -174,7 +178,7 @@ static void client_us_nb_connect(struct client_us_nb_ctx *ctx)
     {
     case 1:
         // Connection in progress, register file descriptor for writing to check the connection when it's ready
-        m->fd.add(ctx, ctx->fd, &client_us_nb_connect_check, false);
+        m->fd.add(ctx, &client_us_nb_connect_check, ctx->fd, NULL, false);
         break;
 
     case -1:
@@ -194,7 +198,7 @@ static void client_us_nb_connect(struct client_us_nb_ctx *ctx)
 
     case 0:
         // Success: register the file descriptor with a callback for data reception
-        if (m->fd.add(ctx, ctx->fd, &client_us_nb_callback, true) == false)
+        if (m->fd.add(ctx, &client_us_nb_callback, ctx->fd, NULL, true) == false)
         {
             LOGGER_ERR("Failed to register callback on client socket [fd=%d ; callback=%p]", ctx->fd, &client_us_nb_callback);
             client_us_nb_clean(ctx);
