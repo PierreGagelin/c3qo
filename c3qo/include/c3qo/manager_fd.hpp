@@ -5,9 +5,6 @@
 #include <vector>
 
 // System library headers
-extern "C" {
-#include <sys/select.h> // select and associated definitions
-}
 
 // ZeroMQ header
 #include <zmq.h>
@@ -15,8 +12,8 @@ extern "C" {
 // Routine to call when socket or file descriptor is ready
 struct fd_call
 {
-    void *ctx;                           // Context for the callback
-    void (*callback)(void *ctx, int fd); // Callback to call on event
+    void *ctx;                                         // Context for the callback
+    void (*callback)(void *ctx, int fd, void *socket); // Callback to call on a file descriptor or a socket
 };
 
 class manager_fd
@@ -26,12 +23,11 @@ class manager_fd
     std::vector<zmq_pollitem_t> fd_;       // File descriptors or socket registered
 
   protected:
-    int find(int fd);
-    int prepare_set(fd_set *set_r, fd_set *set_w);
+    int find(int fd, void *socket);
 
   public:
-    bool add(void *ctx, int fd, void (*callback)(void *ctx, int fd), bool read);
-    void remove(int fd, bool read);
+    bool add(void *ctx, void (*callback)(void *, int, void *), int fd, void *socket, bool read);
+    void remove(int fd, void *socket, bool read);
 
   public:
     int poll_fd();
