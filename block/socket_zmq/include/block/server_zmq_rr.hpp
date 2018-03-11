@@ -15,6 +15,9 @@ struct server_zmq_rr_ctx
     
     void *zmq_ctx;
     void *zmq_socket;
+
+    unsigned long rx_pkt_count;
+    unsigned long tx_pkt_count;
 };
 
 extern struct bk_if server_zmq_rr_if;

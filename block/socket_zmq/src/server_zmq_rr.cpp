@@ -1,8 +1,7 @@
 
 // System headers
 extern "C" {
-#include <zmq.h>    // zmq_*
-#include <unistd.h> // sleep
+#include <zmq.h> // zmq_*
 }
 
 // C++ library headers
@@ -21,24 +20,36 @@ extern struct manager *m;
 //
 // @brief Callback to handle data available on the socket
 //
-static void server_zmq_rr_callback(void *vctx, int fd)
+static void server_zmq_rr_callback(void *vctx, int fd, void *socket)
 {
     struct server_zmq_rr_ctx *ctx;
     char buffer[10];
     int ret;
 
+    (void)fd;
+
+    // Verify input
     if (vctx == NULL)
     {
-        LOGGER_ERR("Failed to execute callback: NULL context [fd=%d]", fd);
+        LOGGER_ERR("Failed to execute callback: NULL context [socket=%p]", socket);
         return;
     }
     ctx = (struct server_zmq_rr_ctx *)vctx;
+    if (socket != ctx->zmq_socket)
+    {
+        LOGGER_ERR("Failed to execute ZMQ callback: unknown socket [socket=%p ; expected=%p]", socket, ctx->zmq_socket);
+        return;
+    }
 
-    ret = zmq_recv(ctx->zmq_socket, buffer, 10, 0);
+    ret = zmq_recv(ctx->zmq_socket, buffer, 10, ZMQ_DONTWAIT);
     if (ret == -1)
     {
         LOGGER_ERR("Failed to receive data from ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
     }
+
+    LOGGER_DEBUG("Data available on ZMQ socket [socket=%p]", ctx->zmq_socket);
+
+    ctx->rx_pkt_count++;
 }
 
 //
@@ -79,6 +90,12 @@ static void *server_zmq_rr_init(int bk_id)
     // Bind and listen to an endpoint
     zmq_bind(ctx->zmq_socket, "tcp://*:5555");
 
+    // Initialize statistics
+    ctx->rx_pkt_count = 0;
+    ctx->tx_pkt_count = 0;
+
+    LOGGER_INFO("Initialize block server ZMQ Request-Reply [bk_id=%d]", bk_id);
+
     return ctx;
 }
 
@@ -87,9 +104,9 @@ static void *server_zmq_rr_init(int bk_id)
 //
 static void server_zmq_rr_start(void *vctx)
 {
-    (void)vctx;
     struct server_zmq_rr_ctx *ctx;
 
+    // Verify input
     if (vctx == NULL)
     {
         LOGGER_ERR("Failed to start block: NULL context");
@@ -97,17 +114,10 @@ static void server_zmq_rr_start(void *vctx)
     }
     ctx = (struct server_zmq_rr_ctx *)vctx;
 
-    while (1)
-    {
-        char buffer[10];
-        zmq_recv(ctx->zmq_socket, buffer, 10, 0);
+    // Register the socket's callback
+    m->fd.add(ctx, server_zmq_rr_callback, -1, ctx->zmq_socket, true);
 
-        LOGGER_DEBUG("Received buffer [bk_id=%d]", ctx->bk_id);
-
-        sleep(1);
-
-        zmq_send(ctx->zmq_socket, "World", 5, 0);
-    }
+    LOGGER_INFO("Start block server ZMQ Request-Reply [bk_id=%d]", ctx->bk_id);
 }
 
 //
@@ -117,6 +127,7 @@ static void server_zmq_rr_stop(void *vctx)
 {
     struct server_zmq_rr_ctx *ctx;
 
+    // Verify input
     if (vctx == NULL)
     {
         LOGGER_ERR("Failed to stop block: NULL context");
@@ -124,20 +135,15 @@ static void server_zmq_rr_stop(void *vctx)
     }
     ctx = (struct server_zmq_rr_ctx *)vctx;
 
-    zmq_ctx_term(ctx->zmq_ctx);
+    // Remove the socket's callback
+    m->fd.remove(-1, ctx->zmq_socket, true);
+
     zmq_close(ctx->zmq_socket);
+    zmq_ctx_term(ctx->zmq_ctx);
 
     free(ctx);
-}
 
-static int server_zmq_rr_rx(void *vctx, void *vdata)
-{
-    (void) vdata;
-
-    // TODO: have zmq_poll to call this
-    server_zmq_rr_callback(vctx, 0);
-
-    return 0;
+    LOGGER_INFO("Stop block server ZMQ Request-Reply [bk_id=%d]", ctx->bk_id);
 }
 
 //
@@ -155,11 +161,13 @@ static int server_zmq_rr_tx(void *vctx, void *vdata)
     }
     ctx = (struct server_zmq_rr_ctx *)vctx;
 
-    ret = zmq_send(ctx->zmq_socket, "World", 5, 0);
+    ret = zmq_send(ctx->zmq_socket, "World", 5, ZMQ_DONTWAIT);
     if (ret == -1)
     {
         LOGGER_ERR("Failed to send data to ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
     }
+
+    ctx->tx_pkt_count++;
 
     return 0;
 }
@@ -176,7 +184,7 @@ struct bk_if server_zmq_rr_if = {
 
     .get_stats = NULL,
 
-    .rx = server_zmq_rr_rx,
+    .rx = NULL,
     .tx = server_zmq_rr_tx,
     .ctrl = NULL,
 };
