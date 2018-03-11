@@ -6,6 +6,9 @@ extern "C" {
 #include <syslog.h> // syslog
 }
 
+// C++ library headers
+#include <cstdio>
+
 // Open and close connection to syslog
 #define LOGGER_OPEN(name) openlog(name, 0, 0);
 #define LOGGER_CLOSE() closelog();
@@ -50,41 +53,49 @@ extern enum logger_level logger_level;
     if (logger_level >= LOGGER_LEVEL_EMERG)                                              \
     {                                                                                    \
         syslog(LOG_EMERG, "[EMERG] " msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
+        printf("[EMERG] " msg " (%s:%d)\n", ##__VA_ARGS__, __func__, __LINE__);          \
     }
 #define LOGGER_ALERT(msg, ...)                                                           \
     if (logger_level >= LOGGER_LEVEL_ALERT)                                              \
     {                                                                                    \
         syslog(LOG_ALERT, "[ALERT] " msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
+        printf("[ALERT] " msg " (%s:%d)\n", ##__VA_ARGS__, __func__, __LINE__);          \
     }
 #define LOGGER_CRIT(msg, ...)                                                          \
     if (logger_level >= LOGGER_LEVEL_CRIT)                                             \
     {                                                                                  \
         syslog(LOG_CRIT, "[CRIT] " msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
+        printf("[CRIT] " msg " (%s:%d)\n", ##__VA_ARGS__, __func__, __LINE__);         \
     }
 #define LOGGER_ERR(msg, ...)                                                         \
     if (logger_level >= LOGGER_LEVEL_ERR)                                            \
     {                                                                                \
         syslog(LOG_ERR, "[ERR] " msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
+        printf("[ERR] " msg " (%s:%d)\n", ##__VA_ARGS__, __func__, __LINE__);        \
     }
 #define LOGGER_WARNING(msg, ...)                                                             \
     if (logger_level >= LOGGER_LEVEL_WARNING)                                                \
     {                                                                                        \
         syslog(LOG_WARNING, "[WARNING] " msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
+        printf("[WARNING] " msg " (%s:%d)\n", ##__VA_ARGS__, __func__, __LINE__);            \
     }
 #define LOGGER_NOTICE(msg, ...)                                                            \
     if (logger_level >= LOGGER_LEVEL_NOTICE)                                               \
     {                                                                                      \
         syslog(LOG_NOTICE, "[NOTICE] " msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
+        printf("[NOTICE] " msg " (%s:%d)\n", ##__VA_ARGS__, __func__, __LINE__);           \
     }
 #define LOGGER_INFO(msg, ...)                                                          \
     if (logger_level >= LOGGER_LEVEL_INFO)                                             \
     {                                                                                  \
         syslog(LOG_INFO, "[INFO] " msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
+        printf("[INFO] " msg " (%s:%d)\n", ##__VA_ARGS__, __func__, __LINE__);         \
     }
 #define LOGGER_DEBUG(msg, ...)                                                           \
     if (logger_level >= LOGGER_LEVEL_DEBUG)                                              \
     {                                                                                    \
         syslog(LOG_DEBUG, "[DEBUG] " msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
+        printf("[DEBUG] " msg " (%s:%d)\n", ##__VA_ARGS__, __func__, __LINE__);          \
     }
 
 #else
