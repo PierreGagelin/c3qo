@@ -185,7 +185,7 @@ static void client_us_nb_connect(struct client_us_nb_ctx *ctx)
     case 2:
         struct timer tm;
 
-        LOGGER_DEBUG("Prepare a timer for socket connection retry [bk_id=%d ; fd=%d]", ctx->bk_id, ctx->fd)
+        LOGGER_DEBUG("Prepare a timer for socket connection retry [bk_id=%d ; fd=%d]", ctx->bk_id, ctx->fd);
 
         // Prepare a 100ms timer for connection retry
         tm.tid = ctx->fd;

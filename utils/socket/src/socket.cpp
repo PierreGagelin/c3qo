@@ -8,7 +8,7 @@
 
 // System library headers
 extern "C" {
-#include <fcntl.h>
+#include <fcntl.h> // fnctl
 #include <unistd.h>
 }
 
