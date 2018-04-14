@@ -63,7 +63,7 @@ static void *server_zmq_rr_init(int bk_id)
     ctx = (struct server_zmq_rr_ctx *)malloc(sizeof(*ctx));
     if (ctx == NULL)
     {
-        LOGGER_ERR("Failed to initialize block: out of memory [bk_id=%d]", bk_id);
+        LOGGER_ERR("Failed to initialize block: %s [bk_id=%d ; errno=%d]", strerror(errno), bk_id, errno);
         return NULL;
     }
     ctx->bk_id = bk_id;
@@ -72,7 +72,7 @@ static void *server_zmq_rr_init(int bk_id)
     ctx->zmq_ctx = zmq_ctx_new();
     if (ctx->zmq_ctx == NULL)
     {
-        LOGGER_ERR("Failed to initialize block: out of memory [bk_id=%d]", bk_id);
+        LOGGER_ERR("Failed to initialize block: out of memory for ZMQ context [bk_id=%d]", bk_id);
         free(ctx);
         return NULL;
     }
