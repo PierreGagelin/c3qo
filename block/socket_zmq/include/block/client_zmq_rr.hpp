@@ -14,7 +14,8 @@ struct client_zmq_rr_ctx
     int bk_id;
     
     void *zmq_ctx;
-    void *zmq_socket;
+    void *zmq_socket_sub;
+    void *zmq_socket_pub;
 
     unsigned long rx_pkt_count;
     unsigned long tx_pkt_count;

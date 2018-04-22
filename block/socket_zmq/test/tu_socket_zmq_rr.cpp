@@ -41,7 +41,7 @@ void tu_socket_zmq_rr::TearDown()
 {
     // Clear the managers
     delete m;
-    
+
     logger_set_level(LOGGER_LEVEL_NONE);
     LOGGER_CLOSE();
 }
@@ -64,17 +64,21 @@ TEST_F(tu_socket_zmq_rr, data)
     server_zmq_rr_if.start(ctx_s);
     client_zmq_rr_if.start(ctx_c);
 
-    // Send data from client to server
-    client_zmq_rr_if.tx(ctx_c, (void *)"hello world");
-    EXPECT_EQ(ctx_s->rx_pkt_count, (unsigned long)0);
-    m->fd.poll_fd();
-    EXPECT_EQ(ctx_s->rx_pkt_count, (unsigned long)1);
+    EXPECT_EQ(ctx_s->rx_pkt_count, 0lu);
+    EXPECT_EQ(ctx_c->rx_pkt_count, 0lu);
 
-    // Send data from server to client
-    server_zmq_rr_if.tx(ctx_s, (void *)"hello world");
-    EXPECT_EQ(ctx_c->rx_pkt_count, (unsigned long)0);
-    m->fd.poll_fd();
-    EXPECT_EQ(ctx_c->rx_pkt_count, (unsigned long)1);
+    // Try to send some data between publisher and subscriber
+    // Some messages are lost because subscription can take some time
+    for (int i = 0; i < 10; i++)
+    {
+        client_zmq_rr_if.tx(ctx_c, (void *)"");
+        server_zmq_rr_if.tx(ctx_s, (void *)"");
+        m->fd.poll_fd();
+    }
+
+    // At least one message should be received
+    EXPECT_GT(ctx_c->rx_pkt_count, 1lu);
+    EXPECT_GT(ctx_s->rx_pkt_count, 1lu);
 
     server_zmq_rr_if.stop(ctx_s);
     client_zmq_rr_if.stop(ctx_c);

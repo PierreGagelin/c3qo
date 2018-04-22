@@ -1,5 +1,5 @@
 
-// System headers
+// System library headers
 extern "C" {
 #include <zmq.h> // zmq_*
 }
@@ -13,6 +13,7 @@ extern "C" {
 #include "block/server_zmq_rr.hpp"
 #include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
+#include "utils/socket.hpp"
 
 // Managers shall be linked
 extern struct manager *m;
@@ -23,8 +24,8 @@ extern struct manager *m;
 static void server_zmq_rr_callback(void *vctx, int fd, void *socket)
 {
     struct server_zmq_rr_ctx *ctx;
-    char buffer[10];
-    int ret;
+    struct c3qo_zmq_msg msg;
+    bool ret;
 
     (void)fd;
 
@@ -35,19 +36,24 @@ static void server_zmq_rr_callback(void *vctx, int fd, void *socket)
         return;
     }
     ctx = (struct server_zmq_rr_ctx *)vctx;
-    if (socket != ctx->zmq_socket)
+    if (socket != ctx->zmq_socket_sub)
     {
-        LOGGER_ERR("Failed to execute ZMQ callback: unknown socket [socket=%p ; expected=%p]", socket, ctx->zmq_socket);
+        LOGGER_ERR("Failed to execute ZMQ callback: unknown socket [socket=%p ; expected=%p]", socket, ctx->zmq_socket_sub);
         return;
     }
 
-    ret = zmq_recv(ctx->zmq_socket, buffer, 10, ZMQ_DONTWAIT);
-    if (ret == -1)
+    ret = socket_nb_zmq_read(ctx->zmq_socket_sub, &msg.topic, &msg.topic_len);
+    if (ret == false)
+    {
+        LOGGER_ERR("Failed to receive data from ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
+    }
+    ret = socket_nb_zmq_read(ctx->zmq_socket_sub, &msg.data, &msg.data_len);
+    if (ret == true)
     {
         LOGGER_ERR("Failed to receive data from ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
     }
 
-    LOGGER_DEBUG("Data available on ZMQ socket [socket=%p]", ctx->zmq_socket);
+    LOGGER_DEBUG("Data available on ZMQ socket [socket=%p]", ctx->zmq_socket_sub);
 
     ctx->rx_pkt_count++;
 }
@@ -58,6 +64,7 @@ static void server_zmq_rr_callback(void *vctx, int fd, void *socket)
 static void *server_zmq_rr_init(int bk_id)
 {
     struct server_zmq_rr_ctx *ctx;
+    int ret;
 
     // Create a block context
     ctx = (struct server_zmq_rr_ctx *)malloc(sizeof(*ctx));
@@ -77,18 +84,48 @@ static void *server_zmq_rr_init(int bk_id)
         return NULL;
     }
 
-    // Create a ZMQ socket
-    ctx->zmq_socket = zmq_socket(ctx->zmq_ctx, ZMQ_REP);
-    if (ctx->zmq_socket == NULL)
+    // Create a publisher and a subscriber
+    ctx->zmq_socket_pub = zmq_socket(ctx->zmq_ctx, ZMQ_PUB);
+    if (ctx->zmq_socket_pub == NULL)
     {
         LOGGER_ERR("Failed to initialize block: %s [bk_id=%d ; errno=%d]", strerror(errno), bk_id, errno);
         zmq_ctx_term(ctx->zmq_ctx);
         free(ctx);
         return NULL;
     }
+    ctx->zmq_socket_sub = zmq_socket(ctx->zmq_ctx, ZMQ_SUB);
+    if (ctx->zmq_socket_sub == NULL)
+    {
+        LOGGER_ERR("Failed to initialize block: %s [bk_id=%d ; errno=%d]", strerror(errno), bk_id, errno);
+        zmq_ctx_term(ctx->zmq_ctx);
+        zmq_close(ctx->zmq_socket_pub);
+        free(ctx);
+        return NULL;
+    }
 
     // Bind and listen to an endpoint
-    zmq_bind(ctx->zmq_socket, "tcp://*:5555");
+    ret = zmq_bind(ctx->zmq_socket_pub, "tcp://*:5555");
+    if (ret == -1)
+    {
+        LOGGER_ERR("Failed to bind ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
+        zmq_close(ctx->zmq_socket_pub);
+        zmq_close(ctx->zmq_socket_sub);
+        zmq_ctx_term(ctx->zmq_ctx);
+        free(ctx);
+        return NULL;
+    }
+
+    // No filter for the subscriber
+    ret = zmq_setsockopt(ctx->zmq_socket_sub, ZMQ_SUBSCRIBE, "", 0);
+    if (ret == -1)
+    {
+        LOGGER_ERR("Failed to set ZMQ socket option: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
+        zmq_close(ctx->zmq_socket_pub);
+        zmq_close(ctx->zmq_socket_sub);
+        zmq_ctx_term(ctx->zmq_ctx);
+        free(ctx);
+        return NULL;
+    }
 
     // Initialize statistics
     ctx->rx_pkt_count = 0;
@@ -105,6 +142,7 @@ static void *server_zmq_rr_init(int bk_id)
 static void server_zmq_rr_start(void *vctx)
 {
     struct server_zmq_rr_ctx *ctx;
+    int ret;
 
     // Verify input
     if (vctx == NULL)
@@ -114,8 +152,15 @@ static void server_zmq_rr_start(void *vctx)
     }
     ctx = (struct server_zmq_rr_ctx *)vctx;
 
+    // Connect the subscriber
+    ret = zmq_connect(ctx->zmq_socket_sub, "tcp://127.0.0.1:6666");
+    if (ret == -1)
+    {
+        LOGGER_ERR("Failed to connect ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
+    }
+
     // Register the socket's callback
-    m->fd.add(ctx, server_zmq_rr_callback, -1, ctx->zmq_socket, true);
+    m->fd.add(ctx, server_zmq_rr_callback, -1, ctx->zmq_socket_sub, true);
 
     LOGGER_INFO("Start block server ZMQ Request-Reply [bk_id=%d]", ctx->bk_id);
 }
@@ -136,9 +181,10 @@ static void server_zmq_rr_stop(void *vctx)
     ctx = (struct server_zmq_rr_ctx *)vctx;
 
     // Remove the socket's callback
-    m->fd.remove(-1, ctx->zmq_socket, true);
+    m->fd.remove(-1, ctx->zmq_socket_sub, true);
 
-    zmq_close(ctx->zmq_socket);
+    zmq_close(ctx->zmq_socket_pub);
+    zmq_close(ctx->zmq_socket_sub);
     zmq_ctx_term(ctx->zmq_ctx);
 
     free(ctx);
@@ -152,6 +198,8 @@ static void server_zmq_rr_stop(void *vctx)
 static int server_zmq_rr_tx(void *vctx, void *vdata)
 {
     struct server_zmq_rr_ctx *ctx;
+    zmq_msg_t topic;
+    zmq_msg_t msg;
     int ret;
 
     if (vctx == NULL)
@@ -161,10 +209,24 @@ static int server_zmq_rr_tx(void *vctx, void *vdata)
     }
     ctx = (struct server_zmq_rr_ctx *)vctx;
 
-    ret = zmq_send(ctx->zmq_socket, "World", 5, ZMQ_DONTWAIT);
+    ret = zmq_msg_init_size(&topic, 5);
+    memcpy(zmq_msg_data(&topic), "Hello", 5);
+    ret = zmq_msg_send(&topic, ctx->zmq_socket_pub, ZMQ_DONTWAIT | ZMQ_SNDMORE);
     if (ret == -1)
     {
         LOGGER_ERR("Failed to send data to ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
+        zmq_msg_close(&topic);
+        return 0;
+    }
+
+    ret = zmq_msg_init_size(&msg, 5);
+    memcpy(zmq_msg_data(&msg), "World", 5);
+    ret = zmq_msg_send(&msg, ctx->zmq_socket_pub, ZMQ_DONTWAIT);
+    if (ret == -1)
+    {
+        LOGGER_ERR("Failed to send data to ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
+        zmq_msg_close(&msg);
+        return 0;
     }
 
     ctx->tx_pkt_count++;
