@@ -3,6 +3,7 @@
 //
 
 // C++ library headers
+#include <cstdlib> // malloc
 #include <cerrno>  // errno
 #include <cstring> // strerror
 
@@ -10,6 +11,7 @@
 extern "C" {
 #include <fcntl.h> // fnctl
 #include <unistd.h>
+#include <zmq.h> // zmq_*
 }
 
 // Project headers
@@ -190,4 +192,52 @@ int socket_nb_connect(int fd, const struct sockaddr *addr, socklen_t len)
         LOGGER_ERR("Failed to connect non-blocking socket: %s [fd=%d ; errno=%d]", strerror(errno), fd, errno);
         return -1;
     }
+}
+
+//
+// @brief Receive data from a ZMQ socket
+//
+// @return True if there's more data part to read
+//
+bool socket_nb_zmq_read(void *socket, char **data, size_t *len)
+{
+    zmq_msg_t part;
+    char *msg;
+    size_t size;
+    int ret;
+    bool more;
+
+    // Receive a message
+    zmq_msg_init(&part);
+    ret = zmq_msg_recv(&part, socket, ZMQ_DONTWAIT);
+    if (ret <= 0)
+    {
+        LOGGER_ERR("Failed to receive data from ZMQ socket: %s [errno=%d]", strerror(errno), errno);
+        zmq_msg_close(&part);
+        return false;
+    }
+
+    // Copy the message and add a terminal null byte
+    size = zmq_msg_size(&part) + 1;
+    msg = (char *)malloc(size);
+    if (msg == NULL)
+    {
+        LOGGER_ERR("Failed to receive data from ZMQ socket: %s [errno=%d]", strerror(errno), errno);
+        zmq_msg_close(&part);
+        return false;
+    }
+    memcpy(msg, zmq_msg_data(&part), size - 1);
+    msg[size - 1] = '\0';
+
+    // Look if there is another part to come
+    ret = zmq_msg_more(&part);
+    more = (ret == 1);
+
+    zmq_msg_close(&part);
+
+    // Fill user information
+    *data = msg;
+    *len = size;
+
+    return more;
 }
