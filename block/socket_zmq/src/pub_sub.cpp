@@ -11,7 +11,7 @@ extern "C" {
 #include <cstring> // strerror
 
 // Project headers
-#include "block/client_zmq_rr.hpp"
+#include "block/pub_sub.hpp"
 #include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
 #include "utils/socket.hpp"
@@ -22,9 +22,9 @@ extern struct manager *m;
 //
 // @brief Callback to handle data available on the socket
 //
-static void client_zmq_rr_callback(void *vctx, int fd, void *socket)
+static void pub_sub_callback(void *vctx, int fd, void *socket)
 {
-    struct client_zmq_rr_ctx *ctx;
+    struct pub_sub_ctx *ctx;
     struct c3qo_zmq_msg msg;
     bool ret;
 
@@ -36,7 +36,7 @@ static void client_zmq_rr_callback(void *vctx, int fd, void *socket)
         LOGGER_ERR("Failed to execute callback: NULL context [socket=%p]", socket);
         return;
     }
-    ctx = (struct client_zmq_rr_ctx *)vctx;
+    ctx = (struct pub_sub_ctx *)vctx;
     if (socket != ctx->zmq_socket_sub)
     {
         LOGGER_ERR("Failed to execute ZMQ callback: unknown socket [socket=%p ; expected=%p]", socket, ctx->zmq_socket_sub);
@@ -62,13 +62,13 @@ static void client_zmq_rr_callback(void *vctx, int fd, void *socket)
 //
 // @brief Initialize the block context
 //
-static void *client_zmq_rr_init(int bk_id)
+static void *pub_sub_init(int bk_id)
 {
-    struct client_zmq_rr_ctx *ctx;
+    struct pub_sub_ctx *ctx;
     int ret;
 
     // Create a block context
-    ctx = (struct client_zmq_rr_ctx *)malloc(sizeof(*ctx));
+    ctx = (struct pub_sub_ctx *)malloc(sizeof(*ctx));
     if (ctx == NULL)
     {
         LOGGER_ERR("Failed to initialize block: %s [bk_id=%d ; errno=%d]", strerror(errno), bk_id, errno);
@@ -127,7 +127,7 @@ static void *client_zmq_rr_init(int bk_id)
 
 static void client_zmq_conf(void *vctx, char *conf)
 {
-    struct client_zmq_rr_ctx *ctx;
+    struct pub_sub_ctx *ctx;
     char *pos;
 
     // Verify input
@@ -136,7 +136,7 @@ static void client_zmq_conf(void *vctx, char *conf)
         LOGGER_ERR("Failed to configure block: NULL context or conf");
         return;
     }
-    ctx = (struct client_zmq_rr_ctx *)vctx;
+    ctx = (struct pub_sub_ctx *)vctx;
 
     LOGGER_INFO("Configure block [bk_id=%d ; conf=%s]", ctx->bk_id, conf);
 
@@ -165,7 +165,7 @@ static void client_zmq_conf(void *vctx, char *conf)
             {
                 LOGGER_ERR("Failed to bind ZMQ publisher socket: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
             }
-            LOGGER_DEBUG("Bound ZMQ publisher socket [pub_addr=%s]", ctx->pub_addr);
+            LOGGER_DEBUG("Bound ZMQ publisher socket [bk_id=%d ; pub_addr=%s]", ctx->bk_id, ctx->pub_addr);
         }
     }
     pos = strstr(conf, NEEDLE_SUB);
@@ -184,7 +184,7 @@ static void client_zmq_conf(void *vctx, char *conf)
         }
         else
         {
-            LOGGER_INFO("Configure subscriber address [sub_addr=%s]", ctx->sub_addr);
+            LOGGER_INFO("Configure subscriber address [bk_id=%d ; sub_addr=%s]", ctx->bk_id, ctx->sub_addr);
         }
     }
 }
@@ -192,9 +192,9 @@ static void client_zmq_conf(void *vctx, char *conf)
 //
 // @brief Start the block
 //
-static void client_zmq_rr_start(void *vctx)
+static void pub_sub_start(void *vctx)
 {
-    struct client_zmq_rr_ctx *ctx;
+    struct pub_sub_ctx *ctx;
     int ret;
 
     if (vctx == NULL)
@@ -202,17 +202,17 @@ static void client_zmq_rr_start(void *vctx)
         LOGGER_ERR("Failed to start block: NULL context");
         return;
     }
-    ctx = (struct client_zmq_rr_ctx *)vctx;
+    ctx = (struct pub_sub_ctx *)vctx;
 
     // Connect the subscriber
     ret = zmq_connect(ctx->zmq_socket_sub, ctx->sub_addr);
     if (ret == -1)
     {
-        LOGGER_ERR("Failed to connect ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
+        LOGGER_ERR("Failed to connect ZMQ subscriber: %s [bk_id=%d ; addr=%s ; errno=%d]", strerror(errno), ctx->bk_id, ctx->sub_addr, errno);
     }
 
     // Register the subscriber's callback
-    m->fd.add(ctx, client_zmq_rr_callback, -1, ctx->zmq_socket_sub, true);
+    m->fd.add(ctx, pub_sub_callback, -1, ctx->zmq_socket_sub, true);
 
     LOGGER_INFO("Start block ZMQ Publish/Subscribe [bk_id=%d]", ctx->bk_id);
 }
@@ -220,9 +220,9 @@ static void client_zmq_rr_start(void *vctx)
 //
 // @brief Stop the block
 //
-static void client_zmq_rr_stop(void *vctx)
+static void pub_sub_stop(void *vctx)
 {
-    struct client_zmq_rr_ctx *ctx;
+    struct pub_sub_ctx *ctx;
 
     // Verify input
     if (vctx == NULL)
@@ -230,7 +230,7 @@ static void client_zmq_rr_stop(void *vctx)
         LOGGER_ERR("Failed to stop block: NULL context");
         return;
     }
-    ctx = (struct client_zmq_rr_ctx *)vctx;
+    ctx = (struct pub_sub_ctx *)vctx;
 
     // Remove the socket's callback
     m->fd.remove(-1, ctx->zmq_socket_sub, true);
@@ -247,9 +247,9 @@ static void client_zmq_rr_stop(void *vctx)
 //
 // @brief Send data to the exterior
 //
-static int client_zmq_rr_tx(void *vctx, void *vdata)
+static int pub_sub_tx(void *vctx, void *vdata)
 {
-    struct client_zmq_rr_ctx *ctx;
+    struct pub_sub_ctx *ctx;
     zmq_msg_t topic;
     zmq_msg_t msg;
     int ret;
@@ -259,7 +259,7 @@ static int client_zmq_rr_tx(void *vctx, void *vdata)
         LOGGER_ERR("Failed to process buffer: NULL context [data=%p]", vdata);
         return 0;
     }
-    ctx = (struct client_zmq_rr_ctx *)vctx;
+    ctx = (struct pub_sub_ctx *)vctx;
 
     zmq_msg_init_size(&topic, 5);
     memcpy(zmq_msg_data(&topic), "Hello", 5);
@@ -289,16 +289,16 @@ static int client_zmq_rr_tx(void *vctx, void *vdata)
 //
 // @brief Exported structure of the block
 //
-struct bk_if client_zmq_rr_if = {
-    .init = client_zmq_rr_init,
+struct bk_if pub_sub_if = {
+    .init = pub_sub_init,
     .conf = client_zmq_conf,
     .bind = NULL,
-    .start = client_zmq_rr_start,
-    .stop = client_zmq_rr_stop,
+    .start = pub_sub_start,
+    .stop = pub_sub_stop,
 
     .get_stats = NULL,
 
     .rx = NULL,
-    .tx = client_zmq_rr_tx,
+    .tx = pub_sub_tx,
     .ctrl = NULL,
 };
