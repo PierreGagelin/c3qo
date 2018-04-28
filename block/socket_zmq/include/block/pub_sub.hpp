@@ -1,5 +1,5 @@
-#ifndef BLOCK_CLIENT_ZMQ_RR_HPP
-#define BLOCK_CLIENT_ZMQ_RR_HPP
+#ifndef BLOCK_PUB_SUB_HPP
+#define BLOCK_PUB_SUB_HPP
 
 // Project headers
 #include "c3qo/block.hpp"
@@ -17,11 +17,11 @@
 #define NEEDLE_PUB "pub_addr="
 
 //
-// @struct client_zmq_rr_ctx
+// @struct pub_sub_ctx
 //
 // @brief Internal structure to store the context
 //
-struct client_zmq_rr_ctx
+struct pub_sub_ctx
 {
     // Context
     int bk_id;
@@ -38,6 +38,6 @@ struct client_zmq_rr_ctx
     unsigned long tx_pkt_count;
 };
 
-extern struct bk_if client_zmq_rr_if;
+extern struct bk_if pub_sub_if;
 
-#endif // BLOCK_CLIENT_ZMQ_RR_HPP
+#endif // BLOCK_PUB_SUB_HPP

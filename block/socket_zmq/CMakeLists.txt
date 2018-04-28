@@ -1,38 +1,27 @@
 
 
-# Build server_zmq_rr as a static library
-set(SOURCES_SERVER src/server_zmq_rr.cpp)
+# Build pub_sub as a static library
+set(SOURCES_PUB_SUB src/pub_sub.cpp)
 
-add_library(server_zmq_rr STATIC ${SOURCES_SERVER})
+add_library(pub_sub STATIC ${SOURCES_PUB_SUB})
 
-C3QO_TARGET_COMPILE_FLAGS(server_zmq_rr)
+C3QO_TARGET_COMPILE_FLAGS(pub_sub)
 
-target_link_libraries(server_zmq_rr manager_bk)
-
-
-# Build client_zmq_rr as a static library
-set(SOURCES_CLIENT src/client_zmq_rr.cpp)
-
-add_library(client_zmq_rr STATIC ${SOURCES_CLIENT})
-
-C3QO_TARGET_COMPILE_FLAGS(client_zmq_rr)
-
-target_link_libraries(client_zmq_rr manager_bk)
+target_link_libraries(pub_sub manager_bk)
 
 
-# Build TU for socket_zmq_rr
-set(SOURCES_TU test/tu_socket_zmq_rr.cpp)
+# Build TU for pub_sub
+set(SOURCES_TU test/tu_pub_sub.cpp)
 
-add_executable(tu_socket_zmq_rr ${SOURCES_TU})
+add_executable(tu_pub_sub ${SOURCES_TU})
 
-C3QO_TARGET_LINK_FLAGS(tu_socket_zmq_rr)
+C3QO_TARGET_LINK_FLAGS(tu_pub_sub)
 
-add_test(NAME tu_socket_zmq_rr COMMAND tu_socket_zmq_rr)
+add_test(NAME tu_pub_sub COMMAND tu_pub_sub)
 
 
-target_link_libraries(tu_socket_zmq_rr client_zmq_rr)
-target_link_libraries(tu_socket_zmq_rr server_zmq_rr)
-target_link_libraries(tu_socket_zmq_rr gtest)
-target_link_libraries(tu_socket_zmq_rr gtest_main)
+target_link_libraries(tu_pub_sub pub_sub)
+target_link_libraries(tu_pub_sub gtest)
+target_link_libraries(tu_pub_sub gtest_main)
 
 
