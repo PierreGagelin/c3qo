@@ -6,6 +6,7 @@ extern "C" {
 
 // C++ library headers
 #include <cerrno>  // errno
+#include <cstdio>  // sscanf
 #include <cstdlib> // size_t, NULL
 #include <cstring> // strerror
 
@@ -103,18 +104,6 @@ static void *client_zmq_rr_init(int bk_id)
         return NULL;
     }
 
-    // Bind the publisher
-    ret = zmq_bind(ctx->zmq_socket_pub, "tcp://*:6666");
-    if (ret == -1)
-    {
-        LOGGER_ERR("Failed to bind ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
-        zmq_close(ctx->zmq_socket_pub);
-        zmq_close(ctx->zmq_socket_sub);
-        zmq_ctx_term(ctx->zmq_ctx);
-        free(ctx);
-        return NULL;
-    }
-
     // No filter for the subscriber
     ret = zmq_setsockopt(ctx->zmq_socket_sub, ZMQ_SUBSCRIBE, "", 0);
     if (ret == -1)
@@ -136,6 +125,70 @@ static void *client_zmq_rr_init(int bk_id)
     return ctx;
 }
 
+static void client_zmq_conf(void *vctx, char *conf)
+{
+    struct client_zmq_rr_ctx *ctx;
+    char *pos;
+
+    // Verify input
+    if ((vctx == NULL) || (conf == NULL))
+    {
+        LOGGER_ERR("Failed to configure block: NULL context or conf");
+        return;
+    }
+    ctx = (struct client_zmq_rr_ctx *)vctx;
+
+    LOGGER_INFO("Configure block [bk_id=%d ; conf=%s]", ctx->bk_id, conf);
+
+    // Retrieve publisher and subscriber addresses
+    pos = strstr(conf, NEEDLE_PUB);
+    if (pos != NULL)
+    {
+        int ret;
+
+        ret = sscanf(pos, NEEDLE_PUB ADDR_FORMAT, ctx->pub_addr);
+        if (ret == EOF)
+        {
+            LOGGER_ERR("Failed to call sscanf: %s [str=%s ; pub_addr=%s ; errno=%d]", strerror(errno), pos, ctx->pub_addr, errno);
+        }
+        else if (ret != 1)
+        {
+            LOGGER_ERR("Failed to call sscanf: wrong number of matched element [expected=1 ; actual=%d ; pub_addr=%s]", ret, ctx->pub_addr);
+        }
+        else
+        {
+            LOGGER_INFO("Configure publisher address [pub_addr=%s]", ctx->pub_addr);
+
+            // Bind the publisher
+            ret = zmq_bind(ctx->zmq_socket_pub, ctx->pub_addr);
+            if (ret == -1)
+            {
+                LOGGER_ERR("Failed to bind ZMQ publisher socket: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
+            }
+            LOGGER_DEBUG("Bound ZMQ publisher socket [pub_addr=%s]", ctx->pub_addr);
+        }
+    }
+    pos = strstr(conf, NEEDLE_SUB);
+    if (pos != NULL)
+    {
+        int ret;
+
+        ret = sscanf(pos, NEEDLE_SUB ADDR_FORMAT, ctx->sub_addr);
+        if (ret == EOF)
+        {
+            LOGGER_ERR("Failed to call sscanf: %s [str=%s ; sub_addr=%s ; errno=%d]", strerror(errno), pos, ctx->sub_addr, errno);
+        }
+        else if (ret != 1)
+        {
+            LOGGER_ERR("Failed to call sscanf: wrong number of matched element [expected=1 ; actual=%d ; sub_addr=%s]", ret, ctx->sub_addr);
+        }
+        else
+        {
+            LOGGER_INFO("Configure subscriber address [sub_addr=%s]", ctx->sub_addr);
+        }
+    }
+}
+
 //
 // @brief Start the block
 //
@@ -152,7 +205,7 @@ static void client_zmq_rr_start(void *vctx)
     ctx = (struct client_zmq_rr_ctx *)vctx;
 
     // Connect the subscriber
-    ret = zmq_connect(ctx->zmq_socket_sub, "tcp://127.0.0.1:5555");
+    ret = zmq_connect(ctx->zmq_socket_sub, ctx->sub_addr);
     if (ret == -1)
     {
         LOGGER_ERR("Failed to connect ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
@@ -238,7 +291,7 @@ static int client_zmq_rr_tx(void *vctx, void *vdata)
 //
 struct bk_if client_zmq_rr_if = {
     .init = client_zmq_rr_init,
-    .conf = NULL,
+    .conf = client_zmq_conf,
     .bind = NULL,
     .start = client_zmq_rr_start,
     .stop = client_zmq_rr_stop,
