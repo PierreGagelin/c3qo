@@ -75,6 +75,16 @@ C3QO_TARGET_LINK_FLAGS(c3qo)
 
 target_link_libraries(c3qo manager)
 
+# Build network CLI executable
+set(SOURCES_NETWORK_CLI src/network_cli.cpp)
+
+add_executable(ncli ${SOURCES_NETWORK_CLI})
+
+target_compile_options(ncli PRIVATE "${C3QO_COMPILE_FLAGS}")
+C3QO_TARGET_LINK_FLAGS(ncli)
+
+target_link_libraries(ncli manager)
+
 
 # Build TU for manager_bk
 set(SOURCES_TU_MANAGER_BK test/tu_manager_bk.cpp)

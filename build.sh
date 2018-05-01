@@ -22,7 +22,7 @@ function action_build
     cmake ../
     cd -
 
-    make -C $DIR_BUILD -j 4
+    make -C $DIR_BUILD -j 8
 }
 
 

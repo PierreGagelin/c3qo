@@ -13,8 +13,8 @@
 #define ADDR_FORMAT "%" XSTR(ADDR_SIZE) "s"
 
 // Needle to look for in configuration
-#define NEEDLE_SUB "sub_addr="
-#define NEEDLE_PUB "pub_addr="
+#define NEEDLE_TYPE "type=" // either "server" or "client"
+#define NEEDLE_ADDR "addr=" // fully specified address
 
 //
 // @struct pub_sub_ctx
@@ -26,12 +26,11 @@ struct pub_sub_ctx
     // Context
     int bk_id;
     void *zmq_ctx;
-    void *zmq_socket_sub;
-    void *zmq_socket_pub;
+    void *zmq_sock;
 
     // Configuration
-    char sub_addr[ADDR_SIZE];
-    char pub_addr[ADDR_SIZE];
+    bool client;          // either client or server
+    char addr[ADDR_SIZE]; // address to connect or bind
 
     // Statistics
     unsigned long rx_pkt_count;

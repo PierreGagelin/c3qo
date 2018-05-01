@@ -1,8 +1,9 @@
 
 
 // C++ library headers
+#include <cerrno>  // errno
 #include <cstdio>  // fopen, fgets, sscanf
-#include <cstring> // memset
+#include <cstring> // memset, strerror
 
 // Project headers
 #include "c3qo/block.hpp"
@@ -13,6 +14,7 @@
 extern struct bk_if hello_if;
 extern struct bk_if client_us_nb_if;
 extern struct bk_if server_us_nb_if;
+extern struct bk_if pub_sub_if;
 
 //
 // @brief Convert flow type into a string
@@ -76,6 +78,10 @@ bool manager_bk::block_add(int id, enum bk_type type)
 
     case TYPE_SERVER_US_NB:
         block.bk = server_us_nb_if;
+        break;
+
+    case TYPE_PUB_SUB:
+        block.bk = pub_sub_if;
         break;
 
     default:
@@ -433,88 +439,137 @@ void manager_bk::block_clear()
 }
 
 //
-// @brief Execute the global manager command
-//        Some of them are directly executed by a block
+// @brief Execute a block command
 //
-bool manager_bk::exec_cmd()
+// @return True on success
+//
+bool manager_bk::exec_cmd(enum bk_cmd cmd, int id, char *arg)
 {
-    LOGGER_INFO("Execute block command [bk_id=%d ; bk_cmd=%s ; cmd_arg=%s]", cmd_.id, get_bk_cmd(cmd_.cmd), cmd_.arg);
+    LOGGER_DEBUG("Execute block command [bk_cmd=%s ; bk_id=%d]", get_bk_cmd(cmd), id);
 
-    switch (cmd_.cmd)
+    switch (cmd)
     {
     case CMD_ADD:
     {
-        unsigned long bk_type;
+        enum bk_type type;
 
-        bk_type = strtoul(cmd_.arg, NULL, 10);
-
-        return block_add(cmd_.id, (enum bk_type)bk_type);
-    }
-    case CMD_INIT:
-        return block_init(cmd_.id);
-
-    case CMD_CONF:
-        return block_conf(cmd_.id, cmd_.arg);
-
-    case CMD_BIND:
-    {
-        int port;
-        int bk_id;
-        int nb_arg;
-
-        // Retrieve bindings parameters from command argument
-        nb_arg = sscanf(cmd_.arg, "%d:%d", &port, &bk_id);
-        if (nb_arg != 2)
+        if (arg == NULL)
         {
-            LOGGER_WARNING("Cannot bind block: corrupted parameters [bk_id=%d ; cmd_arg=%s]", cmd_.id, cmd_.arg);
+            LOGGER_ERR("Failed to add block: block type required as third argument");
             return false;
         }
 
-        return block_bind(cmd_.id, port, bk_id);
+        errno = 0;
+        type = (enum bk_type)strtol(arg, NULL, 10);
+        if (errno != 0)
+        {
+            LOGGER_ERR("Failed to add block: block type should be a decimal integer [bk_type=%s]", arg);
+            return false;
+        }
+
+        return block_add(id, type);
+    }
+    case CMD_INIT:
+    {
+        return block_init(id);
+    }
+    case CMD_CONF:
+    {
+        if (arg == NULL)
+        {
+            LOGGER_ERR("Failed to configure block: configuration entry required as third argument");
+            return false;
+        }
+
+        return block_conf(id, arg);
+    }
+    case CMD_BIND:
+    {
+        int port;
+        int dest;
+        int nb_arg;
+
+        if (arg == NULL)
+        {
+            LOGGER_DEBUG("Failed to bind block: configuration entry required as third argument");
+            return false;
+        }
+
+        // Retrieve bindings parameters from command argument
+        nb_arg = sscanf(arg, "%d:%d", &port, &dest);
+        if (nb_arg != 2)
+        {
+            LOGGER_ERR("Failed to bind block: corrupted binding parameters [entry=%s]", arg);
+            return false;
+        }
+
+        return block_bind(id, port, dest);
     }
     case CMD_START:
-        return block_start(cmd_.id);
-
+    {
+        return block_start(id);
+    }
     case CMD_STOP:
-        return block_stop(cmd_.id);
-
+    {
+        return block_stop(id);
+    }
     default:
         // Ignore this entry
-        LOGGER_WARNING("Cannot execute block command: unknown command value [bk_id=%d ; bk_cmd=%d]", cmd_.id, cmd_.cmd);
+        LOGGER_WARNING("Cannot execute block command: unknown command value [bk_cmd=%d]", cmd);
         return false;
     }
+
+    return true;
 }
 
 //
-// @brief Get a configuration line and fill the global manager command
+// @brief Parse a configuration line
 //
-// @param file : configuration file
+// @return True on success
 //
-// @return Several values
-//           - -1 on bad parsing
-//           -  0 if there are no more lines
-//           -  1 on success
-//
-int manager_bk::conf_parse_line(FILE *file)
+bool manager_bk::conf_parse_line(char *line)
 {
-    int nb_arg;
+    char *token;
+    int id;
+    enum bk_cmd cmd;
+    char *arg;
 
-    if (feof(file) != 0)
-    {
-        LOGGER_DEBUG("Finished to read configuration file");
-        return 0;
-    }
+    LOGGER_DEBUG("Parsing configuration line [line=%s]", line);
 
     // Retrieve command
-    nb_arg = fscanf(file, "%d %d %4095s\n", (int *)&cmd_.cmd, &cmd_.id, cmd_.arg);
-    if (nb_arg != 3)
+    token = strtok(line, " ");
+    if (token == NULL)
     {
-        cmd_.arg[sizeof(cmd_.arg) - 1] = '\0';
-        LOGGER_ERR("Corrupted configuration entry [bk_id=%d ; bk_cmd=%s ; bk_arg=%s]", cmd_.id, get_bk_cmd(cmd_.cmd), cmd_.arg);
-        return -1;
+        LOGGER_ERR("Failed to parse configuration line: no command");
+        return false;
+    }
+    errno = 0;
+    cmd = (enum bk_cmd)strtol(token, NULL, 10);
+    if (errno != 0)
+    {
+        LOGGER_ERR("Failed to parse configuration line: command should be a decimal integer [bk_cmd=%s]", token);
+        return false;
     }
 
-    return 1;
+    // Retrieve block identifier
+    token = strtok(NULL, " ");
+    if (token == NULL)
+    {
+        LOGGER_ERR("Failed to parse configuration line: no block identifier");
+        return false;
+    }
+    errno = 0;
+    id = (enum bk_cmd)strtol(token, NULL, 10);
+    if (errno != 0)
+    {
+        LOGGER_ERR("Failed to parse configuration line: block identifier should be a decimal integer [bk_id=%s]", token);
+        return false;
+    }
+
+    // Retrieve argument (optional)
+    arg = strtok(NULL, "\0");
+
+    return exec_cmd(cmd, id, arg);
 }
 
 //
@@ -525,7 +580,7 @@ int manager_bk::conf_parse_line(FILE *file)
 bool manager_bk::conf_parse(const char *filename)
 {
     FILE *file;
-    bool ret;
+    bool conf_success;
 
     file = fopen(filename, "r");
     if (file == NULL)
@@ -535,35 +590,51 @@ bool manager_bk::conf_parse(const char *filename)
     }
     LOGGER_INFO("Reading configuration file [filename=%s]", filename);
 
-    // Read one line at a time
-    ret = true;
+    // Read the configuration file
+    conf_success = true;
     while (true)
     {
-        int rc;
+        char *line;
+        size_t len;
+        ssize_t written;
 
-        rc = conf_parse_line(file);
-        if (rc == -1)
+        // Read a line
+        line = NULL;
+        written = getline(&line, &len, file);
+        if (written == -1)
         {
-            // Shouldn't read anymore
-            ret = false;
+            // Check if it's an error or end of file
+            if (feof(file) == 0)
+            {
+                LOGGER_ERR("Failed to call getline: %s [errno=%d]", strerror(errno), errno);
+                conf_success = false;
+            }
+            else
+            {
+                LOGGER_DEBUG("Finished to read configuration file");
+            }
+
+            free(line);
             break;
         }
-        else if (rc == 0)
+        else
         {
-            // Finished to read file
-            break;
+            line[written - 1] = '\0'; // Removes the '\n'
+
+            // Parse the line
+            if (conf_parse_line(line) == false)
+            {
+                // One corrupted entry, but the next ones can be good
+                conf_success = false;
+            }
         }
 
-        if ((exec_cmd() == false) && (ret == true))
-        {
-            // One corrupted entry, but the next ones can be good
-            ret = false;
-        }
+        free(line);
     }
 
     fclose(file);
 
-    if (ret == true)
+    if (conf_success == true)
     {
         LOGGER_INFO("Configuration OK");
     }
@@ -572,7 +643,7 @@ bool manager_bk::conf_parse(const char *filename)
         LOGGER_ERR("Configuration KO");
     }
 
-    return ret;
+    return conf_success;
 }
 
 //

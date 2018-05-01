@@ -23,18 +23,6 @@ struct bk_info
 };
 
 //
-// @struct command
-//
-// Generic command to manage a block
-//
-struct command
-{
-    int id;          // Identifier of the block
-    enum bk_cmd cmd; // Type of command
-    char arg[4096];  // Argument of the command
-};
-
-//
 // @enum flow_type
 //
 enum flow_type
@@ -54,10 +42,6 @@ class manager_bk
   protected:
     // Map of blocks
     std::unordered_map<int, struct bk_info> bk_map_;
-
-    // Command to execute on a block
-    // Using only one instance to minimize stack pression
-    struct command cmd_;
 
   protected:
     void block_flow(int id, void *data, enum flow_type type);
@@ -80,11 +64,9 @@ class manager_bk
     void block_del(int id);
     void block_clear();
 
-  protected:
-    int conf_parse_line(FILE *file);
-    bool exec_cmd();
-
   public:
+    bool exec_cmd(enum bk_cmd cmd, int id, char *arg);
+    bool conf_parse_line(char *line);
     bool conf_parse(const char *filename);
     size_t conf_get(char *buf, size_t len);
 };

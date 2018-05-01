@@ -16,7 +16,6 @@ extern char *optarg; // Comes with getopt
 
 int main(int argc, char **argv)
 {
-    bool conf;
     int opt;
     char *filename;
 
@@ -30,31 +29,37 @@ int main(int argc, char **argv)
         {
         case 'h':
         {
-            LOGGER_DEBUG("CLI help : lol, help is for the weaks");
-            break;
+            LOGGER_DEBUG("CLI help: lol, help is for the weaks");
         }
+        break;
+
         case 'f':
         {
-            LOGGER_DEBUG("CLI file to load configuration : %s", optarg);
+            LOGGER_DEBUG("CLI file to load configuration from [path=%s]", optarg);
             filename = optarg;
-            break;
         }
+        break;
+
         case 'l':
         {
-            unsigned long int level;
+            enum logger_level level;
 
-            LOGGER_DEBUG("CLI setting log level to %s", optarg);
+            errno = 0;
+            level = (enum logger_level)strtol(optarg, NULL, 10);
+            if (errno != 0)
+            {
+                LOGGER_ERR("Failed to call strtol for log level: %s [errno=%d ; level=%s]", strerror(errno), errno, optarg);
+                break;
+            }
 
-            level = strtoul(optarg, NULL, 10);
-            logger_set_level((enum logger_level)level);
+            LOGGER_DEBUG("CLI setting log level [level=%s]", get_logger_level(level));
 
-            break;
+            logger_set_level(level);
         }
+        break;
+
         default:
-        {
             LOGGER_ERR("CLI argument error");
-            break;
-        }
         }
     }
 
@@ -64,6 +69,8 @@ int main(int argc, char **argv)
     // Parse configuration file
     if (filename != NULL)
     {
+        bool conf;
+
         conf = m->bk.conf_parse(filename);
         if (conf == false)
         {

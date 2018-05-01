@@ -5,6 +5,7 @@
 extern "C" {
 #include <sys/types.h>  // sockaddr, socklen_t
 #include <sys/socket.h> // sockaddr, socklen_t
+#include <zmq.h>        // zmq_*
 }
 
 //
@@ -29,6 +30,9 @@ bool socket_nb_connect_check(int fd);
 ssize_t socket_nb_write(int fd, const char *buff, size_t size);
 ssize_t socket_nb_read(int fd, char *buff, size_t size);
 
-bool socket_nb_zmq_read(void *socket, char **data, size_t *len);
+bool socket_zmq_read(void *socket, char **data, size_t *len, int flags = ZMQ_DONTWAIT);
+bool socket_zmq_write(void *socket, char *data, size_t len, int flags = ZMQ_DONTWAIT);
+void socket_zmq_flush(void *socket);
+int socket_zmq_get_event(void *monitor);
 
 #endif // C3QO_SOCKET_HPP
