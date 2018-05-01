@@ -16,7 +16,7 @@ enum bk_type
     TYPE_HELLO,        // Block that says hello
     TYPE_CLIENT_US_NB, // Unix stream non-block client
     TYPE_SERVER_US_NB, // Unix stream non-block server
-    TYPE_PUB_SUB,      // ZeroMQ publish/subscribe socket pattern
+    TYPE_ZMQ_PAIR,     // ZeroMQ publish/subscribe socket pattern
 };
 const char *get_bk_type(enum bk_type t);
 

@@ -1,12 +1,12 @@
 //
-// @brief Test file for the hello block
+// @brief Test file for a block
 //
 
 // C++ library headers
 #include <cstdlib> // NULL
 
 // Project headers
-#include "block/pub_sub.hpp"
+#include "block/zmq_pair.hpp"
 #include "c3qo/block.hpp"
 #include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
@@ -19,24 +19,24 @@
 extern struct manager *m;
 
 // Client and server shall be linked
-extern struct bk_if pub_sub_if;
+extern struct bk_if zmq_pair_if;
 
-class tu_pub_sub : public testing::Test
+class tu_zmq_pair : public testing::Test
 {
     void SetUp();
     void TearDown();
 };
 
-void tu_pub_sub::SetUp()
+void tu_zmq_pair::SetUp()
 {
-    LOGGER_OPEN("tu_pub_sub");
+    LOGGER_OPEN("tu_zmq_pair");
     logger_set_level(LOGGER_LEVEL_DEBUG);
 
     // Populate the managers
     m = new struct manager;
 }
 
-void tu_pub_sub::TearDown()
+void tu_zmq_pair::TearDown()
 {
     // Clear the managers
     delete m;
@@ -48,31 +48,31 @@ void tu_pub_sub::TearDown()
 //
 // @brief Nothing yet
 //
-TEST_F(tu_pub_sub, data)
+TEST_F(tu_zmq_pair, data)
 {
-    struct pub_sub_ctx *ctx_s; // server context
-    struct pub_sub_ctx *ctx_c; // client context
-    char conf_c[] = "type=client addr=tcp://127.0.0.1:5555";
+    struct zmq_pair_ctx *ctx_s; // server context
+    struct zmq_pair_ctx *ctx_c; // client context
     char conf_s[] = "type=server addr=tcp://127.0.0.1:5555";
+    char conf_c[] = "type=client addr=tcp://127.0.0.1:5555";
 
-    // Initialize two ZMQ publisher/subscriber
-    ctx_s = (struct pub_sub_ctx *)pub_sub_if.init(1);
-    ctx_c = (struct pub_sub_ctx *)pub_sub_if.init(2);
+    // Initialize two ZMQ pairs
+    ctx_s = (struct zmq_pair_ctx *)zmq_pair_if.init(1);
+    ctx_c = (struct zmq_pair_ctx *)zmq_pair_if.init(2);
     ASSERT_NE(ctx_s, (void *)NULL);
     ASSERT_NE(ctx_c, (void *)NULL);
 
     // Configure them
-    pub_sub_if.conf(ctx_c, conf_c);
-    pub_sub_if.conf(ctx_s, conf_s);
+    zmq_pair_if.conf(ctx_s, conf_s);
+    zmq_pair_if.conf(ctx_c, conf_c);
 
     // Start them
-    pub_sub_if.start(ctx_s);
-    pub_sub_if.start(ctx_c);
+    zmq_pair_if.start(ctx_s);
+    zmq_pair_if.start(ctx_c);
 
     EXPECT_EQ(ctx_s->rx_pkt_count, 0lu);
     EXPECT_EQ(ctx_c->rx_pkt_count, 0lu);
 
-    // Try to send some data between publisher and subscriber
+    // Send some data between both pairs
     // Some messages are lost because subscription can take some time
     for (int i = 0; i < 10; i++)
     {
@@ -83,8 +83,8 @@ TEST_F(tu_pub_sub, data)
         data.data = (char *)"world";
         data.data_len = strlen(data.data);
 
-        pub_sub_if.tx(ctx_c, (void *)&data);
-        pub_sub_if.tx(ctx_s, (void *)&data);
+        zmq_pair_if.tx(ctx_s, (void *)&data);
+        zmq_pair_if.tx(ctx_c, (void *)&data);
 
         m->fd.poll_fd();
     }
@@ -93,6 +93,6 @@ TEST_F(tu_pub_sub, data)
     EXPECT_GT(ctx_c->rx_pkt_count, 1lu);
     EXPECT_GT(ctx_s->rx_pkt_count, 1lu);
 
-    pub_sub_if.stop(ctx_s);
-    pub_sub_if.stop(ctx_c);
+    zmq_pair_if.stop(ctx_s);
+    zmq_pair_if.stop(ctx_c);
 }

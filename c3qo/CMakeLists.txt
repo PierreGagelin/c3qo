@@ -20,7 +20,7 @@ target_include_directories(manager_bk PUBLIC ${UTILS_INCLUDE_DIR})
 target_link_libraries(manager_bk hello)
 target_link_libraries(manager_bk client_us_nb)
 target_link_libraries(manager_bk server_us_nb)
-target_link_libraries(manager_bk pub_sub)
+target_link_libraries(manager_bk zmq_pair)
 
 
 ## File descriptor manager
