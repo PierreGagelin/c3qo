@@ -11,7 +11,6 @@
 extern "C" {
 #include <fcntl.h> // fnctl
 #include <unistd.h>
-#include <zmq.h> // zmq_*
 }
 
 // Project headers
@@ -199,7 +198,7 @@ int socket_nb_connect(int fd, const struct sockaddr *addr, socklen_t len)
 //
 // @return True if there's more data part to read
 //
-bool socket_nb_zmq_read(void *socket, char **data, size_t *len)
+bool socket_zmq_read(void *socket, char **data, size_t *len, int flags)
 {
     zmq_msg_t part;
     char *msg;
@@ -207,9 +206,13 @@ bool socket_nb_zmq_read(void *socket, char **data, size_t *len)
     int ret;
     bool more;
 
+    // Initialization
+    *data = NULL;
+    *len = 0;
+
     // Receive a message
     zmq_msg_init(&part);
-    ret = zmq_msg_recv(&part, socket, ZMQ_DONTWAIT);
+    ret = zmq_msg_recv(&part, socket, flags);
     if (ret <= 0)
     {
         LOGGER_ERR("Failed to receive data from ZMQ socket: %s [errno=%d]", strerror(errno), errno);
@@ -240,4 +243,97 @@ bool socket_nb_zmq_read(void *socket, char **data, size_t *len)
     *len = size;
 
     return more;
+}
+
+//
+// @brief Send data from a ZMQ socket
+//
+// @return True on success
+//
+bool socket_zmq_write(void *socket, char *data, size_t len, int flags)
+{
+    zmq_msg_t message;
+    int rc;
+
+    zmq_msg_init_size(&message, len);
+    memcpy(zmq_msg_data(&message), data, len);
+
+    rc = zmq_msg_send(&message, socket, flags);
+    if (rc == -1)
+    {
+        LOGGER_ERR("Failed to write ZMQ message: %s [errno=%d ; len=%zu ; data=%s]", strerror(errno), errno, len, data);
+        zmq_msg_close(&message);
+        return false;
+    }
+    return true;
+}
+
+//
+// @brief Flush every ZMQ part message on the socket
+//
+void socket_zmq_flush(void *socket)
+{
+    bool more;
+
+    do
+    {
+        char *data;
+        size_t len;
+
+        more = socket_zmq_read(socket, &data, &len);
+        if (data != NULL)
+        {
+            free(data);
+        }
+
+    } while (more == true);
+}
+
+//
+// @brief Return an event sniffed on monitored ZMQ socket
+//
+// Beware that read operation is intentionally blocking
+//
+int socket_zmq_get_event(void *monitor)
+{
+    uint8_t *data;
+    size_t len;
+    uint16_t event;
+    bool more;
+
+    // Retrieve event in the first message part
+    more = socket_zmq_read(monitor, (char **)&data, &len, 0);
+    if (data != NULL)
+    {
+        event = *(uint16_t *)(data);
+        free(data);
+    }
+    else
+    {
+        event = -1;
+    }
+
+    // Second message part contains event address but we don't care
+    if (more == true)
+    {
+        more = socket_zmq_read(monitor, (char **)&data, &len, 0);
+        if (data != NULL)
+        {
+            free(data);
+        }
+    }
+    else
+    {
+        // Two frames are required, information above must be corrupted
+        event = -1;
+    }
+
+    // There must not be any part left
+    if (more == true)
+    {
+        socket_zmq_flush(monitor);
+        event = -1;
+    }
+
+    return event;
 }

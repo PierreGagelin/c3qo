@@ -26,7 +26,7 @@ static void pub_sub_callback(void *vctx, int fd, void *socket)
 {
     struct pub_sub_ctx *ctx;
     struct c3qo_zmq_msg msg;
-    bool ret;
+    bool more;
 
     (void)fd;
 
@@ -37,26 +37,46 @@ static void pub_sub_callback(void *vctx, int fd, void *socket)
         return;
     }
     ctx = (struct pub_sub_ctx *)vctx;
-    if (socket != ctx->zmq_socket_sub)
+    if (socket != ctx->zmq_sock)
     {
-        LOGGER_ERR("Failed to execute ZMQ callback: unknown socket [socket=%p ; expected=%p]", socket, ctx->zmq_socket_sub);
+        LOGGER_ERR("Failed to execute ZMQ callback: unknown socket [socket=%p ; expected=%p]", socket, ctx->zmq_sock);
         return;
     }
 
-    ret = socket_nb_zmq_read(ctx->zmq_socket_sub, &msg.topic, &msg.topic_len);
-    if (ret == false)
+    // Get a topic and payload
+    more = socket_zmq_read(ctx->zmq_sock, &msg.topic, &msg.topic_len);
+    if (more == false)
     {
-        LOGGER_ERR("Failed to receive data from ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
+        LOGGER_ERR("Failed to receive ZMQ message: expected 2 parts and got 1 [bk_id=%d]", ctx->bk_id);
+        goto end;
     }
-    ret = socket_nb_zmq_read(ctx->zmq_socket_sub, &msg.data, &msg.data_len);
-    if (ret == true)
+    more = socket_zmq_read(ctx->zmq_sock, &msg.data, &msg.data_len);
+    if (more == true)
     {
-        LOGGER_ERR("Failed to receive data from ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
+        LOGGER_ERR("Failed to receive ZMQ message: expected 2 parts and got more [bk_id=%d]", ctx->bk_id);
+        socket_zmq_flush(ctx->zmq_sock);
+        goto end;
     }
-
-    LOGGER_DEBUG("Data available on ZMQ socket [socket=%p]", ctx->zmq_socket_sub);
-
     ctx->rx_pkt_count++;
+
+    LOGGER_DEBUG("Message received on ZMQ socket [bk_id=%d ; topic=%s ; payload=%s]", ctx->bk_id, msg.topic, msg.data);
+
+    // Action to take upon topic value
+    if (strcmp(msg.topic, "CONF.LINE") == 0)
+    {
+        // Process the configuration line
+        m->bk.conf_parse_line(msg.data);
+    }
+
+end:
+    if (msg.topic != NULL)
+    {
+        free(msg.topic);
+    }
+    if (msg.topic != NULL)
+    {
+        free(msg.data);
+    }
 }
 
 //
@@ -65,7 +85,6 @@ static void pub_sub_callback(void *vctx, int fd, void *socket)
 static void *pub_sub_init(int bk_id)
 {
     struct pub_sub_ctx *ctx;
-    int ret;
 
     // Create a block context
     ctx = (struct pub_sub_ctx *)malloc(sizeof(*ctx));
@@ -86,31 +105,10 @@ static void *pub_sub_init(int bk_id)
     }
 
     // Create a publisher and a subscriber
-    ctx->zmq_socket_pub = zmq_socket(ctx->zmq_ctx, ZMQ_PUB);
-    if (ctx->zmq_socket_pub == NULL)
+    ctx->zmq_sock = zmq_socket(ctx->zmq_ctx, ZMQ_PAIR);
+    if (ctx->zmq_sock == NULL)
     {
         LOGGER_ERR("Failed to create ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), bk_id, errno);
-        zmq_ctx_term(ctx->zmq_ctx);
-        free(ctx);
-        return NULL;
-    }
-    ctx->zmq_socket_sub = zmq_socket(ctx->zmq_ctx, ZMQ_SUB);
-    if (ctx->zmq_socket_sub == NULL)
-    {
-        LOGGER_ERR("Failed to create ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), bk_id, errno);
-        zmq_close(ctx->zmq_socket_pub);
-        zmq_ctx_term(ctx->zmq_ctx);
-        free(ctx);
-        return NULL;
-    }
-
-    // No filter for the subscriber
-    ret = zmq_setsockopt(ctx->zmq_socket_sub, ZMQ_SUBSCRIBE, "", 0);
-    if (ret == -1)
-    {
-        LOGGER_ERR("Failed to set ZMQ socket option: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
-        zmq_close(ctx->zmq_socket_pub);
-        zmq_close(ctx->zmq_socket_sub);
         zmq_ctx_term(ctx->zmq_ctx);
         free(ctx);
         return NULL;
@@ -120,7 +118,7 @@ static void *pub_sub_init(int bk_id)
     ctx->rx_pkt_count = 0;
     ctx->tx_pkt_count = 0;
 
-    LOGGER_INFO("Initialize block ZMQ Publish/Subscribe [bk_id=%d]", bk_id);
+    LOGGER_INFO("Initialize block ZMQ Pair [bk_id=%d]", bk_id);
 
     return ctx;
 }
@@ -129,6 +127,8 @@ static void client_zmq_conf(void *vctx, char *conf)
 {
     struct pub_sub_ctx *ctx;
     char *pos;
+    char type[32];
+    int ret;
 
     // Verify input
     if ((vctx == NULL) || (conf == NULL))
@@ -140,53 +140,67 @@ static void client_zmq_conf(void *vctx, char *conf)
 
     LOGGER_INFO("Configure block [bk_id=%d ; conf=%s]", ctx->bk_id, conf);
 
-    // Retrieve publisher and subscriber addresses
-    pos = strstr(conf, NEEDLE_PUB);
-    if (pos != NULL)
+    // Retrieve socket type
     {
-        int ret;
+        pos = strstr(conf, NEEDLE_TYPE);
+        if (pos == NULL)
+        {
+            LOGGER_ERR("Failed to configure block: type of socket is required [bk_id=%d ; conf=%s]", ctx->bk_id, conf);
+            return;
+        }
 
-        ret = sscanf(pos, NEEDLE_PUB ADDR_FORMAT, ctx->pub_addr);
+        ret = sscanf(pos, NEEDLE_TYPE "%32s", type);
         if (ret == EOF)
         {
-            LOGGER_ERR("Failed to call sscanf: %s [str=%s ; pub_addr=%s ; errno=%d]", strerror(errno), pos, ctx->pub_addr, errno);
+            LOGGER_ERR("Failed to call sscanf: %s [str=%s ; addr=%s ; errno=%d]", strerror(errno), pos, ctx->addr, errno);
+            return;
         }
         else if (ret != 1)
         {
-            LOGGER_ERR("Failed to call sscanf: wrong number of matched element [expected=1 ; actual=%d ; pub_addr=%s]", ret, ctx->pub_addr);
+            LOGGER_ERR("Failed to call sscanf: wrong number of matched element [expected=1 ; actual=%d ; addr=%s]", ret, ctx->addr);
+            return;
+        }
+
+        // Configure the socket to be either a client or a server
+        LOGGER_DEBUG("Configure socket type [bk_id=%d ; type=%s]", ctx->bk_id, type);
+        if (strcmp(type, "client") == 0)
+        {
+            ctx->client = true;
+        }
+        else if (strcmp(type, "server") == 0)
+        {
+            ctx->client = false;
         }
         else
         {
-            LOGGER_INFO("Configure publisher address [pub_addr=%s]", ctx->pub_addr);
-
-            // Bind the publisher
-            ret = zmq_bind(ctx->zmq_socket_pub, ctx->pub_addr);
-            if (ret == -1)
-            {
-                LOGGER_ERR("Failed to bind ZMQ publisher socket: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
-            }
-            LOGGER_DEBUG("Bound ZMQ publisher socket [bk_id=%d ; pub_addr=%s]", ctx->bk_id, ctx->pub_addr);
+            LOGGER_ERR("Failed to configure socket type: unknown type [bk_id=%d ; type=%s]", ctx->bk_id, type);
+            return;
         }
     }
-    pos = strstr(conf, NEEDLE_SUB);
-    if (pos != NULL)
-    {
-        int ret;
 
-        ret = sscanf(pos, NEEDLE_SUB ADDR_FORMAT, ctx->sub_addr);
+    // Retrieve socket address
+    {
+        pos = strstr(conf, NEEDLE_ADDR);
+        if (pos == NULL)
+        {
+            LOGGER_ERR("Failed to configure block: address of socket is required [bk_id=%d ; conf=%s]", ctx->bk_id, conf);
+            return;
+        }
+
+        ret = sscanf(pos, NEEDLE_ADDR ADDR_FORMAT, ctx->addr);
         if (ret == EOF)
         {
-            LOGGER_ERR("Failed to call sscanf: %s [str=%s ; sub_addr=%s ; errno=%d]", strerror(errno), pos, ctx->sub_addr, errno);
+            LOGGER_ERR("Failed to call sscanf: %s [str=%s ; addr=%s ; errno=%d]", strerror(errno), pos, ctx->addr, errno);
+            return;
         }
         else if (ret != 1)
         {
-            LOGGER_ERR("Failed to call sscanf: wrong number of matched element [expected=1 ; actual=%d ; sub_addr=%s]", ret, ctx->sub_addr);
-        }
-        else
-        {
-            LOGGER_INFO("Configure subscriber address [bk_id=%d ; sub_addr=%s]", ctx->bk_id, ctx->sub_addr);
+            LOGGER_ERR("Failed to call sscanf: wrong number of matched element [expected=1 ; actual=%d ; addr=%s]", ret, ctx->addr);
+            return;
         }
     }
+
+    LOGGER_INFO("Configure publisher address [addr=%s]", ctx->addr);
 }
 
 //
@@ -204,17 +218,32 @@ static void pub_sub_start(void *vctx)
     }
     ctx = (struct pub_sub_ctx *)vctx;
 
-    // Connect the subscriber
-    ret = zmq_connect(ctx->zmq_socket_sub, ctx->sub_addr);
-    if (ret == -1)
+    LOGGER_INFO("Start block ZMQ Pair [bk_id=%d]", ctx->bk_id);
+
+    // Bind or connect the socket
+    if (ctx->client == true)
     {
-        LOGGER_ERR("Failed to connect ZMQ subscriber: %s [bk_id=%d ; addr=%s ; errno=%d]", strerror(errno), ctx->bk_id, ctx->sub_addr, errno);
+        ret = zmq_connect(ctx->zmq_sock, ctx->addr);
+        if (ret == -1)
+        {
+            LOGGER_ERR("Failed to connect ZMQ socket: %s [bk_id=%d ; addr=%s ; errno=%d]", strerror(errno), ctx->bk_id, ctx->addr, errno);
+            return;
+        }
+        LOGGER_DEBUG("Connected client socket [bk_id=%d ; addr=%s]", ctx->bk_id, ctx->addr);
+    }
+    else
+    {
+        ret = zmq_bind(ctx->zmq_sock, ctx->addr);
+        if (ret == -1)
+        {
+            LOGGER_ERR("Failed to bind ZMQ socket: %s [bk_id=%d ; addr=%s ; errno=%d]", strerror(errno), ctx->bk_id, ctx->addr, errno);
+            return;
+        }
+        LOGGER_DEBUG("Bound server socket [bk_id=%d ; addr=%s]", ctx->bk_id, ctx->addr);
     }
 
     // Register the subscriber's callback
-    m->fd.add(ctx, pub_sub_callback, -1, ctx->zmq_socket_sub, true);
-
-    LOGGER_INFO("Start block ZMQ Publish/Subscribe [bk_id=%d]", ctx->bk_id);
+    m->fd.add(ctx, pub_sub_callback, -1, ctx->zmq_sock, true);
 }
 
 //
@@ -233,15 +262,14 @@ static void pub_sub_stop(void *vctx)
     ctx = (struct pub_sub_ctx *)vctx;
 
     // Remove the socket's callback
-    m->fd.remove(-1, ctx->zmq_socket_sub, true);
+    m->fd.remove(-1, ctx->zmq_sock, true);
 
-    zmq_close(ctx->zmq_socket_sub);
-    zmq_close(ctx->zmq_socket_pub);
+    zmq_close(ctx->zmq_sock);
     zmq_ctx_term(ctx->zmq_ctx);
 
     free(ctx);
 
-    LOGGER_INFO("Stop block ZMQ Publish/Subscribe [bk_id=%d]", ctx->bk_id);
+    LOGGER_INFO("Stop block ZMQ Pair [bk_id=%d]", ctx->bk_id);
 }
 
 //
@@ -250,35 +278,24 @@ static void pub_sub_stop(void *vctx)
 static int pub_sub_tx(void *vctx, void *vdata)
 {
     struct pub_sub_ctx *ctx;
-    zmq_msg_t topic;
-    zmq_msg_t msg;
-    int ret;
+    struct c3qo_zmq_msg *data;
+    bool ok;
 
-    if (vctx == NULL)
+    if ((vctx == NULL) || (vdata == NULL))
     {
-        LOGGER_ERR("Failed to process buffer: NULL context [data=%p]", vdata);
+        LOGGER_ERR("Failed to process buffer: NULL context or data");
         return 0;
     }
     ctx = (struct pub_sub_ctx *)vctx;
+    data = (struct c3qo_zmq_msg *)vdata;
 
-    zmq_msg_init_size(&topic, 5);
-    memcpy(zmq_msg_data(&topic), "Hello", 5);
-    ret = zmq_msg_send(&topic, ctx->zmq_socket_pub, ZMQ_DONTWAIT | ZMQ_SNDMORE);
-    if (ret == -1)
-    {
-        LOGGER_ERR("Failed to send data to ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
-        zmq_msg_close(&topic);
-        return 0;
-    }
+    // Send topic and data
+    ok = socket_zmq_write(ctx->zmq_sock, data->topic, data->topic_len, ZMQ_DONTWAIT | ZMQ_SNDMORE);
+    ok = (ok == true) && socket_zmq_write(ctx->zmq_sock, data->data, data->data_len, ZMQ_DONTWAIT);
 
-    zmq_msg_init_size(&msg, 5);
-    memcpy(zmq_msg_data(&msg), "World", 5);
-    ret = zmq_msg_send(&msg, ctx->zmq_socket_pub, ZMQ_DONTWAIT);
-    if (ret == -1)
+    if (ok == true)
     {
-        LOGGER_ERR("Failed to send data to ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), ctx->bk_id, errno);
-        zmq_msg_close(&msg);
-        return 0;
+        LOGGER_DEBUG("Message sent on ZMQ socket [bk_id=%d ; topic=%s ; payload=%s]", ctx->bk_id, data->topic, data->data);
     }
 
     ctx->tx_pkt_count++;

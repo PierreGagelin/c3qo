@@ -10,6 +10,7 @@
 #include "c3qo/block.hpp"
 #include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
+#include "utils/socket.hpp"
 
 // Gtest library
 #include "gtest/gtest.h"
@@ -51,8 +52,8 @@ TEST_F(tu_pub_sub, data)
 {
     struct pub_sub_ctx *ctx_s; // server context
     struct pub_sub_ctx *ctx_c; // client context
-    char conf_c[] = "pub_addr=tcp://*:6666 sub_addr=tcp://127.0.0.1:5555";
-    char conf_s[] = "pub_addr=tcp://*:5555 sub_addr=tcp://127.0.0.1:6666";
+    char conf_c[] = "type=client addr=tcp://127.0.0.1:5555";
+    char conf_s[] = "type=server addr=tcp://127.0.0.1:5555";
 
     // Initialize two ZMQ publisher/subscriber
     ctx_s = (struct pub_sub_ctx *)pub_sub_if.init(1);
@@ -75,8 +76,16 @@ TEST_F(tu_pub_sub, data)
     // Some messages are lost because subscription can take some time
     for (int i = 0; i < 10; i++)
     {
-        pub_sub_if.tx(ctx_c, (void *)"");
-        pub_sub_if.tx(ctx_s, (void *)"");
+        struct c3qo_zmq_msg data;
+
+        data.topic = (char *)"hello";
+        data.topic_len = strlen(data.topic);
+        data.data = (char *)"world";
+        data.data_len = strlen(data.data);
+
+        pub_sub_if.tx(ctx_c, (void *)&data);
+        pub_sub_if.tx(ctx_s, (void *)&data);
+
         m->fd.poll_fd();
     }
 

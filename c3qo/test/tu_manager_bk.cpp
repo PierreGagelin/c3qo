@@ -70,18 +70,18 @@ TEST_F(tu_manager_bk, manager_bk_conf)
     file << CMD_ADD << "   3          " << TYPE_CLIENT_US_NB << std::endl;
     file << CMD_ADD << "   4          " << TYPE_SERVER_US_NB << std::endl;
 
-    file << CMD_INIT << "  1  no_arg  " << std::endl;
-    file << CMD_INIT << "  2  no_arg  " << std::endl;
-    file << CMD_INIT << "  3  no_arg  " << std::endl;
-    file << CMD_INIT << "  4  no_arg  " << std::endl;
+    file << CMD_INIT << "  1" << std::endl;
+    file << CMD_INIT << "  2" << std::endl;
+    file << CMD_INIT << "  3" << std::endl;
+    file << CMD_INIT << "  4" << std::endl;
 
     file << CMD_CONF << "  1  hello_1 " << std::endl;
     file << CMD_CONF << "  2  hello_2 " << std::endl;
 
-    file << CMD_START << " 1  no_arg  " << std::endl;
-    file << CMD_START << " 2  no_arg  " << std::endl;
-    file << CMD_START << " 3  no_arg  " << std::endl;
-    file << CMD_START << " 4  no_arg  " << std::endl;
+    file << CMD_START << " 1" << std::endl;
+    file << CMD_START << " 2" << std::endl;
+    file << CMD_START << " 3" << std::endl;
+    file << CMD_START << " 4" << std::endl;
 
     // Bindings for block 1:
     //   - port=0 ; bk_id=2
