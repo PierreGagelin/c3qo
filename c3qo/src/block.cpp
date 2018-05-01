@@ -18,8 +18,8 @@ const char *get_bk_type(enum bk_type t)
     case TYPE_SERVER_US_NB:
         return "BLOCK_TYPE_SERVER_US_NB";
 
-    case TYPE_PUB_SUB:
-        return "BLOCK_TYPE_PUB_SUB";
+    case TYPE_ZMQ_PAIR:
+        return "BLOCK_TYPE_ZMQ_PAIR";
 
     default:
         return "BLOCK_TYPE_UNKNOWN";

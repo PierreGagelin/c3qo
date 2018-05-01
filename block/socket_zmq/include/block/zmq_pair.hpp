@@ -17,11 +17,11 @@
 #define NEEDLE_ADDR "addr=" // fully specified address
 
 //
-// @struct pub_sub_ctx
+// @struct zmq_pair_ctx
 //
 // @brief Internal structure to store the context
 //
-struct pub_sub_ctx
+struct zmq_pair_ctx
 {
     // Context
     int bk_id;
@@ -37,6 +37,6 @@ struct pub_sub_ctx
     unsigned long tx_pkt_count;
 };
 
-extern struct bk_if pub_sub_if;
+extern struct bk_if zmq_pair_if;
 
 #endif // BLOCK_PUB_SUB_HPP

@@ -14,7 +14,7 @@
 extern struct bk_if hello_if;
 extern struct bk_if client_us_nb_if;
 extern struct bk_if server_us_nb_if;
-extern struct bk_if pub_sub_if;
+extern struct bk_if zmq_pair_if;
 
 //
 // @brief Convert flow type into a string
@@ -80,8 +80,8 @@ bool manager_bk::block_add(int id, enum bk_type type)
         block.bk = server_us_nb_if;
         break;
 
-    case TYPE_PUB_SUB:
-        block.bk = pub_sub_if;
+    case TYPE_ZMQ_PAIR:
+        block.bk = zmq_pair_if;
         break;
 
     default:
