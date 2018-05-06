@@ -81,7 +81,7 @@ bool manager_bk::block_add(int id, const char *type)
     self = dlopen(NULL, RTLD_LAZY);
     if (self == NULL)
     {
-        LOGGER_ERR("Failed to open ourselves: %s", dlerror());
+        LOGGER_ERR("Failed to open library: %s", dlerror());
         return false;
     }
     block.bk = (struct bk_if *)dlsym(self, block.type);

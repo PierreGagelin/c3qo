@@ -88,7 +88,6 @@ static inline void check_replacement(std::vector<uint32_t> &prime_vec, size_t fi
 void solve_problem_51(char *param)
 {
     std::vector<uint32_t> prime_vec;
-    uint32_t prime;
 
     (void)param;
 
@@ -107,6 +106,4 @@ void solve_problem_51(char *param)
 
         check_replacement(prime_vec, pos);
     }
-
-    prime = prime_vec.back();
 }

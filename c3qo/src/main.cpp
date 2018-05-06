@@ -1,7 +1,9 @@
 
 
 // C++ library headers
+#include <cerrno>
 #include <cstdlib>
+#include <cstring>
 
 // System library headers
 extern "C" {

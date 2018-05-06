@@ -84,7 +84,8 @@ endfunction(C3QO_TARGET_COMPILE_FLAGS)
 
 # Function to add link flags
 function(C3QO_TARGET_LINK_FLAGS t_name)
-    set_target_properties(${t_name} PROPERTIES LINK_FLAGS "-lzmq")
+    target_link_libraries(${t_name} zmq)
+    target_link_libraries(${t_name} dl)
     if(${C3QO_COVERAGE})
         set_target_properties(${t_name} PROPERTIES LINK_FLAGS "--coverage")
     endif()

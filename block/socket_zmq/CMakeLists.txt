@@ -9,6 +9,7 @@ C3QO_TARGET_COMPILE_FLAGS(zmq_pair)
 C3QO_TARGET_LINK_FLAGS(zmq_pair)
 
 target_link_libraries(zmq_pair manager)
+target_link_libraries(zmq_pair socket)
 
 
 # Build TU for zmq_pair
