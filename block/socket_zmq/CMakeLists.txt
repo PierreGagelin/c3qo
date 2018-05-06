@@ -1,13 +1,14 @@
 
 
-# Build zmq_pair as a static library
+# Build zmq_pair library
 set(SOURCES_ZMQ_PAIR src/zmq_pair.cpp)
 
-add_library(zmq_pair STATIC ${SOURCES_ZMQ_PAIR})
+add_library(zmq_pair SHARED ${SOURCES_ZMQ_PAIR})
 
 C3QO_TARGET_COMPILE_FLAGS(zmq_pair)
+C3QO_TARGET_LINK_FLAGS(zmq_pair)
 
-target_link_libraries(zmq_pair manager_bk)
+target_link_libraries(zmq_pair manager)
 
 
 # Build TU for zmq_pair

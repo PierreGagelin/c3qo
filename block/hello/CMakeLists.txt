@@ -1,9 +1,9 @@
 
 
-# Build block hello as a static library
+# Build block hello library
 set(SOURCES src/hello.cpp)
 
-add_library(hello STATIC ${SOURCES})
+add_library(hello SHARED ${SOURCES})
 
 C3QO_TARGET_COMPILE_FLAGS(hello)
 

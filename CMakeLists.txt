@@ -66,6 +66,13 @@ set(UTILS_INCLUDE_DIR ${UTILS_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/utils/logger/incl
 set(UTILS_INCLUDE_DIR ${UTILS_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/utils/socket/include)
 
 
+# Function to add include directories
+function(C3QO_TARGET_INCLUDE t_name)
+    target_include_directories(${t_name} PUBLIC ${BLOCK_INCLUDE_DIR})
+    target_include_directories(${t_name} PUBLIC ${C3QO_INCLUDE_DIR})
+    target_include_directories(${t_name} PUBLIC ${UTILS_INCLUDE_DIR})
+endfunction(C3QO_TARGET_INCLUDE)
+
 # Function to add compilation flags
 set(C3QO_COMPILE_FLAGS -std=c++11 -Wall -Wextra -Werror)
 function(C3QO_TARGET_COMPILE_FLAGS t_name)
@@ -78,7 +85,7 @@ endfunction(C3QO_TARGET_COMPILE_FLAGS)
 # Function to add link flags
 function(C3QO_TARGET_LINK_FLAGS t_name)
     set_target_properties(${t_name} PROPERTIES LINK_FLAGS "-lzmq")
-    if(${C3QO_COVERAGE})    
+    if(${C3QO_COVERAGE})
         set_target_properties(${t_name} PROPERTIES LINK_FLAGS "--coverage")
     endif()
 endfunction(C3QO_TARGET_LINK_FLAGS)

@@ -3,30 +3,6 @@
 #include "c3qo/block.hpp"
 
 //
-// @brief Stringify the block type
-//
-const char *get_bk_type(enum bk_type t)
-{
-    switch (t)
-    {
-    case TYPE_HELLO:
-        return "BLOCK_TYPE_HELLO";
-
-    case TYPE_CLIENT_US_NB:
-        return "BLOCK_TYPE_CLIENT_US_NB";
-
-    case TYPE_SERVER_US_NB:
-        return "BLOCK_TYPE_SERVER_US_NB";
-
-    case TYPE_ZMQ_PAIR:
-        return "BLOCK_TYPE_ZMQ_PAIR";
-
-    default:
-        return "BLOCK_TYPE_UNKNOWN";
-    }
-}
-
-//
 // @brief Stringify the block command
 //
 const char *get_bk_cmd(enum bk_cmd t)

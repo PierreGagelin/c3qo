@@ -55,7 +55,7 @@ TEST_F(tu_manager_bk, manager_bk_conf)
 {
     char fname[] = "/tmp/tu_manager_bk.txt";
     std::fstream file;
-    char buf[64];
+    char buf[512];
     std::string buf_exp;
     std::stringstream ss;
     size_t len;
@@ -65,23 +65,23 @@ TEST_F(tu_manager_bk, manager_bk_conf)
 
     // Add, initialize, configure and start 2 blocks hello
     // Spaces should not matter, but 3 values are mandatory
-    file << CMD_ADD << "   1          " << TYPE_HELLO << std::endl;
-    file << CMD_ADD << "   2          " << TYPE_HELLO << std::endl;
-    file << CMD_ADD << "   3          " << TYPE_CLIENT_US_NB << std::endl;
-    file << CMD_ADD << "   4          " << TYPE_SERVER_US_NB << std::endl;
+    file << CMD_ADD << "   1    hello        " << std::endl;
+    file << CMD_ADD << "   2    hello        " << std::endl;
+    file << CMD_ADD << "   3    client_us_nb " << std::endl;
+    file << CMD_ADD << "   4    server_us_nb " << std::endl;
 
-    file << CMD_INIT << "  1" << std::endl;
-    file << CMD_INIT << "  2" << std::endl;
-    file << CMD_INIT << "  3" << std::endl;
-    file << CMD_INIT << "  4" << std::endl;
+    file << CMD_INIT << "  1 " << std::endl;
+    file << CMD_INIT << "  2 " << std::endl;
+    file << CMD_INIT << "  3 " << std::endl;
+    file << CMD_INIT << "  4 " << std::endl;
 
     file << CMD_CONF << "  1  hello_1 " << std::endl;
     file << CMD_CONF << "  2  hello_2 " << std::endl;
 
-    file << CMD_START << " 1" << std::endl;
-    file << CMD_START << " 2" << std::endl;
-    file << CMD_START << " 3" << std::endl;
-    file << CMD_START << " 4" << std::endl;
+    file << CMD_START << " 1 " << std::endl;
+    file << CMD_START << " 2 " << std::endl;
+    file << CMD_START << " 3 " << std::endl;
+    file << CMD_START << " 4 " << std::endl;
 
     // Bindings for block 1:
     //   - port=0 ; bk_id=2
@@ -100,10 +100,10 @@ TEST_F(tu_manager_bk, manager_bk_conf)
 
     // Prepare expected configuration dump for the blocks
     //   - format : "<bk_id> <bk_type> <bk_state>;"
-    ss << "1 " << TYPE_HELLO << " " << STATE_START << ";";
-    ss << "2 " << TYPE_HELLO << " " << STATE_START << ";";
-    ss << "3 " << TYPE_CLIENT_US_NB << " " << STATE_START << ";";
-    ss << "4 " << TYPE_SERVER_US_NB << " " << STATE_START << ";";
+    ss << "1 hello_if " << STATE_START << ";";
+    ss << "2 hello_if " << STATE_START << ";";
+    ss << "3 client_us_nb_if " << STATE_START << ";";
+    ss << "4 server_us_nb_if " << STATE_START << ";";
     buf_exp = ss.str();
 
     // Verify the configuration dump
@@ -126,15 +126,15 @@ TEST_F(tu_manager_bk, manager_bk_conf)
         {
         case 1:
         case 2:
-            EXPECT_EQ(bi->type, TYPE_HELLO);
+            EXPECT_EQ(strcmp(bi->type, "hello_if"), 0);
             break;
 
         case 3:
-            EXPECT_EQ(bi->type, TYPE_CLIENT_US_NB);
+            EXPECT_EQ(strcmp(bi->type, "client_us_nb_if"), 0);
             break;
 
         case 4:
-            EXPECT_EQ(bi->type, TYPE_SERVER_US_NB);
+            EXPECT_EQ(strcmp(bi->type, "server_us_nb_if"), 0);
             break;
 
         default:
@@ -162,7 +162,7 @@ TEST_F(tu_manager_bk, manager_bk_flow)
     // Add, initialize and start 2 blocks
     for (int i = 1; i < 3; i++)
     {
-        EXPECT_EQ(m->bk.block_add(i, TYPE_HELLO), true);
+        EXPECT_EQ(m->bk.block_add(i, "hello"), true);
         EXPECT_EQ(m->bk.block_init(i), true);
         EXPECT_EQ(m->bk.block_start(i), true);
     }
@@ -183,21 +183,21 @@ TEST_F(tu_manager_bk, manager_bk_flow)
     ASSERT_NE(bk_2, (void *)NULL);
 
     // No data should have gone through blocks
-    bk_1->bk.get_stats(bk_1->ctx, stats, sizeof(stats));
+    bk_1->bk->get_stats(bk_1->ctx, stats, sizeof(stats));
     count = atoi(stats);
     EXPECT_TRUE(count == 0);
-    bk_2->bk.get_stats(bk_2->ctx, stats, sizeof(stats));
+    bk_2->bk->get_stats(bk_2->ctx, stats, sizeof(stats));
     count = atoi(stats);
     EXPECT_TRUE(count == 0);
 
     // Notify the block to generate a TX data flow: it shall return 0
-    EXPECT_TRUE(bk_1->bk.ctrl(bk_1->ctx, stats) == 0);
+    EXPECT_TRUE(bk_1->bk->ctrl(bk_1->ctx, stats) == 0);
 
     // A buffer should have crossed block 2
-    bk_1->bk.get_stats(bk_1->ctx, stats, sizeof(stats));
+    bk_1->bk->get_stats(bk_1->ctx, stats, sizeof(stats));
     count = atoi(stats);
     EXPECT_EQ(count, 0);
-    bk_2->bk.get_stats(bk_2->ctx, stats, sizeof(stats));
+    bk_2->bk->get_stats(bk_2->ctx, stats, sizeof(stats));
     count = atoi(stats);
     EXPECT_EQ(count, 1);
 
@@ -214,7 +214,6 @@ TEST_F(tu_manager_bk, strings)
     {
         get_bk_cmd((enum bk_cmd)i);
         get_bk_state((enum bk_state)i);
-        get_bk_type((enum bk_type)i);
     }
 }
 
@@ -238,7 +237,7 @@ TEST_F(tu_manager_bk, errors)
         {
         case 0:
             // Undefined block ID
-            file << CMD_ADD << " 0 " << TYPE_HELLO << std::endl;
+            file << CMD_ADD << " 0 hello" << std::endl;
             break;
 
         case 1:

@@ -64,7 +64,7 @@ TEST_F(tu_perf, commutation)
     //   - bk_1 -> bk_2 -> bk_3 -> bk_4... -> bk_100 -> bk_101
     for (int i = 1; i < 101; i++)
     {
-        EXPECT_EQ(m->bk.block_add(i, TYPE_HELLO), true);
+        EXPECT_EQ(m->bk.block_add(i, "hello"), true);
         EXPECT_EQ(m->bk.block_init(i), true);
         EXPECT_EQ(m->bk.block_start(i), true);
 
@@ -95,7 +95,7 @@ TEST_F(tu_perf, commutation)
         bi = m->bk.block_get(i);
         ASSERT_NE(bi, (void *)NULL);
 
-        bi->bk.get_stats(bi->ctx, buf, sizeof(buf));
+        bi->bk->get_stats(bi->ctx, buf, sizeof(buf));
         count = atoi(buf);
         EXPECT_EQ(count,  10 * 1000);
     }

@@ -1,6 +1,6 @@
 
 
-# Build block project_euler as a static library
+# Build block project_euler library
 set(SOURCES)
 set(SOURCES ${SOURCES} src/project_euler.cpp)
 set(SOURCES ${SOURCES} src/problem_1.cpp)

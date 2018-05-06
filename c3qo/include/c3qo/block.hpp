@@ -5,22 +5,6 @@
 #include <cstdlib> // size_t
 
 //
-// @enum bk_type
-//
-// @brief Block types
-//
-// @note Values are used by configuration file any change has an impact on it
-//
-enum bk_type
-{
-    TYPE_HELLO,        // Block that says hello
-    TYPE_CLIENT_US_NB, // Unix stream non-block client
-    TYPE_SERVER_US_NB, // Unix stream non-block server
-    TYPE_ZMQ_PAIR,     // ZeroMQ publish/subscribe socket pattern
-};
-const char *get_bk_type(enum bk_type t);
-
-//
 // @enum bk_cmd
 //
 // @brief Commands to manage a block

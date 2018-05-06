@@ -27,9 +27,8 @@ struct hello_bind
 //
 struct hello_conf
 {
-    int bk_id;            // Block ID
-    enum bk_type bk_type; // Block type
-    char name[64];        // Block name
+    int bk_id;     // Block ID
+    char name[64]; // Block name
 };
 
 //

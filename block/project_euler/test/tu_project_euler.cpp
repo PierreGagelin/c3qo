@@ -66,10 +66,3 @@ TEST_F(tu_project_euler, problem_2)
     project_euler_if.conf(NULL, conf1000);
     project_euler_if.conf(NULL, conf4000000);
 }
-
-TEST_F(tu_project_euler, problem_51)
-{
-    char conf[] = "51";
-
-    project_euler_if.conf(NULL, conf);
-}
