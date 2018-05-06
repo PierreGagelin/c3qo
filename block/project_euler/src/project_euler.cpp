@@ -4,13 +4,15 @@
 // https://projecteuler.net/
 //
 
+// System library headers
+extern "C" {
+#include <dlfcn.h> // dlopen, dlsym, dlerror
+}
+
 // Project headers
 #include "block/project_euler.hpp"
 #include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
-
-// Local block header
-#include "problem.hpp"
 
 // Managers shall be linked
 extern struct manager *m;
@@ -32,17 +34,26 @@ static void project_euler_stop(void *vctx)
 
 static void solve_problem(int index, char *param)
 {
-    switch (index)
-    {
-    case 1:
-    {
-        solve_problem_1(param);
-    }
-    break;
+    void *self;
+    char solver_name[32];
+    void (*solver)(char *);
 
-    default:
-        LOGGER_ERR("Failed to solve problem: unknown problem number [number=%d]", index);
+    self = dlopen(NULL, RTLD_LAZY);
+    if (self == NULL)
+    {
+        LOGGER_ERR("Failed to open ourselves to look for symbols: %s", dlerror());
+        return;
     }
+
+    sprintf(solver_name, "solve_problem_%d", index);
+    solver = (void (*)(char *))dlsym(self, solver_name);
+    if (solver == NULL)
+    {
+        LOGGER_ERR("Failed to find solver function: %s [func=%s]", dlerror(), solver_name);
+        return;
+    }
+
+    solver(param);
 }
 
 //

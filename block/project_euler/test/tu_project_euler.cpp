@@ -43,16 +43,33 @@ void tu_project_euler::TearDown()
     LOGGER_CLOSE();
 }
 
-//
-// @brief Basic usage of block project_euler
-//
 TEST_F(tu_project_euler, problem_1)
 {
-    char conf10[] = "1 10";     // Solve problem 1 with argument 10
-    char conf100[] = "1 100";   // Solve problem 1 with argument 100
-    char conf1000[] = "1 1000"; // Solve problem 1 with argument 1000
+    char conf10[] = "1 10";
+    char conf100[] = "1 100";
+    char conf1000[] = "1 1000";
 
     project_euler_if.conf(NULL, conf10);
     project_euler_if.conf(NULL, conf100);
     project_euler_if.conf(NULL, conf1000);
+}
+
+TEST_F(tu_project_euler, problem_2)
+{
+    char conf10[] = "2 10";
+    char conf100[] = "2 100";
+    char conf1000[] = "2 1000";
+    char conf4000000[] = "2 4000000";
+
+    project_euler_if.conf(NULL, conf10);
+    project_euler_if.conf(NULL, conf100);
+    project_euler_if.conf(NULL, conf1000);
+    project_euler_if.conf(NULL, conf4000000);
+}
+
+TEST_F(tu_project_euler, problem_51)
+{
+    char conf[] = "51";
+
+    project_euler_if.conf(NULL, conf);
 }

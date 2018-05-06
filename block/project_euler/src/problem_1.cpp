@@ -1,5 +1,6 @@
 
-// Project headers
+
+// Local header
 #include "problem.hpp"
 
 void solve_problem_1(char *param)

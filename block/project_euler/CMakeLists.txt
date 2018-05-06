@@ -4,9 +4,11 @@
 set(SOURCES)
 set(SOURCES ${SOURCES} src/project_euler.cpp)
 set(SOURCES ${SOURCES} src/problem_1.cpp)
+set(SOURCES ${SOURCES} src/problem_2.cpp)
+set(SOURCES ${SOURCES} src/problem_51.cpp)
 set(SOURCES ${SOURCES} src/problem.hpp)
 
-add_library(project_euler STATIC ${SOURCES})
+add_library(project_euler SHARED ${SOURCES})
 
 C3QO_TARGET_COMPILE_FLAGS(project_euler)
 
