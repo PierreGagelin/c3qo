@@ -6,7 +6,7 @@ find_package(Protobuf REQUIRED)
 set(PROTOBUF_USE_STATIC_LIBS on)
 
 
-# Build protobuf person as a static library
+# Build protobuf person library
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS src/test.proto)
 set(SOURCES ${PROTO_SRCS} ${PROTO_HDRS})
 

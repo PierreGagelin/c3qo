@@ -30,7 +30,6 @@ static void *hello_init(int bk_id)
     memset(ctx->bind.id, 0, sizeof(ctx->bind.id));
     ctx->conf.bk_id = bk_id;
     ctx->conf.name[0] = '\0';
-    ctx->conf.bk_type = TYPE_HELLO;
     ctx->count = 0;
 
     return ctx;

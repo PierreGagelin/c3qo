@@ -1,6 +1,6 @@
 
 
-# Build socket as a static library
+# Build socket library
 set(SOURCES src/socket.cpp)
 
 add_library(socket STATIC ${SOURCES})

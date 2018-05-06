@@ -1,6 +1,6 @@
 
 
-# Build logger as a static library
+# Build logger library
 set(SOURCES src/logger.cpp)
 
 add_library(logger STATIC ${SOURCES})

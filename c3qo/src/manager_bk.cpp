@@ -5,16 +5,15 @@
 #include <cstdio>  // fopen, fgets, sscanf
 #include <cstring> // memset, strerror
 
+// System library headers
+extern "C" {
+#include <dlfcn.h> // dlopen, dlsym, dlerror
+}
+
 // Project headers
 #include "c3qo/block.hpp"
 #include "c3qo/manager_bk.hpp"
 #include "utils/logger.hpp"
-
-// Each block shall be linked
-extern struct bk_if hello_if;
-extern struct bk_if client_us_nb_if;
-extern struct bk_if server_us_nb_if;
-extern struct bk_if zmq_pair_if;
 
 //
 // @brief Convert flow type into a string
@@ -55,45 +54,48 @@ manager_bk::~manager_bk()
 // @param id   : Block ID
 // @param type : Block type
 //
-bool manager_bk::block_add(int id, enum bk_type type)
+bool manager_bk::block_add(int id, const char *type)
 {
-    std::pair<std::unordered_map<int, struct bk_info>::iterator, bool> ret;
     struct bk_info block;
+    void *self;
+    int ret;
 
+    // Retrieve block identifier
     if (id == 0)
     {
-        LOGGER_ERR("Failed to add block: forbidden block ID [bk_id=%d ; bk_type=%s]", id, get_bk_type(type));
+        LOGGER_ERR("Failed to add block: forbidden block ID [bk_id=%d ; bk_type=%s]", id, type);
         return false;
     }
-
-    switch (type)
-    {
-    case TYPE_HELLO:
-        block.bk = hello_if;
-        break;
-
-    case TYPE_CLIENT_US_NB:
-        block.bk = client_us_nb_if;
-        break;
-
-    case TYPE_SERVER_US_NB:
-        block.bk = server_us_nb_if;
-        break;
-
-    case TYPE_ZMQ_PAIR:
-        block.bk = zmq_pair_if;
-        break;
-
-    default:
-        LOGGER_ERR("Failed to add block: unknown block type value [bk_id=%d ; bk_type=%d]", id, type);
-        return false;
-    }
-
     block.id = id;
-    block.type = type;
+
+    // Retrieve block type
+    ret = snprintf(block.type, sizeof(block.type), "%s_if", type);
+    if ((ret < 0) || ((size_t)ret >= sizeof(block.type)))
+    {
+        // snprintf failed or not enough room to append "_if"
+        LOGGER_ERR("Failed to call snprintf [ret=%d ; max_len=%u]", ret, MAX_NAME - 4u);
+        return false;
+    }
+
+    // Retrieve interface
+    self = dlopen(NULL, RTLD_LAZY);
+    if (self == NULL)
+    {
+        LOGGER_ERR("Failed to open ourselves: %s", dlerror());
+        return false;
+    }
+    block.bk = (struct bk_if *)dlsym(self, block.type);
+    if (block.bk == NULL)
+    {
+        LOGGER_ERR("Failed to find symbol: %s [symbol=%s]", dlerror(), block.type);
+        dlclose(self);
+        return false;
+    }
+    dlclose(self);
+
     block.state = STATE_STOP;
 
-    LOGGER_INFO("Add block [bk_id=%d ; bk_type=%s ; bk_state=%s]", block.id, get_bk_type(block.type), get_bk_state(block.state));
+    LOGGER_INFO("Add block [bk_id=%d ; bk_type=%s]", block.id, block.type);
 
     block_del(id);
     bk_map_.insert({id, block});
@@ -131,11 +133,11 @@ bool manager_bk::block_init(int id)
         return false;
     }
 
-    LOGGER_INFO("Initialize block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second.id, get_bk_type(it->second.type), get_bk_state(STATE_INIT));
+    LOGGER_INFO("Initialize block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second.id, it->second.type, get_bk_state(STATE_INIT));
 
-    if (it->second.bk.init != NULL)
+    if (it->second.bk->init != NULL)
     {
-        it->second.ctx = it->second.bk.init(it->second.id);
+        it->second.ctx = it->second.bk->init(it->second.id);
     }
     it->second.state = STATE_INIT;
 
@@ -163,11 +165,11 @@ bool manager_bk::block_conf(int id, char *conf)
         return false;
     }
 
-    LOGGER_INFO("Configure block [bk_id=%d ; bk_type=%s ; conf=%s]", id, get_bk_type(it->second.type), conf);
+    LOGGER_INFO("Configure block [bk_id=%d ; bk_type=%s ; conf=%s]", id, it->second.type, conf);
 
-    if (it->second.bk.conf != NULL)
+    if (it->second.bk->conf != NULL)
     {
-        it->second.bk.conf(it->second.ctx, conf);
+        it->second.bk->conf(it->second.ctx, conf);
     }
 
     return true;
@@ -194,11 +196,11 @@ bool manager_bk::block_bind(int id, int port, int bk_id)
         return false;
     }
 
-    LOGGER_INFO("Bind block [bk_id=%d ; bk_type=%s ; port=%d ; bk_id_dest=%d]", it->first, get_bk_type(it->second.type), port, bk_id);
+    LOGGER_INFO("Bind block [bk_id=%d ; bk_type=%s ; port=%d ; bk_id_dest=%d]", it->first, it->second.type, port, bk_id);
 
-    if (it->second.bk.bind != NULL)
+    if (it->second.bk->bind != NULL)
     {
-        it->second.bk.bind(it->second.ctx, port, bk_id);
+        it->second.bk->bind(it->second.ctx, port, bk_id);
     }
 
     return true;
@@ -234,11 +236,11 @@ bool manager_bk::block_start(int id)
         break;
     }
 
-    LOGGER_INFO("Start block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second.id, get_bk_type(it->second.type), get_bk_state(STATE_START));
+    LOGGER_INFO("Start block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second.id, it->second.type, get_bk_state(STATE_START));
 
-    if (it->second.bk.start != NULL)
+    if (it->second.bk->start != NULL)
     {
-        it->second.bk.start(it->second.ctx);
+        it->second.bk->start(it->second.ctx);
     }
     it->second.state = STATE_START;
 
@@ -275,11 +277,11 @@ bool manager_bk::block_stop(int id)
         break;
     }
 
-    LOGGER_INFO("Stop block [bk_id=%d ; bk_type=%s ; bk_state=%s]", id, get_bk_type(it->second.type), get_bk_state(STATE_STOP));
+    LOGGER_INFO("Stop block [bk_id=%d ; bk_type=%s ; bk_state=%s]", id, it->second.type, get_bk_state(STATE_STOP));
 
-    if (it->second.bk.stop != NULL)
+    if (it->second.bk->stop != NULL)
     {
-        it->second.bk.stop(it->second.ctx);
+        it->second.bk->stop(it->second.ctx);
     }
     it->second.state = STATE_STOP;
 
@@ -318,17 +320,17 @@ void manager_bk::block_flow(int bk_id, void *data, enum flow_type type)
         {
         case FLOW_NOTIF:
             LOGGER_DEBUG("Notify block [bk_id=%d ; notif=%p]", bk_id, data);
-            bk_id = bi->bk.ctrl(bi->ctx, data);
+            bk_id = bi->bk->ctrl(bi->ctx, data);
             break;
 
         case FLOW_RX:
             LOGGER_DEBUG("Process RX data [bk_id=%d ; data=%p]", bk_id, data);
-            bk_id = bi->bk.rx(bi->ctx, data);
+            bk_id = bi->bk->rx(bi->ctx, data);
             break;
 
         case FLOW_TX:
             LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", bk_id, data);
-            bk_id = bi->bk.tx(bi->ctx, data);
+            bk_id = bi->bk->tx(bi->ctx, data);
             break;
 
         default:
@@ -413,7 +415,7 @@ void manager_bk::block_del(int id)
 
     block_stop(id);
 
-    LOGGER_INFO("Delete block [bk_id=%d ; bk_type=%s]", it->second.id, get_bk_type(it->second.type));
+    LOGGER_INFO("Delete block [bk_id=%d ; bk_type=%s]", it->second.id, it->second.type);
 
     bk_map_.erase(it);
 }
@@ -445,29 +447,19 @@ void manager_bk::block_clear()
 //
 bool manager_bk::exec_cmd(enum bk_cmd cmd, int id, char *arg)
 {
-    LOGGER_DEBUG("Execute block command [bk_cmd=%s ; bk_id=%d]", get_bk_cmd(cmd), id);
+    LOGGER_DEBUG("Execute block command [bk_cmd=%s ; bk_id=%d ; bk_arg=%s]", get_bk_cmd(cmd), id, arg);
 
     switch (cmd)
     {
     case CMD_ADD:
     {
-        enum bk_type type;
-
-        if (arg == NULL)
+        if ((arg == NULL) || ((arg = strtok(arg, " ")) == 0))
         {
             LOGGER_ERR("Failed to add block: block type required as third argument");
             return false;
         }
 
-        errno = 0;
-        type = (enum bk_type)strtol(arg, NULL, 10);
-        if (errno != 0)
-        {
-            LOGGER_ERR("Failed to add block: block type should be a decimal integer [bk_type=%s]", arg);
-            return false;
-        }
-
-        return block_add(id, type);
+        return block_add(id, arg);
     }
     case CMD_INIT:
     {
@@ -671,7 +663,7 @@ size_t manager_bk::conf_get(char *buf, size_t len)
     {
         int ret;
 
-        ret = snprintf(buf + w, len - w, "%u %d %d;", i->first, i->second.type, i->second.state);
+        ret = snprintf(buf + w, len - w, "%u %s %d;", i->first, i->second.type, i->second.state);
         if (ret < 0)
         {
             LOGGER_ERR("snprintf failed");
