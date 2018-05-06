@@ -11,6 +11,7 @@ C3QO_TARGET_COMPILE_FLAGS(socket_us_nb)
 C3QO_TARGET_LINK_FLAGS(socket_us_nb)
 
 target_link_libraries(socket_us_nb manager)
+target_link_libraries(socket_us_nb socket)
 
 
 # Build TU for socket_us_nb

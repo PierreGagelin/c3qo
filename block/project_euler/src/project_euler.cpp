@@ -4,6 +4,9 @@
 // https://projecteuler.net/
 //
 
+// C++ library headers
+#include <cstring>
+
 // System library headers
 extern "C" {
 #include <dlfcn.h> // dlopen, dlsym, dlerror

@@ -14,8 +14,7 @@ C3QO_TARGET_INCLUDE(manager)
 C3QO_TARGET_COMPILE_FLAGS(manager)
 C3QO_TARGET_LINK_FLAGS(manager)
 
-target_link_libraries(manager PUBLIC logger)
-target_link_libraries(manager PUBLIC socket)
+target_link_libraries(manager logger)
 
 
 # Build c3qo main executable
@@ -40,8 +39,8 @@ add_executable(ncli ${SOURCES_NETWORK_CLI})
 target_compile_options(ncli PRIVATE "${C3QO_COMPILE_FLAGS}")
 C3QO_TARGET_LINK_FLAGS(ncli)
 
-target_link_libraries(ncli PRIVATE logger)
-target_link_libraries(ncli PRIVATE socket)
+target_link_libraries(ncli logger)
+target_link_libraries(ncli socket)
 
 
 # Build TU for manager_bk
@@ -93,12 +92,12 @@ set(SOURCES_TU_PERF test/tu_perf.cpp)
 
 add_executable(tu_perf ${SOURCES_TU_PERF})
 
-C3QO_TARGET_LINK_FLAGS(tu_perf)
-
 add_test(NAME tu_perf COMMAND tu_perf)
 
 target_link_libraries(tu_perf manager)
 target_link_libraries(tu_perf hello)
 target_link_libraries(tu_perf gtest)
 target_link_libraries(tu_perf gtest_main)
+
+C3QO_TARGET_LINK_FLAGS(tu_perf)
 
