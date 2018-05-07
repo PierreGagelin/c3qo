@@ -66,3 +66,11 @@ TEST_F(tu_project_euler, problem_2)
     project_euler_if.conf(NULL, conf1000);
     project_euler_if.conf(NULL, conf4000000);
 }
+
+
+TEST_F(tu_project_euler, problem_3)
+{
+    char nada[] = "3 600851475143";
+
+    project_euler_if.conf(NULL, nada);      //6857
+}
