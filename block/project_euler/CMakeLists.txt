@@ -5,6 +5,7 @@ set(SOURCES)
 set(SOURCES ${SOURCES} src/project_euler.cpp)
 set(SOURCES ${SOURCES} src/problem_1.cpp)
 set(SOURCES ${SOURCES} src/problem_2.cpp)
+set(SOURCES ${SOURCES} src/problem_3.cpp)
 set(SOURCES ${SOURCES} src/problem_51.cpp)
 set(SOURCES ${SOURCES} src/problem.hpp)
 
