@@ -271,9 +271,9 @@ static void zmq_pair_stop(void *vctx)
     zmq_close(ctx->zmq_sock);
     zmq_ctx_term(ctx->zmq_ctx);
 
-    free(ctx);
-
     LOGGER_INFO("Stop block ZMQ Pair [bk_id=%d]", ctx->bk_id);
+
+    free(ctx);
 }
 
 //
