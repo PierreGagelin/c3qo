@@ -41,5 +41,5 @@ void solve_problem_3(char *param)
 
     unsigned long answer = largest_prime_factor(max);
 
-    LOGGER_INFO("Solved problem 1 [max=%lu ; sum=%lu]", max, answer);
+    LOGGER_INFO("Solved problem 3 [max=%lu ; sum=%lu]", max, answer);
 }
