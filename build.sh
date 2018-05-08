@@ -7,6 +7,7 @@ DIR_BUILD="$DIR_SOURCE/build"
 DIR_LCOV="$DIR_BUILD/lcov"
 
 LLVM="false"
+EXPORT_SYMBOLS="OFF"
 
 ACTION_BUILD="false"
 ACTION_CLEAN="false"
@@ -19,10 +20,10 @@ function action_build
 
     # Could use cmake's -H and -B options but it's undocumented so better not rely on those
     cd $DIR_BUILD
-    cmake ../
+    cmake -DNO_AS_NEEDED:BOOL=$EXPORT_SYMBOLS ../
     cd -
 
-    make -C $DIR_BUILD -j 8
+    make -C $DIR_BUILD -j 4
 }
 
 
@@ -116,7 +117,7 @@ function action_lcov
 }
 
 
-while getopts "bclL" opt
+while getopts "bchlEL" opt
 do
     case "${opt}" in
         b)
@@ -127,6 +128,12 @@ do
             ;;
         l)
             ACTION_LCOV="true"
+            ;;
+        h)
+            echo "lol, t'as cru un peu, non ?"
+            ;;
+        E)
+            EXPORT_SYMBOLS="ON"
             ;;
         L)
             LLVM="true"

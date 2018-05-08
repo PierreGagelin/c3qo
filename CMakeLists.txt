@@ -84,8 +84,16 @@ endfunction(C3QO_TARGET_COMPILE_FLAGS)
 
 # Function to add link flags
 function(C3QO_TARGET_LINK_FLAGS t_name)
-    target_link_libraries(${t_name} zmq)
+    # Required for dlopen usage
     target_link_libraries(${t_name} dl)
+    if(${NO_AS_NEEDED})
+        # If specified from cmake CLI, force linked libraries
+        # to appear in DT_NEEDED ELF section
+	set_target_properties(${t_name} PROPERTIES LINK_FLAGS "-Wl,--no-as-needed")
+    endif()
+
+    target_link_libraries(${t_name} zmq)
+
     if(${C3QO_COVERAGE})
         set_target_properties(${t_name} PROPERTIES LINK_FLAGS "--coverage")
     endif()
