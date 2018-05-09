@@ -8,13 +8,19 @@ set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_bk.cpp)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_fd.cpp)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_tm.cpp)
 
-add_library(manager SHARED ${SOURCES_MANAGER})
+add_library(manager ${C3QO_LIB_TYPE} ${SOURCES_MANAGER})
 
 C3QO_TARGET_INCLUDE(manager)
 C3QO_TARGET_COMPILE_FLAGS(manager)
 C3QO_TARGET_LINK_FLAGS(manager)
 
 target_link_libraries(manager logger)
+if (${C3QO_STATIC})
+    target_link_libraries(manager hello)
+    target_link_libraries(manager socket_us_nb)
+    target_link_libraries(manager zmq_pair)
+    target_link_libraries(manager project_euler)
+endif()
 
 
 # Build c3qo main executable
@@ -30,6 +36,7 @@ target_link_libraries(c3qo hello)
 target_link_libraries(c3qo socket_us_nb)
 target_link_libraries(c3qo zmq_pair)
 target_link_libraries(c3qo project_euler)
+target_link_libraries(c3qo project_euler_lib)
 
 # Build network CLI executable
 set(SOURCES_NETWORK_CLI src/network_cli.cpp)

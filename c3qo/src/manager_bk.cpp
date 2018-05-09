@@ -57,7 +57,6 @@ manager_bk::~manager_bk()
 bool manager_bk::block_add(int id, const char *type)
 {
     struct bk_info block;
-    void *self;
     int ret;
 
     // Retrieve block identifier
@@ -77,7 +76,17 @@ bool manager_bk::block_add(int id, const char *type)
         return false;
     }
 
-    // Retrieve interface
+// Retrieve interface
+#ifdef C3QO_STATIC
+    block.bk = get_bk_if(block.type);
+    if (block.bk == NULL)
+    {
+        LOGGER_ERR("Failed to find block interface [name=%s]", block.type);
+        return false;
+    }
+#else
+    void *self;
+
     self = dlopen(NULL, RTLD_LAZY);
     if (self == NULL)
     {
@@ -92,6 +101,7 @@ bool manager_bk::block_add(int id, const char *type)
         return false;
     }
     dlclose(self);
+#endif // C3QO_STATIC
 
     block.state = STATE_STOP;
 

@@ -2,6 +2,46 @@
 
 #include "c3qo/block.hpp"
 
+#ifdef C3QO_STATIC
+
+#include <cstring> // strcmp
+
+extern struct bk_if hello_if;
+extern struct bk_if client_us_nb_if;
+extern struct bk_if server_us_nb_if;
+extern struct bk_if zmq_pair_if;
+extern struct bk_if project_euler_if;
+
+//
+// @brief Retrieve a block interface pointer
+//
+struct bk_if *get_bk_if(const char *b)
+{
+    if (strcmp(b, "hello_if") == 0)
+    {
+        return &hello_if;
+    }
+    if (strcmp(b, "client_us_nb_if") == 0)
+    {
+        return &client_us_nb_if;
+    }
+    if (strcmp(b, "server_us_nb_if") == 0)
+    {
+        return &server_us_nb_if;
+    }
+    if (strcmp(b, "zmq_pair_if") == 0)
+    {
+        return &zmq_pair_if;
+    }
+    if (strcmp(b, "project_euler_if") == 0)
+    {
+        return &project_euler_if;
+    }
+    return NULL;
+}
+
+#endif // C3QO_STATIC
+
 //
 // @brief Stringify the block command
 //

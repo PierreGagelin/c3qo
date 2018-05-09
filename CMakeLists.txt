@@ -17,6 +17,14 @@ set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
+# Preprocessing flag
+if (${C3QO_STATIC})
+    add_definitions(-DC3QO_STATIC)
+    set(C3QO_LIB_TYPE STATIC)
+else()
+    set(C3QO_LIB_TYPE SHARED)
+endif()
+
 
 # Using GCOV on the code
 set(C3QO_COVERAGE off)

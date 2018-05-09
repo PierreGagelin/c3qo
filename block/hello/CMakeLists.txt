@@ -3,7 +3,7 @@
 # Build block hello library
 set(SOURCES src/hello.cpp)
 
-add_library(hello SHARED ${SOURCES})
+add_library(hello ${C3QO_LIB_TYPE} ${SOURCES})
 
 C3QO_TARGET_COMPILE_FLAGS(hello)
 C3QO_TARGET_LINK_FLAGS(hello)

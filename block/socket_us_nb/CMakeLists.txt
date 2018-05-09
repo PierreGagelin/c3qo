@@ -5,7 +5,7 @@ set(SOURCES)
 set(SOURCES ${SOURCES} src/client_us_nb.cpp)
 set(SOURCES ${SOURCES} src/server_us_nb.cpp)
 
-add_library(socket_us_nb SHARED ${SOURCES})
+add_library(socket_us_nb ${C3QO_LIB_TYPE} ${SOURCES})
 
 C3QO_TARGET_COMPILE_FLAGS(socket_us_nb)
 C3QO_TARGET_LINK_FLAGS(socket_us_nb)

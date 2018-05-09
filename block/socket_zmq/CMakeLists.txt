@@ -3,7 +3,7 @@
 # Build zmq_pair library
 set(SOURCES_ZMQ_PAIR src/zmq_pair.cpp)
 
-add_library(zmq_pair SHARED ${SOURCES_ZMQ_PAIR})
+add_library(zmq_pair ${C3QO_LIB_TYPE} ${SOURCES_ZMQ_PAIR})
 
 C3QO_TARGET_COMPILE_FLAGS(zmq_pair)
 C3QO_TARGET_LINK_FLAGS(zmq_pair)
