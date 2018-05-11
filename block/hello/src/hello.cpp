@@ -112,11 +112,8 @@ static int hello_rx(void *vctx, void *vdata)
 
     LOGGER_DEBUG("Process RX data [bk_id=%d ; data=%p]", ctx->conf.bk_id, vdata);
 
-    // Get bind index to return
-    ret = ctx->bind.id[ctx->count % 8];
-
-    // Increase packet count
-    ctx->count++;
+    // Get and increment bind index to return
+    ret = ctx->count++ % 8;
 
     return ret;
 }
@@ -135,11 +132,8 @@ static int hello_tx(void *vctx, void *vdata)
 
     LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", ctx->conf.bk_id, vdata);
 
-    // Get bind index to return
-    ret = ctx->bind.id[ctx->count % 8];
-
-    // Increase packet count
-    ctx->count++;
+    // Get and increment bind index to return
+    ret = ctx->count++ % 8;
 
     return ret;
 }
@@ -156,7 +150,7 @@ static int hello_ctrl(void *vctx, void *vnotif)
     ctx = (struct hello_ctx *)vctx;
 
     // Send a message
-    m->bk.process_tx(ctx->bind.id[ctx->count % 8], vnotif);
+    m->bk.process_tx(ctx->conf.bk_id, ctx->count % 8, vnotif);
 
     // No forwarding
     return 0;

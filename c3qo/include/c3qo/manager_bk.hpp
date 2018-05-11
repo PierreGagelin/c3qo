@@ -4,11 +4,25 @@
 // C++ library headers
 #include <unordered_map> // unordered_map container
 #include <cstdlib>       // size_t, malloc, free, strtoul
+#include <memory>        // shared_ptr, weak_ptr
+#include <vector>        // vector
 
 // Project headers
 #include "c3qo/block.hpp" // struct bk_if, enum bk_type, enum bk_state
 
 #define MAX_NAME 32u
+
+//
+// @struct bind_info
+//
+// @brief Information to bind to blocks together
+//
+struct bind_info
+{
+    int port;                            // Port from source block
+    int bk_id;                           // Identifier of the destination block
+    std::weak_ptr<struct bk_info> block; // Destination block
+};
 
 //
 // @struct bk_info
@@ -17,11 +31,12 @@
 //
 struct bk_info
 {
-    struct bk_if *bk;    // Block interface
-    void *ctx;           // Block context
-    int id;              // Block ID
-    char type[MAX_NAME]; // Block type
-    enum bk_state state; // Block state
+    std::vector<struct bind_info> bind; // Block bindings
+    struct bk_if *bk;                   // Block interface
+    void *ctx;                          // Block context
+    int id;                             // Block ID
+    char type[MAX_NAME];                // Block type
+    enum bk_state state;                // Block state
 };
 
 //
@@ -43,15 +58,15 @@ class manager_bk
 
   protected:
     // Map of blocks
-    std::unordered_map<int, struct bk_info> bk_map_;
+    std::unordered_map<int, std::shared_ptr<struct bk_info> > bk_map_;
 
   protected:
-    void block_flow(int id, void *data, enum flow_type type);
+    void block_flow(int id, int port, void *data, enum flow_type type);
 
   public:
-    void process_rx(int bk_id, void *data);
-    void process_tx(int bk_id, void *data);
-    void process_notif(int bk_id, void *notif);
+    void process_rx(int bk_id, int port, void *data);
+    void process_tx(int bk_id, int port, void *data);
+    void process_notif(int bk_id, int port, void *notif);
 
   public:
     bool block_add(int id, const char *type);

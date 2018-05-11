@@ -108,22 +108,18 @@ bool manager_bk::block_add(int id, const char *type)
     LOGGER_INFO("Add block [bk_id=%d ; bk_type=%s]", block.id, block.type);
 
     block_del(id);
-    bk_map_.insert({id, block});
+    bk_map_.insert({id, std::make_shared<struct bk_info>(block)});
 
     return true;
 }
 
 //
-// @brief Initialiaze a block
-//
-// @param bki : Block information
+// @brief Initialize a block
 //
 bool manager_bk::block_init(int id)
 {
-    std::unordered_map<int, struct bk_info>::iterator it;
-
     // Find the block concerned by the command
-    it = bk_map_.find(id);
+    const auto &it = bk_map_.find(id);
     if (it == bk_map_.end())
     {
         LOGGER_WARNING("Cannot initialize block: unknown block ID [bk_id=%d]", id);
@@ -131,25 +127,24 @@ bool manager_bk::block_init(int id)
     }
 
     // Verify block state
-    switch (it->second.state)
+    switch (it->second->state)
     {
     case STATE_STOP:
         // Normal case
         break;
 
-    case STATE_INIT:
-    case STATE_START:
-        LOGGER_WARNING("Cannot initialize block: block no stopped [bk_id=%d ; bk_state=%s]", id, get_bk_state(it->second.state));
+    default:
+        LOGGER_WARNING("Cannot initialize block: block not stopped [bk_id=%d ; bk_state=%s]", id, get_bk_state(it->second->state));
         return false;
     }
 
-    LOGGER_INFO("Initialize block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second.id, it->second.type, get_bk_state(STATE_INIT));
+    LOGGER_INFO("Initialize block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second->id, it->second->type, get_bk_state(STATE_INIT));
 
-    if (it->second.bk->init != NULL)
+    if (it->second->bk->init != NULL)
     {
-        it->second.ctx = it->second.bk->init(it->second.id);
+        it->second->ctx = it->second->bk->init(it->second->id);
     }
-    it->second.state = STATE_INIT;
+    it->second->state = STATE_INIT;
 
     return true;
 }
@@ -159,27 +154,25 @@ bool manager_bk::block_init(int id)
 //
 bool manager_bk::block_conf(int id, char *conf)
 {
-    std::unordered_map<int, struct bk_info>::iterator it;
-
     // Find the block concerned by the command
-    it = bk_map_.find(id);
+    const auto &it = bk_map_.find(id);
     if (it == bk_map_.end())
     {
         LOGGER_WARNING("Cannot configure block: unknown block ID [bk_id=%d]", id);
         return false;
     }
 
-    if (it->second.state == STATE_STOP)
+    if (it->second->state == STATE_STOP)
     {
         LOGGER_WARNING("Cannot configure block: block stopped [bk_id=%d]", id);
         return false;
     }
 
-    LOGGER_INFO("Configure block [bk_id=%d ; bk_type=%s ; conf=%s]", id, it->second.type, conf);
+    LOGGER_INFO("Configure block [bk_id=%d ; bk_type=%s ; conf=%s]", id, it->second->type, conf);
 
-    if (it->second.bk->conf != NULL)
+    if (it->second->bk->conf != NULL)
     {
-        it->second.bk->conf(it->second.ctx, conf);
+        it->second->bk->conf(it->second->ctx, conf);
     }
 
     return true;
@@ -190,28 +183,40 @@ bool manager_bk::block_conf(int id, char *conf)
 //
 bool manager_bk::block_bind(int id, int port, int bk_id)
 {
-    std::unordered_map<int, struct bk_info>::iterator it;
+    struct bind_info bind;
 
     // Find the block concerned by the command
-    it = bk_map_.find(id);
-    if (it == bk_map_.end())
+    const auto &source = bk_map_.find(id);
+    const auto &end = bk_map_.end();
+    if (source == end)
     {
-        LOGGER_WARNING("Cannot bind block: unknown block ID [bk_id=%d]", id);
+        LOGGER_WARNING("Cannot bind block: unknown source [bk_id=%d]", id);
         return false;
     }
 
-    if (it->second.state == STATE_STOP)
+    if (source->second->state == STATE_STOP)
     {
         LOGGER_WARNING("Cannot bind block: block stopped [bk_id=%d]", id);
         return false;
     }
 
-    LOGGER_INFO("Bind block [bk_id=%d ; bk_type=%s ; port=%d ; bk_id_dest=%d]", it->first, it->second.type, port, bk_id);
+    LOGGER_INFO("Bind block [bk_id=%d ; port=%d ; bk_id_dest=%d]", source->first, port, bk_id);
 
-    if (it->second.bk->bind != NULL)
+    if (source->second->bk->bind != NULL)
     {
-        it->second.bk->bind(it->second.ctx, port, bk_id);
+        source->second->bk->bind(source->second->ctx, port, bk_id);
     }
+
+    // Add a binding in the engine with a weak reference to the block
+    // If the block does not exist, we just let it undefined
+    const auto &dest = bk_map_.find(bk_id);
+    if (dest != end)
+    {
+        bind.block = dest->second;
+    }
+    bind.port = port;
+    bind.bk_id = bk_id;
+    source->second->bind.push_back(bind);
 
     return true;
 }
@@ -219,14 +224,10 @@ bool manager_bk::block_bind(int id, int port, int bk_id)
 //
 // @brief Stop a block
 //
-// @param bki : Block information
-//
 bool manager_bk::block_start(int id)
 {
-    std::unordered_map<int, struct bk_info>::iterator it;
-
     // Find the block concerned by the command
-    it = bk_map_.find(id);
+    const auto &it = bk_map_.find(id);
     if (it == bk_map_.end())
     {
         LOGGER_WARNING("Cannot start block: unknown block ID [bk_id=%d]", id);
@@ -234,25 +235,24 @@ bool manager_bk::block_start(int id)
     }
 
     // Verify block state
-    switch (it->second.state)
+    switch (it->second->state)
     {
-    case STATE_START:
-    case STATE_STOP:
-        LOGGER_WARNING("Cannot start block: block not initialized [bk_id=%d ; bk_state=%s]", id, get_bk_state(it->second.state));
-        return false;
-
     case STATE_INIT:
         // Normal case
         break;
+
+    default:
+        LOGGER_WARNING("Cannot start block: block not initialized [bk_id=%d ; bk_state=%s]", id, get_bk_state(it->second->state));
+        return false;
     }
 
-    LOGGER_INFO("Start block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second.id, it->second.type, get_bk_state(STATE_START));
+    LOGGER_INFO("Start block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second->id, it->second->type, get_bk_state(STATE_START));
 
-    if (it->second.bk->start != NULL)
+    if (it->second->bk->start != NULL)
     {
-        it->second.bk->start(it->second.ctx);
+        it->second->bk->start(it->second->ctx);
     }
-    it->second.state = STATE_START;
+    it->second->state = STATE_START;
 
     return true;
 }
@@ -260,14 +260,10 @@ bool manager_bk::block_start(int id)
 //
 // @brief Stop a block
 //
-// @param bki : Block information
-//
 bool manager_bk::block_stop(int id)
 {
-    std::unordered_map<int, struct bk_info>::iterator it;
-
     // Find the block concerned by the command
-    it = bk_map_.find(id);
+    const auto &it = bk_map_.find(id);
     if (it == bk_map_.end())
     {
         LOGGER_WARNING("Cannot stop block: unknown block ID [bk_id=%d]", id);
@@ -275,25 +271,24 @@ bool manager_bk::block_stop(int id)
     }
 
     // Verify block state
-    switch (it->second.state)
+    switch (it->second->state)
     {
-    case STATE_INIT:
-    case STATE_STOP:
-        LOGGER_WARNING("Cannot stop block: block not started [bk_id=%d ; bk_state=%s]", id, get_bk_state(it->second.state));
-        return false;
-
     case STATE_START:
         // Normal case
         break;
+
+    default:
+        LOGGER_WARNING("Cannot stop block: block not started [bk_id=%d ; bk_state=%s]", id, get_bk_state(it->second->state));
+        return false;
     }
 
-    LOGGER_INFO("Stop block [bk_id=%d ; bk_type=%s ; bk_state=%s]", id, it->second.type, get_bk_state(STATE_STOP));
+    LOGGER_INFO("Stop block [bk_id=%d ; bk_type=%s ; bk_state=%s]", id, it->second->type, get_bk_state(STATE_STOP));
 
-    if (it->second.bk->stop != NULL)
+    if (it->second->bk->stop != NULL)
     {
-        it->second.bk->stop(it->second.ctx);
+        it->second->bk->stop(it->second->ctx);
     }
-    it->second.state = STATE_STOP;
+    it->second->state = STATE_STOP;
 
     return true;
 }
@@ -302,57 +297,86 @@ bool manager_bk::block_stop(int id)
 // @brief Start a data flow between blocks
 //
 // @param bk_id : Block ID where the flow starts
+// @param port  : Source port to find a peer block
 // @param data  : Data to process
 // @param type  : Flow type (RX, TX, NOTIF)
 //
-void manager_bk::block_flow(int bk_id, void *data, enum flow_type type)
+void manager_bk::block_flow(int bk_id, int port, void *data, enum flow_type type)
 {
-    LOGGER_DEBUG("Begin data flow [bk_id=%d ; data=%p ; flow_type=%s]", bk_id, data, get_flow_type(type));
+    // Find source block
+    auto source = bk_map_.find(bk_id);
+    if (source == bk_map_.end())
+    {
+        LOGGER_WARNING("Cannot start data flow: unknown block ID [bk_id=%d]", bk_id);
+        return;
+    }
+    else if (source->second->state != STATE_START)
+    {
+        LOGGER_WARNING("Cannot start data flow: block is not started [bk_id=%d ; bk_state=%s]", bk_id, get_bk_state(source->second->state));
+        return;
+    }
+
+    // Get a copy of the source that will serve to iterate over the blocks
+    std::shared_ptr<struct bk_info> src = source->second;
 
     // Process the data from one block to the other
     while (true)
     {
-        const struct bk_info *bi;
-
-        bi = block_get(bk_id);
-        if (bi == NULL)
+        // Find the source port in bindings
+        auto it = src->bind.begin();
+        const auto &end = src->bind.end();
+        while (it != end)
         {
-            LOGGER_WARNING("Could not continue data flow: unknown block ID [bk_id=%d ; data=%p ; flow_type=%s]", bk_id, data, get_flow_type(type));
+            if (it->port == port)
+            {
+                // We found the requested port
+                break;
+            }
+            ++it;
+        }
+        if (it == end)
+        {
+            LOGGER_ERR("Failed to find route for data flow: source port not found [bk_id=%d ; port=%d]", src->id, port);
             return;
         }
-        else if (bi->state != STATE_START)
+
+        LOGGER_DEBUG("Routed data flow [bk_id_src=%d ; port=%d ; bk_id_dest=%d]", src->id, port, it->bk_id);
+
+        // Destination bk_id=0 is the regular way out of this flow
+        if (it->bk_id == 0)
         {
-            LOGGER_WARNING("Could not continue data flow: block is not started [bk_id=%d ; bk_state=%s ; data=%p ; flow_type=%s]", bk_id, get_bk_state(bi->state), data, get_flow_type(type));
+            LOGGER_DEBUG("End data flow [bk_id=%d ; data=%p ; flow_type=%s]", src->id, data, get_flow_type(type));
+            break;
+        }
+
+        // The destination block is the new source of the data flow
+        src = it->block.lock();
+        if (src == nullptr)
+        {
+            LOGGER_ERR("Failed to continue data flow: destination block does not exist any longer [bk_id=%d]", it->bk_id);
             return;
         }
 
         switch (type)
         {
         case FLOW_NOTIF:
-            LOGGER_DEBUG("Notify block [bk_id=%d ; notif=%p]", bk_id, data);
-            bk_id = bi->bk->ctrl(bi->ctx, data);
+            LOGGER_DEBUG("Notify block [bk_id=%d ; notif=%p]", src->id, data);
+            port = src->bk->ctrl(src->ctx, data);
             break;
 
         case FLOW_RX:
-            LOGGER_DEBUG("Process RX data [bk_id=%d ; data=%p]", bk_id, data);
-            bk_id = bi->bk->rx(bi->ctx, data);
+            LOGGER_DEBUG("Process RX data [bk_id=%d ; data=%p]", src->id, data);
+            port = src->bk->rx(src->ctx, data);
             break;
 
         case FLOW_TX:
-            LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", bk_id, data);
-            bk_id = bi->bk->tx(bi->ctx, data);
+            LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", src->id, data);
+            port = src->bk->tx(src->ctx, data);
             break;
 
         default:
-            LOGGER_WARNING("Could not continue data flow: unknown flow type value [bk_id=%d ; data=%p ; flow_type=%d]", bk_id, data, type);
+            LOGGER_WARNING("Could not continue data flow: unknown flow type value [bk_id=%d ; data=%p ; flow_type=%d]", src->id, data, type);
             return;
-        }
-
-        if (bk_id == 0)
-        {
-            // Block ID 0 is the regular way out of this flow
-            LOGGER_DEBUG("End data flow [bk_id=%d ; data=%p ; flow_type=%s]", bk_id, data, get_flow_type(type));
-            break;
         }
     }
 }
@@ -363,9 +387,9 @@ void manager_bk::block_flow(int bk_id, void *data, enum flow_type type)
 // @param bk_id : Block ID
 // @param data  : Data to process
 //
-void manager_bk::process_rx(int bk_id, void *data)
+void manager_bk::process_rx(int bk_id, int port, void *data)
 {
-    block_flow(bk_id, data, FLOW_RX);
+    block_flow(bk_id, port, data, FLOW_RX);
 }
 
 //
@@ -374,9 +398,9 @@ void manager_bk::process_rx(int bk_id, void *data)
 // @param bk_id : Block ID
 // @param data  : Data to process
 //
-void manager_bk::process_tx(int bk_id, void *data)
+void manager_bk::process_tx(int bk_id, int port, void *data)
 {
-    block_flow(bk_id, data, FLOW_TX);
+    block_flow(bk_id, port, data, FLOW_TX);
 }
 
 //
@@ -385,9 +409,9 @@ void manager_bk::process_tx(int bk_id, void *data)
 // @param bk_id : Block ID
 // @param notif : Notification to process
 //
-void manager_bk::process_notif(int bk_id, void *notif)
+void manager_bk::process_notif(int bk_id, int port, void *notif)
 {
-    block_flow(bk_id, notif, FLOW_NOTIF);
+    block_flow(bk_id, port, notif, FLOW_NOTIF);
 }
 
 //
@@ -395,16 +419,14 @@ void manager_bk::process_notif(int bk_id, void *notif)
 //
 const struct bk_info *manager_bk::block_get(int id)
 {
-    std::unordered_map<int, struct bk_info>::iterator it;
-
-    it = bk_map_.find(id);
+    const auto &it = bk_map_.find(id);
     if (it == bk_map_.end())
     {
         LOGGER_WARNING("Cannot get block: unknown block ID [bk_id=%d]", id);
         return NULL;
     }
 
-    return &it->second;
+    return it->second.get();
 }
 
 //
@@ -414,9 +436,7 @@ const struct bk_info *manager_bk::block_get(int id)
 //
 void manager_bk::block_del(int id)
 {
-    std::unordered_map<int, struct bk_info>::iterator it;
-
-    it = bk_map_.find(id);
+    const auto &it = bk_map_.find(id);
     if (it == bk_map_.end())
     {
         LOGGER_WARNING("Cannot delete block: unknown block ID [bk_id=%d]", id);
@@ -425,7 +445,7 @@ void manager_bk::block_del(int id)
 
     block_stop(id);
 
-    LOGGER_INFO("Delete block [bk_id=%d ; bk_type=%s]", it->second.id, it->second.type);
+    LOGGER_INFO("Delete block [bk_id=%d ; bk_type=%s]", it->second->id, it->second->type);
 
     bk_map_.erase(it);
 }
@@ -435,12 +455,9 @@ void manager_bk::block_del(int id)
 //
 void manager_bk::block_clear()
 {
-    std::unordered_map<int, struct bk_info>::iterator i;
-    std::unordered_map<int, struct bk_info>::iterator e;
-
     // Stop every blocks
-    i = bk_map_.begin();
-    e = bk_map_.end();
+    auto i = bk_map_.begin();
+    const auto &e = bk_map_.end();
     while (i != e)
     {
         block_stop(i->first);
@@ -660,20 +677,18 @@ bool manager_bk::conf_parse(const char *filename)
 //
 size_t manager_bk::conf_get(char *buf, size_t len)
 {
-    std::unordered_map<int, struct bk_info>::const_iterator i;
-    std::unordered_map<int, struct bk_info>::const_iterator e;
     size_t w;
 
     LOGGER_DEBUG("Getting blocks information")
 
     w = 0;
-    i = bk_map_.begin();
-    e = bk_map_.end();
+    auto i = bk_map_.begin();
+    const auto &e = bk_map_.end();
     while (i != e)
     {
         int ret;
 
-        ret = snprintf(buf + w, len - w, "%u %s %d;", i->first, i->second.type, i->second.state);
+        ret = snprintf(buf + w, len - w, "%u %s %d;", i->first, i->second->type, i->second->state);
         if (ret < 0)
         {
             LOGGER_ERR("snprintf failed");

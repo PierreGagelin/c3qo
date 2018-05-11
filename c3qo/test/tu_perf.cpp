@@ -54,20 +54,24 @@ void tu_perf::TearDown()
 //
 TEST_F(tu_perf, commutation)
 {
-    const struct bk_info *bi;
-    char buf[] = "yolooooo";
+    int nb_block = 100 * 1;
+    int nb_buf = 10 * 1000;
 
     // Reduce amount of output
     logger_set_level(LOGGER_LEVEL_WARNING);
 
-    // Configure a chain of 100 blocks:
-    //   - bk_1 -> bk_2 -> bk_3 -> bk_4... -> bk_100 -> bk_101
-    for (int i = 1; i < 101; i++)
+    // Add, init and start some blocks
+    for (int i = 1; i < nb_block + 1; i++)
     {
         EXPECT_EQ(m->bk.block_add(i, "hello"), true);
         EXPECT_EQ(m->bk.block_init(i), true);
         EXPECT_EQ(m->bk.block_start(i), true);
+    }
 
+    // Configure a chain of N blocks:
+    //   - bk_1 -> bk_2 -> bk_3 -> bk_4... -> bk_N
+    for (int i = 1; i < nb_block; i++)
+    {
         for (int j = 0; j < 8; j++)
         {
             // Bind port j of bk_i to bk_i+1
@@ -75,21 +79,29 @@ TEST_F(tu_perf, commutation)
         }
     }
 
-    // Modify binds of bk_100 to point to 0
+    // Bind the last block to 0 (trash)
     for (int j = 0; j < 8; j++)
     {
-        EXPECT_EQ(m->bk.block_bind(100, j, 0), true);
+        EXPECT_EQ(m->bk.block_bind(nb_block, j, 0), true);
     }
 
     // Send data from bk_1
-    for (int i = 0; i < 10 * 1000; i++)
+    for (int i = 0; i < nb_buf; i++)
     {
-        m->bk.process_notif(1, buf);
+        const struct bk_info *bi;
+        char buf[] = "yolooooo";
+
+        bi = m->bk.block_get(1);
+        ASSERT_NE(bi, (void *)NULL);
+
+        bi->bk->ctrl(bi->ctx, buf);
     }
 
-    // Verify that 10 000 buffers crossed bk_2 to bk_100
-    for (int i = 2; i < 101; i++)
+    // Verify that buffers crossed bk_2 to the last block
+    for (int i = 2; i < nb_block + 1; i++)
     {
+        const struct bk_info *bi;
+        char buf[16];
         int count;
 
         bi = m->bk.block_get(i);
@@ -97,7 +109,7 @@ TEST_F(tu_perf, commutation)
 
         bi->bk->get_stats(bi->ctx, buf, sizeof(buf));
         count = atoi(buf);
-        EXPECT_EQ(count,  10 * 1000);
+        EXPECT_EQ(count, nb_buf);
     }
 
     // Clean blocks

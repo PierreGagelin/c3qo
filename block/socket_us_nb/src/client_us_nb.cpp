@@ -85,7 +85,7 @@ static void client_us_nb_callback(void *vctx, int fd, void *socket)
 
             // For the moment this is OK because the data flow is synchronous
             // Need to fix it if asynchronous data flow arrives
-            m->bk.process_rx(ctx->bind, buf);
+            m->bk.process_rx(ctx->bk_id, ctx->bind, buf);
         }
     } while (ret > 0);
 }

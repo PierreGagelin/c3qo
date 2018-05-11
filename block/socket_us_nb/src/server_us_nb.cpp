@@ -143,7 +143,7 @@ static void server_us_nb_flush_fd(struct server_us_nb_ctx *ctx, int fd)
 
             // For the moment this is OK because the data flow is synchronous
             // Need to fix it if asynchronous data flow arrives
-            m->bk.process_rx(ctx->bind, buf);
+            m->bk.process_rx(ctx->bk_id, ctx->bind, buf);
         }
     } while (ret > 0);
 }
