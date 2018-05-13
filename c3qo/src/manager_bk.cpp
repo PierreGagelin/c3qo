@@ -56,7 +56,7 @@ manager_bk::~manager_bk()
 //
 bool manager_bk::block_add(int id, const char *type)
 {
-    struct bk_info block;
+    boost::intrusive_ptr<class bk_info> block(new class bk_info);
     int ret;
 
     // Retrieve block identifier
@@ -65,11 +65,11 @@ bool manager_bk::block_add(int id, const char *type)
         LOGGER_ERR("Failed to add block: forbidden block ID [bk_id=%d ; bk_type=%s]", id, type);
         return false;
     }
-    block.id = id;
+    block->id = id;
 
     // Retrieve block type
-    ret = snprintf(block.type, sizeof(block.type), "%s_if", type);
-    if ((ret < 0) || ((size_t)ret >= sizeof(block.type)))
+    ret = snprintf(block->type, sizeof(block->type), "%s_if", type);
+    if ((ret < 0) || ((size_t)ret >= sizeof(block->type)))
     {
         // snprintf failed or not enough room to append "_if"
         LOGGER_ERR("Failed to call snprintf [ret=%d ; max_len=%u]", ret, MAX_NAME - 4u);
@@ -78,10 +78,10 @@ bool manager_bk::block_add(int id, const char *type)
 
 // Retrieve interface
 #ifdef C3QO_STATIC
-    block.bk = get_bk_if(block.type);
-    if (block.bk == NULL)
+    block->bk = get_bk_if(block->type);
+    if (block->bk == NULL)
     {
-        LOGGER_ERR("Failed to find block interface [name=%s]", block.type);
+        LOGGER_ERR("Failed to find block interface [name=%s]", block->type);
         return false;
     }
 #else
@@ -93,22 +93,22 @@ bool manager_bk::block_add(int id, const char *type)
         LOGGER_ERR("Failed to open library: %s", dlerror());
         return false;
     }
-    block.bk = (struct bk_if *)dlsym(self, block.type);
-    if (block.bk == NULL)
+    block->bk = (struct bk_if *)dlsym(self, block->type);
+    if (block->bk == NULL)
     {
-        LOGGER_ERR("Failed to find symbol: %s [symbol=%s]", dlerror(), block.type);
+        LOGGER_ERR("Failed to find symbol: %s [symbol=%s]", dlerror(), block->type);
         dlclose(self);
         return false;
     }
     dlclose(self);
 #endif // C3QO_STATIC
 
-    block.state = STATE_STOP;
+    block->state = STATE_STOP;
 
-    LOGGER_INFO("Add block [bk_id=%d ; bk_type=%s]", block.id, block.type);
+    LOGGER_INFO("Add block [bk_id=%d ; bk_type=%s]", block->id, block->type);
 
     block_del(id);
-    bk_map_.insert({id, std::make_shared<struct bk_info>(block)});
+    bk_map_.insert({id, block});
 
     return true;
 }
@@ -317,7 +317,7 @@ void manager_bk::block_flow(int bk_id, int port, void *data, enum flow_type type
     }
 
     // Get a copy of the source that will serve to iterate over the blocks
-    std::shared_ptr<struct bk_info> src = source->second;
+    boost::intrusive_ptr<class bk_info> src = source->second;
 
     // Process the data from one block to the other
     while (true)
@@ -350,12 +350,7 @@ void manager_bk::block_flow(int bk_id, int port, void *data, enum flow_type type
         }
 
         // The destination block is the new source of the data flow
-        src = it->block.lock();
-        if (src == nullptr)
-        {
-            LOGGER_ERR("Failed to continue data flow: destination block does not exist any longer [bk_id=%d]", it->bk_id);
-            return;
-        }
+        src = it->block;
 
         switch (type)
         {
@@ -417,7 +412,7 @@ void manager_bk::process_notif(int bk_id, int port, void *notif)
 //
 // @brief Get block information
 //
-const struct bk_info *manager_bk::block_get(int id)
+const class bk_info *manager_bk::block_get(int id)
 {
     const auto &it = bk_map_.find(id);
     if (it == bk_map_.end())

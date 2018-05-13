@@ -55,7 +55,7 @@ void tu_perf::TearDown()
 TEST_F(tu_perf, commutation)
 {
     int nb_block = 100 * 1;
-    int nb_buf = 10 * 1000;
+    int nb_buf = 1 * 10 * 1000;
 
     // Reduce amount of output
     logger_set_level(LOGGER_LEVEL_WARNING);
@@ -88,7 +88,7 @@ TEST_F(tu_perf, commutation)
     // Send data from bk_1
     for (int i = 0; i < nb_buf; i++)
     {
-        const struct bk_info *bi;
+        const class bk_info *bi;
         char buf[] = "yolooooo";
 
         bi = m->bk.block_get(1);
@@ -100,7 +100,7 @@ TEST_F(tu_perf, commutation)
     // Verify that buffers crossed bk_2 to the last block
     for (int i = 2; i < nb_block + 1; i++)
     {
-        const struct bk_info *bi;
+        const class bk_info *bi;
         char buf[16];
         int count;
 

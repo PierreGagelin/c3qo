@@ -113,7 +113,7 @@ TEST_F(tu_manager_bk, manager_bk_conf)
     // Verify block informations
     for (int i = 1; i < 5; i++)
     {
-        const struct bk_info *bi;
+        const class bk_info *bi;
 
         bi = block_get(i);
         ASSERT_NE(bi, (void *)NULL);
@@ -154,8 +154,8 @@ TEST_F(tu_manager_bk, manager_bk_conf)
 //
 TEST_F(tu_manager_bk, manager_bk_flow)
 {
-    const struct bk_info *bk_1;
-    const struct bk_info *bk_2;
+    const class bk_info *bk_1;
+    const class bk_info *bk_2;
     char stats[] = "useless value";
     int count;
 
