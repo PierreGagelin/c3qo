@@ -2,10 +2,10 @@
 #define C3QO_MANAGER_BK_HPP
 
 // C++ library headers
-#include <boost/intrusive_ptr.hpp> // boost::intrusive_ptr
-#include <cstdlib>                 // size_t, malloc, free, strtoul
-#include <unordered_map>           // unordered_map container
-#include <vector>                  // vector
+#include <memory>        // std::shared_ptr
+#include <cstdlib>       // size_t, malloc, free, strtoul
+#include <unordered_map> // unordered_map container
+#include <vector>        // vector
 
 // Project headers
 #include "c3qo/block.hpp" // struct bk_if, enum bk_type, enum bk_state
@@ -19,9 +19,9 @@
 //
 struct bind_info
 {
-    int port;                                  // Port from source block
-    int bk_id;                                 // Identifier of the destination block
-    boost::intrusive_ptr<class bk_info> block; // Destination block
+    int port;                             // Port from source block
+    int bk_id;                            // Identifier of the destination block
+    std::shared_ptr<class bk_info> block; // Destination block
 };
 
 //
@@ -78,7 +78,7 @@ class manager_bk
 
   protected:
     // Map of blocks
-    std::unordered_map<int, boost::intrusive_ptr<class bk_info> > bk_map_;
+    std::unordered_map<int, std::shared_ptr<class bk_info>> bk_map_;
 
   protected:
     void block_flow(int id, int port, void *data, enum flow_type type);

@@ -54,14 +54,14 @@ void tu_perf::TearDown()
 //
 TEST_F(tu_perf, commutation)
 {
-    int nb_block = 100 * 1;
-    int nb_buf = 1 * 10 * 1000;
+    size_t nb_block = 1 * 100;
+    size_t nb_buf = 10 * 1000 * 1000;
 
     // Reduce amount of output
     logger_set_level(LOGGER_LEVEL_WARNING);
 
     // Add, init and start some blocks
-    for (int i = 1; i < nb_block + 1; i++)
+    for (size_t i = 1; i < nb_block + 1; i++)
     {
         EXPECT_EQ(m->bk.block_add(i, "hello"), true);
         EXPECT_EQ(m->bk.block_init(i), true);
@@ -70,7 +70,7 @@ TEST_F(tu_perf, commutation)
 
     // Configure a chain of N blocks:
     //   - bk_1 -> bk_2 -> bk_3 -> bk_4... -> bk_N
-    for (int i = 1; i < nb_block; i++)
+    for (size_t i = 1; i < nb_block; i++)
     {
         for (int j = 0; j < 8; j++)
         {
@@ -86,7 +86,7 @@ TEST_F(tu_perf, commutation)
     }
 
     // Send data from bk_1
-    for (int i = 0; i < nb_buf; i++)
+    for (size_t i = 0; i < nb_buf; i++)
     {
         const class bk_info *bi;
         char buf[] = "yolooooo";
@@ -98,7 +98,7 @@ TEST_F(tu_perf, commutation)
     }
 
     // Verify that buffers crossed bk_2 to the last block
-    for (int i = 2; i < nb_block + 1; i++)
+    for (size_t i = 2; i < nb_block + 1; i++)
     {
         const class bk_info *bi;
         char buf[16];

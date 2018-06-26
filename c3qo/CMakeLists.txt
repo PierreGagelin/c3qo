@@ -55,6 +55,7 @@ set(SOURCES_TU_MANAGER_BK test/tu_manager_bk.cpp)
 
 add_executable(tu_manager_bk ${SOURCES_TU_MANAGER_BK})
 
+target_compile_options(tu_manager_bk PRIVATE "-std=c++11")
 C3QO_TARGET_LINK_FLAGS(tu_manager_bk)
 
 add_test(NAME tu_manager_bk COMMAND tu_manager_bk)
@@ -71,6 +72,7 @@ set(SOURCES_TU_MANAGER_FD test/tu_manager_fd.cpp)
 
 add_executable(tu_manager_fd ${SOURCES_TU_MANAGER_FD})
 
+target_compile_options(tu_manager_fd PRIVATE "-std=c++11")
 C3QO_TARGET_LINK_FLAGS(tu_manager_fd)
 
 add_test(NAME tu_manager_fd COMMAND tu_manager_fd)
@@ -85,6 +87,7 @@ set(SOURCES_TU_MANAGER_TM test/tu_manager_tm.cpp)
 
 add_executable(tu_manager_tm ${SOURCES_TU_MANAGER_TM})
 
+target_compile_options(tu_manager_tm PRIVATE "-std=c++11")
 C3QO_TARGET_LINK_FLAGS(tu_manager_tm)
 
 add_test(NAME tu_manager_tm COMMAND tu_manager_tm)
@@ -98,6 +101,8 @@ target_link_libraries(tu_manager_tm gtest_main)
 set(SOURCES_TU_PERF test/tu_perf.cpp)
 
 add_executable(tu_perf ${SOURCES_TU_PERF})
+
+target_compile_options(tu_perf PRIVATE "-std=c++11")
 
 add_test(NAME tu_perf COMMAND tu_perf)
 

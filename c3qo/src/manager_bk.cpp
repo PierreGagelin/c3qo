@@ -56,7 +56,7 @@ manager_bk::~manager_bk()
 //
 bool manager_bk::block_add(int id, const char *type)
 {
-    boost::intrusive_ptr<class bk_info> block(new class bk_info);
+    std::shared_ptr<class bk_info> block(new class bk_info);
     int ret;
 
     // Retrieve block identifier
@@ -317,40 +317,39 @@ void manager_bk::block_flow(int bk_id, int port, void *data, enum flow_type type
     }
 
     // Get a copy of the source that will serve to iterate over the blocks
-    boost::intrusive_ptr<class bk_info> src = source->second;
+    std::shared_ptr<class bk_info> src = source->second;
 
     // Process the data from one block to the other
     while (true)
     {
         // Find the source port in bindings
-        auto it = src->bind.begin();
-        const auto &end = src->bind.end();
-        while (it != end)
+        const struct bind_info *bind = NULL;
+        for (const auto &it : src->bind)
         {
-            if (it->port == port)
+            if (it.port == port)
             {
                 // We found the requested port
+                bind = &it;
                 break;
             }
-            ++it;
         }
-        if (it == end)
+        if (bind == NULL)
         {
             LOGGER_ERR("Failed to find route for data flow: source port not found [bk_id=%d ; port=%d]", src->id, port);
             return;
         }
 
-        LOGGER_DEBUG("Routed data flow [bk_id_src=%d ; port=%d ; bk_id_dest=%d]", src->id, port, it->bk_id);
+        LOGGER_DEBUG("Routed data flow [bk_id_src=%d ; port=%d ; bk_id_dest=%d]", src->id, port, bind->bk_id);
 
         // Destination bk_id=0 is the regular way out of this flow
-        if (it->bk_id == 0)
+        if (bind->bk_id == 0)
         {
             LOGGER_DEBUG("End data flow [bk_id=%d ; data=%p ; flow_type=%s]", src->id, data, get_flow_type(type));
             break;
         }
 
         // The destination block is the new source of the data flow
-        src = it->block;
+        src = bind->block;
 
         switch (type)
         {

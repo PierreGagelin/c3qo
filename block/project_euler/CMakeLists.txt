@@ -29,6 +29,7 @@ set(SOURCES_TEST test/tu_project_euler.cpp)
 
 add_executable(tu_project_euler ${SOURCES_TEST})
 
+target_compile_options(tu_project_euler PRIVATE "-std=c++11")
 C3QO_TARGET_LINK_FLAGS(tu_project_euler)
 
 add_test(NAME tu_project_euler COMMAND tu_project_euler)

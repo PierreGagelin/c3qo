@@ -9,7 +9,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
 
 # Build type: either Debug or Release
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 
 # Compilation flags

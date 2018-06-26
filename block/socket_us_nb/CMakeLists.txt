@@ -19,6 +19,7 @@ set(SOURCES_TU_SOCKET_US_NB test/tu_socket_us_nb.cpp)
 
 add_executable(tu_socket_us_nb ${SOURCES_TU_SOCKET_US_NB})
 
+target_compile_options(tu_socket_us_nb PRIVATE "-std=c++11")
 C3QO_TARGET_LINK_FLAGS(tu_socket_us_nb)
 
 add_test(NAME tu_socket_us_nb COMMAND tu_socket_us_nb)

@@ -2,7 +2,7 @@
 # Script to build the c3qo project
 # Works with relative path
 
-DIR_SOURCE="."
+DIR_SOURCE=$(dirname $_)
 DIR_BUILD="$DIR_SOURCE/build"
 DIR_LCOV="$DIR_BUILD/lcov"
 
