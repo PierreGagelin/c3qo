@@ -56,7 +56,7 @@ manager_bk::~manager_bk()
 //
 bool manager_bk::block_add(int id, const char *type)
 {
-    std::shared_ptr<class bk_info> block(new class bk_info);
+    class bk_info *block = new class bk_info;
     int ret;
 
     // Retrieve block identifier
@@ -317,7 +317,7 @@ void manager_bk::block_flow(int bk_id, int port, void *data, enum flow_type type
     }
 
     // Get a copy of the source that will serve to iterate over the blocks
-    std::shared_ptr<class bk_info> src = source->second;
+    class bk_info *src = source->second;
 
     // Process the data from one block to the other
     while (true)
@@ -420,7 +420,7 @@ const class bk_info *manager_bk::block_get(int id)
         return NULL;
     }
 
-    return it->second.get();
+    return it->second;
 }
 
 //
@@ -437,7 +437,8 @@ void manager_bk::block_del(int id)
         return;
     }
 
-    block_stop(id);
+    block_stop(it->first);
+    delete it->second;
 
     LOGGER_INFO("Delete block [bk_id=%d ; bk_type=%s]", it->second->id, it->second->type);
 
@@ -450,12 +451,10 @@ void manager_bk::block_del(int id)
 void manager_bk::block_clear()
 {
     // Stop every blocks
-    auto i = bk_map_.begin();
-    const auto &e = bk_map_.end();
-    while (i != e)
+    for (const auto &it : bk_map_)
     {
-        block_stop(i->first);
-        ++i;
+        block_stop(it.first);
+        delete it.second;
     }
 
     bk_map_.clear();

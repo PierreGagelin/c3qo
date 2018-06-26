@@ -2,7 +2,6 @@
 #define C3QO_MANAGER_BK_HPP
 
 // C++ library headers
-#include <memory>        // std::shared_ptr
 #include <cstdlib>       // size_t, malloc, free, strtoul
 #include <unordered_map> // unordered_map container
 #include <vector>        // vector
@@ -19,9 +18,9 @@
 //
 struct bind_info
 {
-    int port;                             // Port from source block
-    int bk_id;                            // Identifier of the destination block
-    std::shared_ptr<class bk_info> block; // Destination block
+    int port;             // Port from source block
+    int bk_id;            // Identifier of the destination block
+    class bk_info *block; // Destination block
 };
 
 //
@@ -40,24 +39,8 @@ class bk_info
     enum bk_state state;                // Block state
 
   public:
-    // Intrusive pointer information
-    int ref;
-    bk_info() : bk(NULL), ctx(NULL), id(0), state(STATE_STOP), ref(0){};
+    bk_info() : bk(NULL), ctx(NULL), id(0), state(STATE_STOP){};
 };
-
-// Implement the instrusive pointer take-release
-inline void intrusive_ptr_add_ref(class bk_info *x)
-{
-    ++x->ref;
-}
-inline void intrusive_ptr_release(class bk_info *x)
-{
-    --x->ref;
-    if (x->ref == 0)
-    {
-        delete x;
-    }
-}
 
 //
 // @enum flow_type
@@ -78,7 +61,7 @@ class manager_bk
 
   protected:
     // Map of blocks
-    std::unordered_map<int, std::shared_ptr<class bk_info>> bk_map_;
+    std::unordered_map<int, class bk_info *> bk_map_;
 
   protected:
     void block_flow(int id, int port, void *data, enum flow_type type);

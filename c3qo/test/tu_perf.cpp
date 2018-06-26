@@ -55,7 +55,7 @@ void tu_perf::TearDown()
 TEST_F(tu_perf, commutation)
 {
     size_t nb_block = 1 * 100;
-    size_t nb_buf = 10 * 1000 * 1000;
+    size_t nb_buf = 1 * 10 * 1000;
 
     // Reduce amount of output
     logger_set_level(LOGGER_LEVEL_WARNING);
