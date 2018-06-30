@@ -144,11 +144,11 @@ void manager_fd::remove(int fd, void *socket, bool read)
     if (entry->events == 0)
     {
         // Remove file descriptor and callback
-        auto it_cb = callback_.cbegin();
+        auto it_cb = callback_.begin();
         it_cb += index;
         callback_.erase(it_cb);
 
-        auto it_fd = fd_.cbegin();
+        auto it_fd = fd_.begin();
         it_fd += index;
         fd_.erase(it_fd);
     }
