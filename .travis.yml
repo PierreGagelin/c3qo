@@ -4,4 +4,6 @@ before_install:
   - sudo apt-get install -y libzmq3-dev
 script:
   - ./build.sh -b
+  - ./build.sh -c
+  - ./build.sh -Sb
 
