@@ -6,6 +6,7 @@ set(SOURCES src/project_euler.cpp)
 add_library(project_euler ${C3QO_LIB_TYPE} ${SOURCES})
 
 C3QO_TARGET_COMPILE_FLAGS(project_euler)
+C3QO_TARGET_LINK_FLAGS(project_euler)
 
 target_link_libraries(project_euler manager)
 
@@ -21,6 +22,7 @@ set(SOURCES_LIB ${SOURCES_LIB} src/problem.hpp)
 add_library(project_euler_lib SHARED ${SOURCES_LIB})
 
 C3QO_TARGET_COMPILE_FLAGS(project_euler_lib)
+C3QO_TARGET_LINK_FLAGS(project_euler_lib)
 C3QO_TARGET_INCLUDE(project_euler_lib)
 
 

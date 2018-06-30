@@ -122,10 +122,10 @@ function action_lcov
     # Generate an index.html file into $DIR_LCOV with results
     genhtml --output-directory $DIR_LCOV $file_t
 
-    open $DIR_LCOV/index.html
-
     # Clean
     rm $(find $DIR_BUILD -name "*.gcda")
+
+    echo "HTML report available at: $DIR_LCOV/index.html"
 }
 
 

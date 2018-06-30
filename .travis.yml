@@ -1,9 +1,19 @@
 dist: trusty
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y libzmq3-dev
+  - sudo apt-get install -y libzmq3-dev lcov
 script:
+  - echo "CLASSIC"
   - ./build.sh -b
   - ./build.sh -c
+  - echo "RELEASE"
+  - ./build.sh -Rb
+  - ./build.sh -c
+  - echo "STATIC"
   - ./build.sh -Sb
+  - ./build.sh -c
+  - echo "GCOV"
+  - ./build.sh -Gb
+  - ./build.sh -l
+  - ./build.sh -c
 
