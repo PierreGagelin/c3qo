@@ -109,7 +109,10 @@ function (C3QO_TARGET_LINK_FLAGS t_name)
         # to appear in DT_NEEDED ELF section
         set(link_flags "${link_flags} -Wl,--no-as-needed")
     endif ()
-    set_target_properties(${t_name} PROPERTIES LINK_FLAGS ${link_flags})
+
+    if (${link_flags})
+        set_target_properties(${t_name} PROPERTIES LINK_FLAGS ${link_flags})
+    endif ()
 endfunction (C3QO_TARGET_LINK_FLAGS)
 
 
