@@ -70,7 +70,15 @@ TEST_F(tu_project_euler, problem_2)
 
 TEST_F(tu_project_euler, problem_3)
 {
-    char nada[] = "3 600851475143";
+    char conf[] = "3 600851475143";
 
-    project_euler_if.conf(NULL, nada);      //6857
+    project_euler_if.conf(NULL, conf);
+}
+
+
+TEST_F(tu_project_euler, problem_51)
+{
+    char conf[] = "51 useless";
+
+    project_euler_if.conf(NULL, conf);
 }

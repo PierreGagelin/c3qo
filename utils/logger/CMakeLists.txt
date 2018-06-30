@@ -6,6 +6,7 @@ set(SOURCES src/logger.cpp)
 add_library(logger ${C3QO_LIB_TYPE} ${SOURCES})
 
 C3QO_TARGET_COMPILE_FLAGS(logger)
+C3QO_TARGET_LINK_FLAGS(logger)
 
 target_include_directories(logger PUBLIC ${UTILS_INCLUDE_DIR})
 

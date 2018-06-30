@@ -143,15 +143,12 @@ void manager_fd::remove(int fd, void *socket, bool read)
     // Verify that the entry still has a flag
     if (entry->events == 0)
     {
-        std::vector<zmq_pollitem_t>::const_iterator it_fd;
-        std::vector<struct fd_call>::const_iterator it_cb;
-
         // Remove file descriptor and callback
-        it_cb = callback_.begin();
+        auto it_cb = callback_.cbegin();
         it_cb += index;
         callback_.erase(it_cb);
 
-        it_fd = fd_.begin();
+        auto it_fd = fd_.cbegin();
         it_fd += index;
         fd_.erase(it_fd);
     }

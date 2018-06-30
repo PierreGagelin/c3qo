@@ -1,17 +1,29 @@
 #!/bin/bash
 # Script to build the c3qo project
-# Works with relative path
 
+
+# Setting folder architecture
 DIR_SOURCE=$(dirname $_)
 DIR_BUILD="$DIR_SOURCE/build"
 DIR_LCOV="$DIR_BUILD/lcov"
 
-LLVM="false"
-EXPORT_SYMBOLS="OFF"
 
-ACTION_BUILD="false"
-ACTION_CLEAN="false"
-ACTION_LCOV="false"
+# Default values, can be overriden with command line options
+EXPORT_SYMBOLS="OFF" # Force linked libraries to appear in DT_NEEDED ELF section
+GCOV="OFF"           # Build with GCOV enabled
+LOG_NO="OFF"         # Disable the logs
+RELEASE="OFF"        # Build in release mode
+STATIC="OFF"         # Build for static compilation (when possible)
+
+
+# Action to do, specified from command line options
+ACTION_BUILD="false" # Build the project and compile it
+ACTION_CLEAN="false" # Clean the project
+ACTION_LCOV="false"  # Run the tests and make a coverage report
+
+
+# No error or undefined variables allowed
+set -eu
 
 
 function action_build
@@ -20,7 +32,7 @@ function action_build
 
     # Could use cmake's -H and -B options but it's undocumented so better not rely on those
     cd $DIR_BUILD
-    cmake -DNO_AS_NEEDED:BOOL=$EXPORT_SYMBOLS ../
+    cmake $CMAKE_OPTIONS ../
     cd -
 
     make -C $DIR_BUILD -j 4
@@ -117,7 +129,7 @@ function action_lcov
 }
 
 
-while getopts "bchlEL" opt
+while getopts "bchlEGLRS" opt
 do
     case "${opt}" in
         b)
@@ -135,14 +147,31 @@ do
         E)
             EXPORT_SYMBOLS="ON"
             ;;
+        G)
+            GCOV="ON"
+            ;;
         L)
-            LLVM="true"
+            LOG_NO="ON"
+            ;;
+        R)
+            RELEASE="ON"
+            ;;
+        S)
+            STATIC="ON"
             ;;
         *)
             echo "Invalid option" >&2
             ;;
     esac
 done
+
+
+CMAKE_OPTIONS=
+CMAKE_OPTIONS="$CMAKE_OPTIONS -DNO_AS_NEEDED:BOOL=$EXPORT_SYMBOLS"
+CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_COVERAGE:BOOL=$GCOV"
+CMAKE_OPTIONS="$CMAKE_OPTIONS -DLOGGER_DISABLE:BOOL=$LOG_NO"
+CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_RELEASE:BOOL=$RELEASE"
+CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_STATIC:BOOL=$STATIC"
 
 
 if [ $ACTION_CLEAN = "true" ]

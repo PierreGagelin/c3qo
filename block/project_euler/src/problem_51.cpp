@@ -95,7 +95,7 @@ void solve_problem_51(char *param)
     prime_vec.push_back(3u);
     prime_vec.push_back(5u);
     prime_vec.push_back(7u);
-    for (int i = 0; i < 7; i++)
+    for (int i = 0; i < 3; i++)
     {
         size_t pos;
 
