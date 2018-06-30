@@ -16,6 +16,7 @@ set(SOURCES_TU_LOGGER test/tu_logger.cpp)
 
 add_executable(tu_logger ${SOURCES_TU_LOGGER})
 
+target_compile_options(tu_logger PRIVATE "-std=c++11")
 C3QO_TARGET_LINK_FLAGS(tu_logger)
 
 add_test(NAME tu_logger COMMAND tu_logger)
