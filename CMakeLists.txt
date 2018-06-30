@@ -93,15 +93,23 @@ function (C3QO_TARGET_LINK_FLAGS t_name)
     target_link_libraries(${t_name} dl)
     target_link_libraries(${t_name} zmq)
 
+    # Get current link flags if any
+    get_target_property(link_flags ${t_name} LINK_FLAGS)
+    if (${link_flags} MATCHES "NOTFOUND")
+        set(link_flags "")
+    endif ()
+
+    # Add some link flags
     if (${C3QO_COVERAGE})
-        set_target_properties(${t_name} PROPERTIES LINK_FLAGS "--coverage")
+        set(link_flags "${link_flags} --coverage")
     endif ()
 
     if (${NO_AS_NEEDED})
         # If specified from cmake CLI, force linked libraries
         # to appear in DT_NEEDED ELF section
-	    set_target_properties(${t_name} PROPERTIES LINK_FLAGS "-Wl,--no-as-needed")
+        set(link_flags "${link_flags} -Wl,--no-as-needed")
     endif ()
+    set_target_properties(${t_name} PROPERTIES LINK_FLAGS ${link_flags})
 endfunction (C3QO_TARGET_LINK_FLAGS)
 
 

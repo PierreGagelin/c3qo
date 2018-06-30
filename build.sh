@@ -19,24 +19,12 @@ STATIC="OFF"         # Build for static compilation (when possible)
 # Action to do, specified from command line options
 ACTION_BUILD="false" # Build the project and compile it
 ACTION_CLEAN="false" # Clean the project
-ACTION_LCOV="false"  # Run the tests and make a coverage report
+ACTION_LCOV="false"  # Do a coverage report
+ACTION_TEST="false"  # Run the tests
 
 
 # No error or undefined variables allowed
 set -eu
-
-
-function action_build
-{
-    mkdir -p $DIR_BUILD
-
-    # Could use cmake's -H and -B options but it's undocumented so better not rely on those
-    cd $DIR_BUILD
-    cmake $CMAKE_OPTIONS ../
-    cd -
-
-    make -C $DIR_BUILD -j 4
-}
 
 
 function action_clean
@@ -70,6 +58,25 @@ function action_clean
     then
         rm $FILES_GCDA
     fi
+}
+
+
+function action_build
+{
+    mkdir -p $DIR_BUILD
+
+    # Could use cmake's -H and -B options but it's undocumented so better not rely on those
+    cd $DIR_BUILD
+    cmake $CMAKE_OPTIONS ../
+    cd -
+
+    make -C $DIR_BUILD -j 4
+}
+
+
+function action_test
+{
+    make -C $DIR_BUILD test
 }
 
 
@@ -129,7 +136,7 @@ function action_lcov
 }
 
 
-while getopts "bchlEGLRS" opt
+while getopts "bchltEGLRS" opt
 do
     case "${opt}" in
         b)
@@ -138,11 +145,14 @@ do
         c)
             ACTION_CLEAN="true"
             ;;
+        h)
+            echo "lol, t'as cru un peu, non ?"
+            ;;
         l)
             ACTION_LCOV="true"
             ;;
-        h)
-            echo "lol, t'as cru un peu, non ?"
+        t)
+            ACTION_TEST="true"
             ;;
         E)
             EXPORT_SYMBOLS="ON"
@@ -183,6 +193,12 @@ fi
 if [ $ACTION_BUILD = "true" ]
 then
     action_build
+fi
+
+
+if [ $ACTION_TEST = "true" ]
+then
+    action_test
 fi
 
 
