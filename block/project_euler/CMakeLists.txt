@@ -25,6 +25,8 @@ C3QO_TARGET_COMPILE_FLAGS(project_euler_lib)
 C3QO_TARGET_LINK_FLAGS(project_euler_lib)
 C3QO_TARGET_INCLUDE(project_euler_lib)
 
+target_link_libraries(project_euler_lib logger)
+
 
 # Build test tu_project_euler as an executable
 set(SOURCES_TEST test/tu_project_euler.cpp)
