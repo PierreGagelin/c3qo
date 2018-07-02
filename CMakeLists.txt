@@ -1,6 +1,6 @@
 
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 2.8)
 project(c3q0)
 
 
@@ -31,12 +31,12 @@ if (${C3QO_COVERAGE})
 endif ()
 
 
-#[=[
-Disable log:
-  - if asked
-  - if we are making code coverage
-  - if we are in release
-#]=]
+#
+# Disable log:
+#   - if asked
+#   - if we are making code coverage
+#   - if we are in release
+#
 if (${LOGGER_DISABLE} OR ${C3QO_COVERAGE} OR (${CMAKE_BUILD_TYPE} STREQUAL Release))
     add_definitions(-DLOGGER_DISABLE)
 endif ()

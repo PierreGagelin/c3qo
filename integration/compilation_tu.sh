@@ -12,14 +12,14 @@ set -eu
 
 
 echo "Clean build directory and do a CLASSIC build"
-$DIR_BUILD/$BUILD_COMMAND -cbt
+$DIR_BUILD/$BUILD_COMMAND -Ecbt
 
 echo "Clean build directory and do a RELEASE build"
-$DIR_BUILD/$BUILD_COMMAND -Rcbt
+$DIR_BUILD/$BUILD_COMMAND -ERcbt
 
 echo "Clean build directory and do a STATIC build"
-$DIR_BUILD/$BUILD_COMMAND -Scbt
+$DIR_BUILD/$BUILD_COMMAND -EScbt
 
 echo "Clean build directory and do a GCOV build"
-$DIR_BUILD/$BUILD_COMMAND -Gcbtl
+$DIR_BUILD/$BUILD_COMMAND -EGcbtl
 

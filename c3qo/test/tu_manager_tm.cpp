@@ -3,6 +3,7 @@
 //
 
 // C++ library headers
+#include <vector>
 #include <string.h> // memcmp, strlen, strncpy
 
 // System library headers
@@ -21,13 +22,10 @@ extern "C" {
 // Managers shall be linked
 extern struct manager *m;
 
-char zozo_l_asticot[8];
+std::vector<std::string> zozo_l_asticot;
 void tm_callback(void *arg)
 {
-    // We need strlen + 1 bytes to write it
-    EXPECT_LT(strlen((char *)arg), sizeof(zozo_l_asticot));
-
-    strncpy(zozo_l_asticot, (char *)arg, sizeof(zozo_l_asticot));
+    zozo_l_asticot.push_back(std::string((char *)arg));
 }
 
 // Derive from the manager_tm class
@@ -45,14 +43,15 @@ void tu_manager_tm::SetUp()
 
     // Populate the managers
     m = new struct manager;
-
-    strncpy(zozo_l_asticot, "hello", sizeof("hello"));
 }
 
 void tu_manager_tm::TearDown()
 {
     // Clear the managers
     delete m;
+
+    // Clear the list
+    zozo_l_asticot.clear();
     
     logger_set_level(LOGGER_LEVEL_NONE);
     LOGGER_CLOSE();
@@ -64,12 +63,10 @@ void tu_manager_tm::TearDown()
 TEST_F(tu_manager_tm, manager_tm_expiration)
 {
     struct timer t;
-    char def[8] = "hello";
     char arg[8] = "world";
 
-    // Initialize manager and zozo
+    // Initialize manager
     clear();
-    tm_callback(def);
 
     // Register a 40 ms timer
     t.tid = 0;
@@ -94,13 +91,14 @@ TEST_F(tu_manager_tm, manager_tm_expiration)
 
         if (i < 3)
         {
-            // Timer shouldn't have expired
-            EXPECT_EQ(memcmp(zozo_l_asticot, def, strlen(def) + 1), 0);
+            // Timer shouldn't have expired but this
+            // isn't real-time system, we can't assure it
         }
         else
         {
             // Timer should have expired
-            EXPECT_EQ(memcmp(zozo_l_asticot, arg, strlen(arg) + 1), 0);
+            ASSERT_EQ(zozo_l_asticot.size(), 1lu);
+            EXPECT_EQ(zozo_l_asticot[0], std::string(arg));
         }
     }
 }
@@ -116,11 +114,9 @@ TEST_F(tu_manager_tm, manager_tm_order)
     struct timespec time_start;
     struct timespec time_cur;
     char arg[3][8] = {"timer0", "timer1", "timer2"};
-    char def[8] = "default";
 
-    // Initialize manager and his friend zozo
+    // Initialize manager
     clear();
-    tm_callback(def);
 
     // Get system time
     ASSERT_NE(clock_gettime(CLOCK_REALTIME, &time_start), -1);
@@ -173,28 +169,18 @@ TEST_F(tu_manager_tm, manager_tm_order)
         time_cur.tv_sec -= time_start.tv_nsec / NSEC_MAX;
         time_cur.tv_nsec = time_start.tv_nsec % NSEC_MAX;
 
-        if (time_cur < t_0.time)
+        if (i < 5)
         {
-            // Timer shouldn't have expired
-            exp = def;
-            break;
-        }
-        else if (time_cur < t_0.time)
-        {
-            // Timer 0 should expire but not yet timer 1
-            exp = arg[0];
-        }
-        else if (time_cur < t_0.time)
-        {
-            // Timer 1 should expire but not yet timer 2
-            exp = arg[1];
+            // Timers shouldn't have all expired
         }
         else
         {
-            // Timer 2 should expire
-            exp = arg[2];
+            // Timers should have expired
+            ASSERT_EQ(zozo_l_asticot.size(), 3lu);
+            EXPECT_EQ(zozo_l_asticot[0], std::string(arg[0]));
+            EXPECT_EQ(zozo_l_asticot[1], std::string(arg[1]));
+            EXPECT_EQ(zozo_l_asticot[2], std::string(arg[2]));
         }
-        EXPECT_EQ(memcmp(zozo_l_asticot, exp, strlen(exp) + 1), 0);
     }
 }
 
@@ -204,21 +190,19 @@ TEST_F(tu_manager_tm, manager_tm_order)
 TEST_F(tu_manager_tm, manager_tm_id)
 {
     struct timer t;
-    char def[8] = "hello";
     char arg[8] = "world";
 
     // Initialize manager and the global
     clear();
-    tm_callback(def);
 
     // Register two timers with the same ID:
-    //   - 20ms
+    //   - 2000ms
     //   - 30ms
     t.callback = &tm_callback;
     t.tid = 0;
     t.arg = arg;
     t.time.tv_sec = 0;
-    t.time.tv_nsec = 20 * 1000 * 1000;
+    t.time.tv_nsec = 2 * 1000 * 1000 * 1000;
     EXPECT_EQ(add(t), true);
     t.time.tv_sec = 0;
     t.time.tv_nsec = 30 * 1000 * 1000;
@@ -241,14 +225,12 @@ TEST_F(tu_manager_tm, manager_tm_id)
         if (i < 2)
         {
             // Timer shouldn't have expired
-            exp = def;
         }
         else
         {
             // Timer should expire
-            exp = arg;
+            ASSERT_EQ(zozo_l_asticot.size(), 1lu);
+            EXPECT_EQ(zozo_l_asticot[0], std::string(arg));
         }
-
-        EXPECT_EQ(memcmp(zozo_l_asticot, exp, strlen(exp) + 1), 0);
     }
 }
