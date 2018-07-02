@@ -110,7 +110,7 @@ function (C3QO_TARGET_LINK_FLAGS t_name)
         set(link_flags "${link_flags} -Wl,--no-as-needed")
     endif ()
 
-    if (${link_flags})
+    if (NOT "${link_flags}" STREQUAL "")
         set_target_properties(${t_name} PROPERTIES LINK_FLAGS ${link_flags})
     endif ()
 endfunction (C3QO_TARGET_LINK_FLAGS)
