@@ -59,12 +59,6 @@ TEST_F(tu_hello, hello)
     hello_if.conf(ctx, conf);
     hello_if.start(ctx);
 
-    // Bind block (0 -> 0, 1 -> 1... 7 -> 7)
-    for (int i = 0; i < 8; i++)
-    {
-        hello_if.bind(ctx, i, i);
-    }
-
     // Verify binding (block hello only increment port output)
     for (int i = 0; i < 8; i++)
     {
@@ -104,16 +98,6 @@ TEST_F(tu_hello, error)
 
     hello_if.conf(NULL, conf);
     hello_if.conf(ctx, NULL);
-
-    // Bind without context of to unknown port
-    hello_if.bind(NULL, 4, 0); // port available
-    hello_if.bind(ctx, 42, 0); // port unavailable
-
-    // Bind every port to 1 (0 -> 1, 1 -> 1... 7 -> 1)
-    for (int i = 0; i < 8; i++)
-    {
-        hello_if.bind(ctx, i, 1);
-    }
 
     hello_if.start(NULL);
 

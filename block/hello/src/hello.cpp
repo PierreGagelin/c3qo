@@ -1,6 +1,7 @@
 
 
 // C++ library headers
+#include <cstdlib> // size_t, malloc
 #include <cstring> // memset, strnlen
 
 // Project headers
@@ -23,13 +24,11 @@ static void *hello_init(int bk_id)
     }
 
     // Default values :
-    //   - bind ID to zero (dropped by engine)
     //   - register the block ID
     //   - no name
     //   - no packet processed
-    memset(ctx->bind.id, 0, sizeof(ctx->bind.id));
-    ctx->conf.bk_id = bk_id;
-    ctx->conf.name[0] = '\0';
+    ctx->bk_id = bk_id;
+    ctx->name[0] = '\0';
     ctx->count = 0;
 
     return ctx;
@@ -47,33 +46,17 @@ static void hello_conf(void *vctx, char *conf)
         return;
     }
     ctx = (struct hello_ctx *)vctx;
-    len = strnlen(conf, sizeof(ctx->conf.name));
-    if (len == sizeof(ctx->conf.name))
+    len = strnlen(conf, sizeof(ctx->name));
+    if (len == sizeof(ctx->name))
     {
-        LOGGER_ERR("Failed to configure block: name too long [bk_id=%d ; name=%s]", ctx->conf.bk_id, conf);
+        LOGGER_ERR("Failed to configure block: name too long [bk_id=%d ; name=%s]", ctx->bk_id, conf);
         return;
     }
 
-    LOGGER_INFO("Configure block name [bk_id=%d ; name=%s]", ctx->conf.bk_id, conf);
+    LOGGER_INFO("Configure block name [bk_id=%d ; name=%s]", ctx->bk_id, conf);
 
     // Write name given by configuration
-    memcpy(ctx->conf.name, conf, len + 1);
-}
-
-static void hello_bind(void *vctx, int port, int bk_id)
-{
-    struct hello_ctx *ctx;
-
-    // Verify input
-    if ((vctx == NULL) || (port < 0) || (port > 7))
-    {
-        LOGGER_ERR("Failed to bind block: NULL context or port not in range [port=%d ; range=[0,7]]", port);
-        return;
-    }
-    ctx = (struct hello_ctx *)vctx;
-
-    // Bind a port to a block
-    ctx->bind.id[port] = bk_id;
+    memcpy(ctx->name, conf, len + 1);
 }
 
 static void hello_start(void *vctx)
@@ -110,9 +93,9 @@ static int hello_rx(void *vctx, void *vdata)
     }
     ctx = (struct hello_ctx *)vctx;
 
-    LOGGER_DEBUG("Process RX data [bk_id=%d ; data=%p]", ctx->conf.bk_id, vdata);
+    LOGGER_DEBUG("Process RX data [bk_id=%d ; data=%p]", ctx->bk_id, vdata);
 
-    // Get and increment bind index to return
+    // Get and increment index to return
     ret = ctx->count++ % 8;
 
     return ret;
@@ -130,9 +113,9 @@ static int hello_tx(void *vctx, void *vdata)
     }
     ctx = (struct hello_ctx *)vctx;
 
-    LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", ctx->conf.bk_id, vdata);
+    LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", ctx->bk_id, vdata);
 
-    // Get and increment bind index to return
+    // Get and increment index to return
     ret = ctx->count++ % 8;
 
     return ret;
@@ -150,7 +133,7 @@ static int hello_ctrl(void *vctx, void *vnotif)
     ctx = (struct hello_ctx *)vctx;
 
     // Send a message
-    m->bk.process_tx(ctx->conf.bk_id, ctx->count % 8, vnotif);
+    m->bk.process_tx(ctx->bk_id, ctx->count % 8, vnotif);
 
     // No forwarding
     return 0;
@@ -196,7 +179,7 @@ static size_t hello_get_stats(void *vctx, char *buf, size_t len)
 struct bk_if hello_if = {
     .init = hello_init,
     .conf = hello_conf,
-    .bind = hello_bind,
+    .bind = NULL,
     .start = hello_start,
     .stop = hello_stop,
 
