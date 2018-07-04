@@ -6,7 +6,7 @@ set(SOURCES src/project_euler.cpp)
 c3qo_add_block(project_euler "${SOURCES}")
 
 
-# Build problem solutions as a shared library (never static !)
+# Build problem solutions as a shared library
 set(SOURCES_LIB)
 set(SOURCES_LIB ${SOURCES_LIB} src/problem_1.cpp)
 set(SOURCES_LIB ${SOURCES_LIB} src/problem_2.cpp)
@@ -16,25 +16,18 @@ set(SOURCES_LIB ${SOURCES_LIB} src/problem.hpp)
 
 add_library(project_euler_lib SHARED ${SOURCES_LIB})
 
-C3QO_TARGET_COMPILE_FLAGS(project_euler_lib)
-C3QO_TARGET_LINK_FLAGS(project_euler_lib)
-C3QO_TARGET_INCLUDE(project_euler_lib)
+c3qo_target_compile_flags(project_euler_lib)
+c3qo_target_link_flags(project_euler_lib)
+c3qo_target_include(project_euler_lib)
 
 target_link_libraries(project_euler_lib logger)
 
 
 # Build test tu_project_euler as an executable
-set(SOURCES_TEST test/tu_project_euler.cpp)
+set(SOURCES_TU test/tu_project_euler.cpp)
 
-add_executable(tu_project_euler ${SOURCES_TEST})
-
-target_compile_options(tu_project_euler PRIVATE "-std=c++11")
-C3QO_TARGET_LINK_FLAGS(tu_project_euler)
-
-add_test(NAME tu_project_euler COMMAND tu_project_euler)
+c3qo_add_test(tu_project_euler "${SOURCES_TU}")
 
 target_link_libraries(tu_project_euler project_euler)
 target_link_libraries(tu_project_euler project_euler_lib)
-target_link_libraries(tu_project_euler gtest)
-target_link_libraries(tu_project_euler gtest_main)
 

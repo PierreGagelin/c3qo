@@ -5,23 +5,16 @@ set(SOURCES src/logger.cpp)
 
 add_library(logger SHARED ${SOURCES})
 
-C3QO_TARGET_COMPILE_FLAGS(logger)
-C3QO_TARGET_LINK_FLAGS(logger)
+c3qo_target_compile_flags(logger)
+c3qo_target_link_flags(logger)
 
 target_include_directories(logger PUBLIC ${UTILS_INCLUDE_DIR})
 
 
 # Build TU for logger
-set(SOURCES_TU_LOGGER test/tu_logger.cpp)
+set(SOURCES_TU test/tu_logger.cpp)
 
-add_executable(tu_logger ${SOURCES_TU_LOGGER})
-
-target_compile_options(tu_logger PRIVATE "-std=c++11")
-C3QO_TARGET_LINK_FLAGS(tu_logger)
-
-add_test(NAME tu_logger COMMAND tu_logger)
+c3qo_add_test(tu_logger "${SOURCES_TU}")
 
 target_link_libraries(tu_logger logger)
-target_link_libraries(tu_logger gtest)
-target_link_libraries(tu_logger gtest_main)
 

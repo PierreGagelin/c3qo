@@ -24,6 +24,9 @@ extern struct manager *m;
 bool fd_called;
 void fd_callback(void *ctx, int fd, void *socket)
 {
+    (void)ctx;
+    (void)fd;
+    (void)socket;
     fd_called = true;
 }
 

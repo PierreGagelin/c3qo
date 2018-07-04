@@ -149,7 +149,6 @@ TEST_F(tu_manager_tm, manager_tm_order)
     for (int i = 0; i < 6; i++)
     {
         struct timeval sleep;
-        char *exp;
 
         // Sleep 20 ms
         sleep.tv_sec = 0;
@@ -212,7 +211,6 @@ TEST_F(tu_manager_tm, manager_tm_id)
     for (int i = 0; i < 4; i++)
     {
         struct timeval sleep;
-        char *exp;
 
         // Sleep 10 ms
         sleep.tv_sec = 0;
