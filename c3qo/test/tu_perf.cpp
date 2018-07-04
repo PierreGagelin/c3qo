@@ -3,15 +3,7 @@
 //
 
 // C++ library headers
-#include <fstream>  // open, close
-#include <sstream>  // stringstream
-#include <stdio.h>  // fopen, fileno
-#include <string.h> // memcmp, strlen, strncpy
-
-// System library headers
-extern "C" {
-#include <unistd.h> // sleep
-}
+#include <string> // stoul
 
 // Project headers
 #include "c3qo/block.hpp"
@@ -102,13 +94,13 @@ TEST_F(tu_perf, commutation)
     {
         const class bk_info *bi;
         char buf[16];
-        int count;
+        size_t count;
 
         bi = m->bk.block_get(i);
         ASSERT_NE(bi, (void *)NULL);
 
         bi->bk->get_stats(bi->ctx, buf, sizeof(buf));
-        count = atoi(buf);
+        count = (size_t)std::stoul(buf);
         EXPECT_EQ(count, nb_buf);
     }
 
