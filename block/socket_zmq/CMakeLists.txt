@@ -1,14 +1,10 @@
 
 
 # Build zmq_pair library
-set(SOURCES_ZMQ_PAIR src/zmq_pair.cpp)
+set(SOURCES src/zmq_pair.cpp)
 
-add_library(zmq_pair ${C3QO_LIB_TYPE} ${SOURCES_ZMQ_PAIR})
+c3qo_add_block(zmq_pair "${SOURCES}")
 
-C3QO_TARGET_COMPILE_FLAGS(zmq_pair)
-C3QO_TARGET_LINK_FLAGS(zmq_pair)
-
-target_link_libraries(zmq_pair manager)
 target_link_libraries(zmq_pair socket)
 
 

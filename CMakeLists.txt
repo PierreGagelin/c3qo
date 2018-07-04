@@ -115,6 +115,23 @@ function (C3QO_TARGET_LINK_FLAGS t_name)
     endif ()
 endfunction (C3QO_TARGET_LINK_FLAGS)
 
+function (c3qo_add_library target_name target_sources)
+    add_library(${target_name} ${C3QO_LIB_TYPE} ${target_sources})
+
+    c3qo_target_compile_flags(${target_name})
+    c3qo_target_link_flags(${target_name})
+endfunction (c3qo_add_library)
+
+function (c3qo_add_block target_name target_sources)
+    c3qo_add_library(${target_name} "${target_sources}")
+
+    if (${C3QO_LIB_TYPE} STREQUAL SHARED)
+        target_link_libraries(${target_name} logger)
+    endif ()
+
+    target_link_libraries(${target_name} manager)
+endfunction (c3qo_add_block)
+
 
 add_subdirectory(c3qo)
 add_subdirectory(block)

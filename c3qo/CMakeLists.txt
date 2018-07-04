@@ -8,13 +8,13 @@ set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_bk.cpp)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_fd.cpp)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_tm.cpp)
 
-add_library(manager ${C3QO_LIB_TYPE} ${SOURCES_MANAGER})
+c3qo_add_library(manager "${SOURCES_MANAGER}")
 
 C3QO_TARGET_INCLUDE(manager)
-C3QO_TARGET_COMPILE_FLAGS(manager)
-C3QO_TARGET_LINK_FLAGS(manager)
 
 target_link_libraries(manager logger)
+
+# STATIC: manager_bk needs symbols directly to invoke an interface
 if (${C3QO_STATIC})
     target_link_libraries(manager hello)
     target_link_libraries(manager socket_us_nb)

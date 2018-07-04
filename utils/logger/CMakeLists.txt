@@ -3,7 +3,7 @@
 # Build logger library
 set(SOURCES src/logger.cpp)
 
-add_library(logger ${C3QO_LIB_TYPE} ${SOURCES})
+add_library(logger SHARED ${SOURCES})
 
 C3QO_TARGET_COMPILE_FLAGS(logger)
 C3QO_TARGET_LINK_FLAGS(logger)

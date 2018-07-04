@@ -3,12 +3,7 @@
 # Build block project_euler library
 set(SOURCES src/project_euler.cpp)
 
-add_library(project_euler ${C3QO_LIB_TYPE} ${SOURCES})
-
-C3QO_TARGET_COMPILE_FLAGS(project_euler)
-C3QO_TARGET_LINK_FLAGS(project_euler)
-
-target_link_libraries(project_euler manager)
+c3qo_add_block(project_euler "${SOURCES}")
 
 
 # Build problem solutions as a shared library (never static !)

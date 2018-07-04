@@ -5,12 +5,8 @@ set(SOURCES)
 set(SOURCES ${SOURCES} src/client_us_nb.cpp)
 set(SOURCES ${SOURCES} src/server_us_nb.cpp)
 
-add_library(socket_us_nb ${C3QO_LIB_TYPE} ${SOURCES})
+c3qo_add_block(socket_us_nb "${SOURCES}")
 
-C3QO_TARGET_COMPILE_FLAGS(socket_us_nb)
-C3QO_TARGET_LINK_FLAGS(socket_us_nb)
-
-target_link_libraries(socket_us_nb manager)
 target_link_libraries(socket_us_nb socket)
 
 

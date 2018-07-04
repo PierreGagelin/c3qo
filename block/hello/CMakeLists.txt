@@ -3,12 +3,7 @@
 # Build block hello library
 set(SOURCES src/hello.cpp)
 
-add_library(hello ${C3QO_LIB_TYPE} ${SOURCES})
-
-C3QO_TARGET_COMPILE_FLAGS(hello)
-C3QO_TARGET_LINK_FLAGS(hello)
-
-target_link_libraries(hello manager)
+c3qo_add_block(hello "${SOURCES}")
 
 
 # Build test tu_hello as an executable
