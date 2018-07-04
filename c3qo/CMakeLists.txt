@@ -32,6 +32,7 @@ target_link_libraries(c3qo hello)
 target_link_libraries(c3qo socket_us_nb)
 target_link_libraries(c3qo zmq_pair)
 target_link_libraries(c3qo project_euler)
+target_link_libraries(c3qo project_euler_lib)
 
 
 # Build network CLI executable

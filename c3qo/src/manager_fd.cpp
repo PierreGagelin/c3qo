@@ -40,7 +40,7 @@ int manager_fd::find(int fd, void *socket)
     {
         if ((fd_[i].fd == fd) && (fd_[i].socket == socket))
         {
-            return i;
+            return static_cast<int>(i);
         }
     }
 
@@ -166,7 +166,7 @@ int manager_fd::poll_fd()
 
     // Poll sockets for 10ms
     timeout = 10;
-    ret = zmq_poll(fd_.data(), fd_.size(), timeout);
+    ret = zmq_poll(fd_.data(), static_cast<int>(fd_.size()), timeout);
     if (ret == -1)
     {
         LOGGER_ERR("Failed to poll socket: %s [errno=%d]", strerror(errno), errno);

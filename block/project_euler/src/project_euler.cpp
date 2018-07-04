@@ -41,7 +41,7 @@ static void solve_problem(int index, char *param)
     char solver_name[32];
     void (*solver)(char *);
 
-    self = dlopen("libproject_euler_lib.so", RTLD_LAZY);
+    self = dlopen(NULL, RTLD_LAZY);
     if (self == NULL)
     {
         LOGGER_ERR("Failed to open ourselves to look for symbols: %s", dlerror());

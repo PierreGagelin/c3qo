@@ -310,7 +310,7 @@ int socket_zmq_get_event(void *monitor)
     }
     else
     {
-        event = -1;
+        event = 0xffff;
     }
 
     // Second message part contains event address but we don't care
@@ -325,14 +325,14 @@ int socket_zmq_get_event(void *monitor)
     else
     {
         // Two frames are required, information above must be corrupted
-        event = -1;
+        event = 0xffff;
     }
 
     // There must not be any part left
     if (more == true)
     {
         socket_zmq_flush(monitor);
-        event = -1;
+        event = 0xffff;
     }
 
     return event;
