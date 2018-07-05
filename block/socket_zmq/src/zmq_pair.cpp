@@ -43,6 +43,9 @@ static void zmq_pair_callback(void *vctx, int fd, void *socket)
         return;
     }
 
+    msg.topic = NULL;
+    msg.data = NULL;
+
     // Get a topic and payload
     more = socket_zmq_read(ctx->zmq_sock, &msg.topic, &msg.topic_len);
     if (more == false)
@@ -73,7 +76,7 @@ end:
     {
         free(msg.topic);
     }
-    if (msg.topic != NULL)
+    if (msg.data != NULL)
     {
         free(msg.data);
     }
@@ -127,7 +130,7 @@ static void *zmq_pair_init(int bk_id)
     return ctx;
 }
 
-static void client_zmq_conf(void *vctx, char *conf)
+static void zmq_pair_conf(void *vctx, char *conf)
 {
     struct zmq_pair_ctx *ctx;
     char *pos;
@@ -311,7 +314,7 @@ static int zmq_pair_tx(void *vctx, void *vdata)
 //
 struct bk_if zmq_pair_if = {
     .init = zmq_pair_init,
-    .conf = client_zmq_conf,
+    .conf = zmq_pair_conf,
     .bind = NULL,
     .start = zmq_pair_start,
     .stop = zmq_pair_stop,

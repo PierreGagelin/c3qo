@@ -109,9 +109,9 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    // Create a publisher
-    void *publisher = zmq_socket(ctx, ZMQ_PAIR);
-    if (publisher == NULL)
+    // Create a client
+    void *client = zmq_socket(ctx, ZMQ_PAIR);
+    if (client == NULL)
     {
         LOGGER_ERR("Failed");
         return 1;
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
     // Monitor the socket
     {
         // Filter to receive only accepted connection event
-        rc = zmq_socket_monitor(publisher, "inproc://monitor-pair", ZMQ_EVENT_ACCEPTED);
+        rc = zmq_socket_monitor(client, "inproc://monitor-pair", ZMQ_EVENT_CONNECTED);
         if (rc == -1)
         {
             LOGGER_ERR("Failed");
@@ -143,15 +143,15 @@ int main(int argc, char **argv)
         }
     }
 
-    // Bind the socket
-    rc = zmq_bind(publisher, addr);
+    // Connect the socket
+    rc = zmq_connect(client, addr);
     if (rc == -1)
     {
         LOGGER_ERR("Failed");
         return 1;
     }
 
-    // Wait for an accepted client
+    // Wait for the client to be connected
     rc = socket_zmq_get_event(monitor);
     if (rc == -1)
     {
@@ -160,11 +160,11 @@ int main(int argc, char **argv)
     }
 
     // Send a two-parts message
-    socket_zmq_write(publisher, topic, strlen(topic), ZMQ_SNDMORE);
-    socket_zmq_write(publisher, payload, strlen(payload), 0);
+    socket_zmq_write(client, topic, strlen(topic), ZMQ_SNDMORE);
+    socket_zmq_write(client, payload, strlen(payload), 0);
 
     // Close down the sockets
-    zmq_close(publisher);
+    zmq_close(client);
     zmq_close(monitor);
     zmq_ctx_term(ctx);
 
