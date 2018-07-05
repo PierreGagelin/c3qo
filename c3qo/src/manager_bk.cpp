@@ -56,7 +56,7 @@ manager_bk::~manager_bk()
 //
 bool manager_bk::block_add(int id, const char *type)
 {
-    class bk_info *block = new class bk_info;
+    class bk_info *block;
     int ret;
 
     // Retrieve block identifier
@@ -65,6 +65,8 @@ bool manager_bk::block_add(int id, const char *type)
         LOGGER_ERR("Failed to add block: forbidden block ID [bk_id=%d ; bk_type=%s]", id, type);
         return false;
     }
+
+    block = new class bk_info;
     block->id = id;
 
     // Retrieve block type
@@ -73,7 +75,7 @@ bool manager_bk::block_add(int id, const char *type)
     {
         // snprintf failed or not enough room to append "_if"
         LOGGER_ERR("Failed to call snprintf [ret=%d ; max_len=%u]", ret, MAX_NAME - 4u);
-        return false;
+        goto error;
     }
 
 // Retrieve interface
@@ -82,7 +84,7 @@ bool manager_bk::block_add(int id, const char *type)
     if (block->bk == NULL)
     {
         LOGGER_ERR("Failed to find block interface [name=%s]", block->type);
-        return false;
+        goto error;
     }
 #else
     void *self;
@@ -91,14 +93,14 @@ bool manager_bk::block_add(int id, const char *type)
     if (self == NULL)
     {
         LOGGER_ERR("Failed to open library: %s", dlerror());
-        return false;
+        goto error;
     }
     block->bk = (struct bk_if *)dlsym(self, block->type);
     if (block->bk == NULL)
     {
         LOGGER_ERR("Failed to find symbol: %s [symbol=%s]", dlerror(), block->type);
         dlclose(self);
-        return false;
+        goto error;
     }
     dlclose(self);
 #endif // C3QO_STATIC
@@ -111,6 +113,10 @@ bool manager_bk::block_add(int id, const char *type)
     bk_map_.insert({id, block});
 
     return true;
+
+error:
+    delete block;
+    return false;
 }
 
 //
