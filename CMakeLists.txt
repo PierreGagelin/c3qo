@@ -51,7 +51,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} --build                 . WORKING_DIREC
 add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src EXCLUDE_FROM_ALL)
 
 # Allow tests to register themselves as tests
-enable_testing()
+include(CTest)
 
 # Library to define libraries, executables, and tests according to the project
 include(c3qo_lib.cmake)

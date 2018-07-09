@@ -6,6 +6,7 @@ set(BLOCK_INCLUDE_DIR ${BLOCK_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/block/hello/inclu
 set(BLOCK_INCLUDE_DIR ${BLOCK_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/block/project_euler/include)
 set(BLOCK_INCLUDE_DIR ${BLOCK_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/block/socket_us_nb/include)
 set(BLOCK_INCLUDE_DIR ${BLOCK_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/block/socket_zmq/include)
+set(BLOCK_INCLUDE_DIR ${BLOCK_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/block/trans_pb/include)
 
 # Include directories for c3qo engine
 set(C3QO_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/c3qo/include)
@@ -110,3 +111,28 @@ function (c3qo_add_test target_name target_sources)
     add_test(NAME ${target_name} COMMAND ${target_name})
 endfunction (c3qo_add_test)
 
+
+# Protobuf libraries
+if (${C3QO_PROTOBUF})
+    include(FindProtobuf)
+    find_package(Protobuf REQUIRED)
+    set(PROTOBUF_USE_STATIC_LIBS off)
+endif (${C3QO_PROTOBUF})
+
+# Add a protobuf library
+function (c3qo_add_library_protobuf target_name target_sources)
+    if (NOT ${C3QO_PROTOBUF})
+        return()
+    endif ()
+    protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS "${target_sources}")
+    protobuf_generate_python(PROTO_PY "${target_sources}")
+
+    add_library(${target_name} ${C3QO_LIB_TYPE} ${PROTO_SRCS} ${PROTO_HDRS})
+
+    target_compile_options(${target_name} PRIVATE ${COMPILE_FLAGS_COMMON})
+
+    target_include_directories(${target_name} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+    target_include_directories(${target_name} PUBLIC ${PROTOBUF_INCLUDE_DIRS})
+
+    target_link_libraries(${target_name} ${PROTOBUF_LITE_LIBRARIES})
+endfunction (c3qo_add_library_protobuf)

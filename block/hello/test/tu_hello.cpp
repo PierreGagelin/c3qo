@@ -38,7 +38,7 @@ void tu_hello::TearDown()
 {
     // Clear the managers
     delete m;
-    
+
     logger_set_level(LOGGER_LEVEL_NONE);
     LOGGER_CLOSE();
 }
