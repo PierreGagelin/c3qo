@@ -9,12 +9,12 @@ DIR_LCOV="$DIR_BUILD/lcov"
 
 
 # Default values, can be overriden with command line options
-EXPORT_SYMBOLS="OFF" # Force linked libraries to appear in DT_NEEDED ELF section
-GCOV="OFF"           # Build with GCOV enabled
-LOG_NO="OFF"         # Disable the logs
-PROTOBUF="OFF"       # Enable protobuf
-RELEASE="OFF"        # Build in release mode
-STATIC="OFF"         # Build for static compilation (when possible)
+GCOV="OFF"     # Build with GCOV enabled
+LOG_NO="OFF"   # Disable the logs
+PROTOBUF="OFF" # Enable protobuf
+RELEASE="OFF"  # Build in release mode
+STATIC="OFF"   # Build for static compilation (when possible)
+TEST_NO="OFF"  # Disable the tests
 
 
 # Action to do, specified from command line options
@@ -137,7 +137,7 @@ function action_lcov
 }
 
 
-while getopts "bchltEGLPRS" opt
+while getopts "bchltGLPRST" opt
 do
     case "${opt}" in
         b)
@@ -155,9 +155,6 @@ do
         t)
             ACTION_TEST="true"
             ;;
-        E)
-            EXPORT_SYMBOLS="ON"
-            ;;
         G)
             GCOV="ON"
             ;;
@@ -173,11 +170,22 @@ do
         S)
             STATIC="ON"
             ;;
+        T)
+            TEST_NO="ON"
+            ;;
         *)
             echo "Invalid option" >&2
             ;;
     esac
 done
+
+
+# Need to remove linker option on OS X
+EXPORT_SYMBOLS="ON"
+if [ $(uname) == "Darwin" ]
+then
+    EXPORT_SYMBOLS="OFF"
+fi
 
 
 CMAKE_OPTIONS=
@@ -187,6 +195,7 @@ CMAKE_OPTIONS="$CMAKE_OPTIONS -DLOGGER_DISABLE:BOOL=$LOG_NO"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_RELEASE:BOOL=$RELEASE"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_STATIC:BOOL=$STATIC"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_PROTOBUF:BOOL=$PROTOBUF"
+CMAKE_OPTIONS="$CMAKE_OPTIONS -DGTEST_DISABLE:BOOL=$TEST_NO"
 
 
 if [ $ACTION_CLEAN = "true" ]

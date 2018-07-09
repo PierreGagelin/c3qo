@@ -6,14 +6,12 @@ set(SOURCES ${SOURCES} src/client_us_nb.cpp)
 set(SOURCES ${SOURCES} src/server_us_nb.cpp)
 
 c3qo_add_block(socket_us_nb "${SOURCES}")
-
 target_link_libraries(socket_us_nb socket)
 
 
-# Build TU for socket_us_nb
-set(SOURCES_TU test/tu_socket_us_nb.cpp)
-
-c3qo_add_test(tu_socket_us_nb "${SOURCES_TU}")
-
-target_link_libraries(tu_socket_us_nb socket_us_nb)
+if (NOT ${GTEST_DISABLE})
+    # Build TU for socket_us_nb
+    c3qo_add_test(tu_socket_us_nb test/tu_socket_us_nb.cpp)
+    target_link_libraries(tu_socket_us_nb socket_us_nb)
+endif ()
 

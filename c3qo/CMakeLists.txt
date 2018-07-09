@@ -10,7 +10,6 @@ set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_tm.cpp)
 
 c3qo_add_library(manager "${SOURCES_MANAGER}")
 c3qo_target_include(manager)
-
 target_link_libraries(manager logger)
 
 # STATIC: manager_bk needs symbols directly to invoke an interface
@@ -23,10 +22,7 @@ endif()
 
 
 # Build c3qo main executable
-set(SOURCES_C3QO src/main.cpp)
-
-c3qo_add_executable(c3qo "${SOURCES_C3QO}")
-
+c3qo_add_executable(c3qo src/main.cpp)
 target_link_libraries(c3qo manager)
 target_link_libraries(c3qo hello)
 target_link_libraries(c3qo socket_us_nb)
@@ -36,44 +32,29 @@ target_link_libraries(c3qo project_euler_lib)
 
 
 # Build network CLI executable
-set(SOURCES_NETWORK_CLI src/network_cli.cpp)
-
-c3qo_add_executable(ncli "${SOURCES_NETWORK_CLI}")
-
+c3qo_add_executable(ncli src/network_cli.cpp)
 target_link_libraries(ncli socket)
 
 
-# Build TU for manager_bk
-set(SOURCES_TU_MANAGER_BK test/tu_manager_bk.cpp)
+if (NOT ${GTEST_DISABLE})
+    # Build TU for manager_bk
+    c3qo_add_test(tu_manager_bk test/tu_manager_bk.cpp)
+    target_link_libraries(tu_manager_bk manager)
+    target_link_libraries(tu_manager_bk hello)
+    target_link_libraries(tu_manager_bk socket_us_nb)
 
-c3qo_add_test(tu_manager_bk "${SOURCES_TU_MANAGER_BK}")
+    # Build TU for manager_fd
+    c3qo_add_test(tu_manager_fd test/tu_manager_fd.cpp)
+    target_link_libraries(tu_manager_fd manager)
 
-target_link_libraries(tu_manager_bk manager)
-target_link_libraries(tu_manager_bk hello)
-target_link_libraries(tu_manager_bk socket_us_nb)
+    # Build TU for manager_tm
+    c3qo_add_test(tu_manager_tm test/tu_manager_tm.cpp)
+    target_link_libraries(tu_manager_tm manager)
 
+    # Build TU for performances
+    c3qo_add_test(tu_perf test/tu_perf.cpp)
 
-# Build TU for manager_fd
-set(SOURCES_TU_MANAGER_FD test/tu_manager_fd.cpp)
-
-c3qo_add_test(tu_manager_fd "${SOURCES_TU_MANAGER_FD}")
-
-target_link_libraries(tu_manager_fd manager)
-
-
-# Build TU for manager_tm
-set(SOURCES_TU_MANAGER_TM test/tu_manager_tm.cpp)
-
-c3qo_add_test(tu_manager_tm "${SOURCES_TU_MANAGER_TM}")
-
-target_link_libraries(tu_manager_tm manager)
-
-
-# Build TU for performances
-set(SOURCES_TU_PERF test/tu_perf.cpp)
-
-c3qo_add_test(tu_perf "${SOURCES_TU_PERF}")
-
-target_link_libraries(tu_perf manager)
-target_link_libraries(tu_perf hello)
+    target_link_libraries(tu_perf manager)
+    target_link_libraries(tu_perf hello)
+endif ()
 

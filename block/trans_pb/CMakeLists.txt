@@ -15,6 +15,8 @@ target_link_libraries(trans_pb block_pb)
 
 
 # Build test unit
-c3qo_add_test(tu_trans_pb test/tu_trans_pb.cpp)
-target_link_libraries(tu_trans_pb trans_pb)
-target_link_libraries(tu_trans_pb block_pb)
+if (NOT ${GTEST_DISABLE})
+    c3qo_add_test(tu_trans_pb test/tu_trans_pb.cpp)
+    target_link_libraries(tu_trans_pb trans_pb)
+    target_link_libraries(tu_trans_pb block_pb)
+endif ()
