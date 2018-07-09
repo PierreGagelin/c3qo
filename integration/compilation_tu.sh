@@ -22,6 +22,9 @@ $DIR_SOURCE/$CMD_BUILD -Rcbt
 echo "Clean build directory and do a STATIC build"
 $DIR_SOURCE/$CMD_BUILD -Scbt
 
+echo "Clean build directory and do a TESTLESS build"
+$DIR_SOURCE/$CMD_BUILD -Tcb
+
 echo "Clean build directory and do a GCOV build"
 $DIR_SOURCE/$CMD_BUILD -Gcbt
 
