@@ -12,6 +12,7 @@ DIR_LCOV="$DIR_BUILD/lcov"
 EXPORT_SYMBOLS="OFF" # Force linked libraries to appear in DT_NEEDED ELF section
 GCOV="OFF"           # Build with GCOV enabled
 LOG_NO="OFF"         # Disable the logs
+PROTOBUF="OFF"       # Enable protobuf
 RELEASE="OFF"        # Build in release mode
 STATIC="OFF"         # Build for static compilation (when possible)
 
@@ -136,7 +137,7 @@ function action_lcov
 }
 
 
-while getopts "bchltEGLRS" opt
+while getopts "bchltEGLPRS" opt
 do
     case "${opt}" in
         b)
@@ -163,6 +164,9 @@ do
         L)
             LOG_NO="ON"
             ;;
+        P)
+            PROTOBUF="ON"
+            ;;
         R)
             RELEASE="ON"
             ;;
@@ -182,7 +186,7 @@ CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_COVERAGE:BOOL=$GCOV"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DLOGGER_DISABLE:BOOL=$LOG_NO"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_RELEASE:BOOL=$RELEASE"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_STATIC:BOOL=$STATIC"
-CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_PROTOBUF:BOOL=ON"
+CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_PROTOBUF:BOOL=$PROTOBUF"
 
 
 if [ $ACTION_CLEAN = "true" ]
