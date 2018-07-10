@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # No errors or use of undefined variables allowed
-set -eux
+set -eu
 
 DIR_BIN=""
 DIR_CONFIG=""
@@ -38,4 +38,3 @@ $DIR_BIN/c3qo -f $DIR_CONFIG/server_zmq.txt &
 sleep 1
 
 killall c3qo
-

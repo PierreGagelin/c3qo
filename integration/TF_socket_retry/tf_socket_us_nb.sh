@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # No errors or use of undefined variables allowed
-set -eux
+set -eu
 
 DIR_BIN=""
 DIR_CONFIG=""
@@ -21,6 +21,7 @@ do
             ;;
     esac
 done
+
 
 if [ ! -d $DIR_BIN ]
 then

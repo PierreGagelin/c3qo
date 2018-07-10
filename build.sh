@@ -2,10 +2,8 @@
 # Script to build the c3qo project
 
 # No error or undefined variables allowed
-set -eux
+set -eu
 
-
-SCRIPT=$0
 
 # Setting folder architecture
 DIR_SOURCE=$(dirname $0)

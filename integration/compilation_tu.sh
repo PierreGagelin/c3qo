@@ -2,19 +2,16 @@
 # Test file to test non-regression of the compilation and of the test units
 
 # No errors or undefined variables allowed
-set -eux
+set -eu
 
 
-SCRIPT=$0
-DIR_CURRENT=$(pwd)
-DIR_SCRIPT=$(dirname $DIR_CURRENT/$SCRIPT)
+DIR_SCRIPT=$(dirname $0)
 DIR_SOURCE=$DIR_SCRIPT/..
 DIR_BUILD=$DIR_SOURCE/../build
 DIR_C3QO=$DIR_BUILD/c3qo
 DIR_TEST=$DIR_SOURCE/integration/TF_socket_retry
 
 CMD_BUILD=build.sh
-
 
 echo "Clean build directory and do a CLASSIC build"
 $DIR_SOURCE/$CMD_BUILD -cbt
