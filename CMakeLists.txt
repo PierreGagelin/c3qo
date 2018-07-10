@@ -15,15 +15,6 @@ else ()
 endif ()
 
 
-# Static compilation
-if (${C3QO_STATIC})
-    add_definitions(-DC3QO_STATIC)
-    set(C3QO_LIB_TYPE STATIC)
-else ()
-    set(C3QO_LIB_TYPE SHARED)
-endif ()
-
-
 # Using GCOV on the code
 if (${C3QO_COVERAGE})
     # Force the build type to Debug
@@ -49,7 +40,7 @@ if (NOT ${GTEST_DISABLE})
     execute_process(COMMAND ${CMAKE_COMMAND} --build                 . WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download)
 
     # Add gtest directly to our build. This defines the gtest and gtest_main targets
-    add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src EXCLUDE_FROM_ALL)
+    add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src ${CMAKE_BINARY_DIR}/googletest-src EXCLUDE_FROM_ALL)
 endif ()
 
 # Allow tests to register themselves as tests

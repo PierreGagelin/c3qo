@@ -2,8 +2,6 @@
 
 #include "c3qo/block.hpp"
 
-#ifdef C3QO_STATIC
-
 #include <cstring> // strcmp
 
 extern struct bk_if hello_if;
@@ -39,8 +37,6 @@ struct bk_if *get_bk_if(const char *b)
     }
     return NULL;
 }
-
-#endif // C3QO_STATIC
 
 //
 // @brief Stringify the block command

@@ -11,14 +11,10 @@ set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_tm.cpp)
 c3qo_add_library(manager "${SOURCES_MANAGER}")
 c3qo_target_include(manager)
 target_link_libraries(manager logger)
-
-# STATIC: manager_bk needs symbols directly to invoke an interface
-if (${C3QO_STATIC})
-    target_link_libraries(manager hello)
-    target_link_libraries(manager socket_us_nb)
-    target_link_libraries(manager zmq_pair)
-    target_link_libraries(manager project_euler)
-endif()
+target_link_libraries(manager hello)
+target_link_libraries(manager socket_us_nb)
+target_link_libraries(manager zmq_pair)
+target_link_libraries(manager project_euler)
 
 
 # Build c3qo main executable

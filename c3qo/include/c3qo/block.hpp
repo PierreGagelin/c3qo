@@ -4,9 +4,7 @@
 // C++ library headers
 #include <cstdlib> // size_t
 
-#ifdef C3QO_STATIC
 struct bk_if *get_bk_if(const char *b);
-#endif // C3QO_STATIC
 
 //
 // @enum bk_cmd

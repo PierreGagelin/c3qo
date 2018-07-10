@@ -1,12 +1,7 @@
 
 
 # Build logger library
-add_library(logger SHARED src/logger.cpp)
-
-c3qo_target_compile_flags(logger)
-c3qo_target_link_flags(logger)
-
-target_include_directories(logger PUBLIC ${UTILS_INCLUDE_DIR})
+c3qo_add_library(logger src/logger.cpp)
 
 
 if (NOT ${GTEST_DISABLE})

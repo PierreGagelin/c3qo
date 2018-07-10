@@ -5,11 +5,6 @@
 #include <cstdio>  // fopen, fgets, sscanf
 #include <cstring> // memset, strerror
 
-// System library headers
-extern "C" {
-#include <dlfcn.h> // dlopen, dlsym, dlerror
-}
-
 // Project headers
 #include "c3qo/block.hpp"
 #include "c3qo/manager_bk.hpp"
@@ -78,33 +73,12 @@ bool manager_bk::block_add(int id, const char *type)
         goto error;
     }
 
-// Retrieve interface
-#ifdef C3QO_STATIC
     block->bk = get_bk_if(block->type);
     if (block->bk == NULL)
     {
         LOGGER_ERR("Failed to find block interface [name=%s]", block->type);
         goto error;
     }
-#else
-    void *self;
-
-    self = dlopen(NULL, RTLD_LAZY);
-    if (self == NULL)
-    {
-        LOGGER_ERR("Failed to open library: %s", dlerror());
-        goto error;
-    }
-    block->bk = (struct bk_if *)dlsym(self, block->type);
-    if (block->bk == NULL)
-    {
-        LOGGER_ERR("Failed to find symbol: %s [symbol=%s]", dlerror(), block->type);
-        dlclose(self);
-        goto error;
-    }
-    dlclose(self);
-#endif // C3QO_STATIC
-
     block->state = STATE_STOP;
 
     LOGGER_INFO("Add block [bk_id=%d ; bk_type=%s]", block->id, block->type);

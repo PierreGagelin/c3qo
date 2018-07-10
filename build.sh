@@ -1,10 +1,15 @@
 #!/bin/bash
 # Script to build the c3qo project
 
+# No error or undefined variables allowed
+set -eux
+
+
+SCRIPT=$0
 
 # Setting folder architecture
-DIR_SOURCE=$(dirname $_)
-DIR_BUILD="$DIR_SOURCE/build"
+DIR_SOURCE=$(dirname $0)
+DIR_BUILD="$DIR_SOURCE/../build"
 DIR_LCOV="$DIR_BUILD/lcov"
 
 
@@ -13,7 +18,6 @@ GCOV="OFF"     # Build with GCOV enabled
 LOG_NO="OFF"   # Disable the logs
 PROTOBUF="OFF" # Enable protobuf
 RELEASE="OFF"  # Build in release mode
-STATIC="OFF"   # Build for static compilation (when possible)
 TEST_NO="OFF"  # Disable the tests
 
 
@@ -22,10 +26,6 @@ ACTION_BUILD="false" # Build the project and compile it
 ACTION_CLEAN="false" # Clean the project
 ACTION_LCOV="false"  # Do a coverage report
 ACTION_TEST="false"  # Run the tests
-
-
-# No error or undefined variables allowed
-set -eu
 
 
 function action_clean
@@ -45,7 +45,7 @@ function action_clean
     # Clean coverage data
     if [ -d $DIR_LCOV ]
     then
-        rm -rf lcov/
+        rm -rf $DIR_LCOV
     fi
 
     FILES_GCNO=$(find $DIR_BUILD -name *.gcno)
@@ -68,7 +68,7 @@ function action_build
 
     # Could use cmake's -H and -B options but it's undocumented so better not rely on those
     cd $DIR_BUILD
-    cmake $CMAKE_OPTIONS ../
+    cmake $CMAKE_OPTIONS $DIR_SOURCE
     cd -
 
     make -C $DIR_BUILD -j 4
@@ -180,20 +180,10 @@ do
 done
 
 
-# Need to remove linker option on OS X
-EXPORT_SYMBOLS="ON"
-if [ $(uname) == "Darwin" ]
-then
-    EXPORT_SYMBOLS="OFF"
-fi
-
-
 CMAKE_OPTIONS=
-CMAKE_OPTIONS="$CMAKE_OPTIONS -DNO_AS_NEEDED:BOOL=$EXPORT_SYMBOLS"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_COVERAGE:BOOL=$GCOV"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DLOGGER_DISABLE:BOOL=$LOG_NO"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_RELEASE:BOOL=$RELEASE"
-CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_STATIC:BOOL=$STATIC"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_PROTOBUF:BOOL=$PROTOBUF"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DGTEST_DISABLE:BOOL=$TEST_NO"
 
