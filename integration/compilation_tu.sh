@@ -4,7 +4,8 @@
 # No errors or undefined variables allowed
 set -eu
 
-
+# Get absolute path
+DIR_CMD=$(pwd)
 DIR_SCRIPT=$(dirname $0)
 DIR_SOURCE=$DIR_SCRIPT/..
 DIR_BUILD=$DIR_SOURCE/../build

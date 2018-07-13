@@ -5,10 +5,14 @@
 set -eu
 
 
-# Setting folder architecture
-DIR_SOURCE=$(dirname $0)
+# Get absolute path
+DIR_CMD=$(pwd)
+DIR_SCRIPT=$(dirname $0)
+DIR_SOURCE=$DIR_CMD/$DIR_SCRIPT
 DIR_BUILD="$DIR_SOURCE/../build"
 DIR_LCOV="$DIR_BUILD/lcov"
+
+echo "[dir_source=$DIR_SOURCE ; dir_build=$DIR_BUILD ; dir_lcov=$DIR_LCOV]"
 
 
 # Default values, can be overriden with command line options

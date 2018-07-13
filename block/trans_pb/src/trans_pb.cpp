@@ -1,9 +1,12 @@
 
+#include "block/trans_pb.hpp"
+
+#ifdef C3QO_PROTOBUF
+
 #include <cerrno>
 
 // Project headers
 #include "block/hello.hpp"
-#include "block/trans_pb.hpp"
 #include "block/zmq_pair.hpp"
 #include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
@@ -154,3 +157,21 @@ struct bk_if trans_pb_if = {
     .tx = nullptr,
     .ctrl = trans_pb_ctrl,
 };
+
+#else
+
+struct bk_if trans_pb_if = {
+    .init = nullptr,
+    .conf = nullptr,
+    .bind = nullptr,
+    .start = nullptr,
+    .stop = nullptr,
+
+    .get_stats = nullptr,
+
+    .rx = nullptr,
+    .tx = nullptr,
+    .ctrl = nullptr,
+};
+
+#endif // C3QO_PROTOBUF

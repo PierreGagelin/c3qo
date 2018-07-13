@@ -15,16 +15,12 @@ target_link_libraries(manager hello)
 target_link_libraries(manager socket_us_nb)
 target_link_libraries(manager zmq_pair)
 target_link_libraries(manager project_euler)
+target_link_libraries(manager trans_pb)
 
 
 # Build c3qo main executable
 c3qo_add_executable(c3qo src/main.cpp)
 target_link_libraries(c3qo manager)
-target_link_libraries(c3qo hello)
-target_link_libraries(c3qo socket_us_nb)
-target_link_libraries(c3qo zmq_pair)
-target_link_libraries(c3qo project_euler)
-target_link_libraries(c3qo project_euler_lib)
 
 
 # Build network CLI executable
@@ -36,8 +32,6 @@ if (NOT ${GTEST_DISABLE})
     # Build TU for manager_bk
     c3qo_add_test(tu_manager_bk test/tu_manager_bk.cpp)
     target_link_libraries(tu_manager_bk manager)
-    target_link_libraries(tu_manager_bk hello)
-    target_link_libraries(tu_manager_bk socket_us_nb)
 
     # Build TU for manager_fd
     c3qo_add_test(tu_manager_fd test/tu_manager_fd.cpp)
@@ -49,8 +43,6 @@ if (NOT ${GTEST_DISABLE})
 
     # Build TU for performances
     c3qo_add_test(tu_perf test/tu_perf.cpp)
-
     target_link_libraries(tu_perf manager)
-    target_link_libraries(tu_perf hello)
 endif ()
 

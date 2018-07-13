@@ -9,6 +9,7 @@ extern struct bk_if client_us_nb_if;
 extern struct bk_if server_us_nb_if;
 extern struct bk_if zmq_pair_if;
 extern struct bk_if project_euler_if;
+extern struct bk_if trans_pb_if;
 
 //
 // @brief Retrieve a block interface pointer
@@ -34,6 +35,10 @@ struct bk_if *get_bk_if(const char *b)
     if (strcmp(b, "project_euler_if") == 0)
     {
         return &project_euler_if;
+    }
+    if (strcmp(b, "trans_pb") == 0)
+    {
+        return &trans_pb_if;
     }
     return NULL;
 }
