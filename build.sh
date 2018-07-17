@@ -5,26 +5,13 @@
 set -eu
 
 
-# Get absolute path of a directory
-function get_abs_path()
-{
-    if [ -d $1 ]
-    then
-        echo $(cd $1 > /dev/null && pwd)
-    else
-        # Temporary creation of the folder
-        mkdir -p $1
-        echo $(cd $1 > /dev/null && pwd)
-        rmdir $1
-    fi
-}
-
 # Get absolute path to this script
-DIR_SCRIPT=$(cd $(dirname $0) > /dev/null && pwd)
+dir_script=$(cd $(dirname $0) > /dev/null && pwd)
 
-DIR_SOURCE=$DIR_SCRIPT
-DIR_BUILD=$(get_abs_path $DIR_SOURCE/../build)
-DIR_LCOV=$(get_abs_path $DIR_BUILD/lcov)
+source $dir_script/c3qo_lib.sh
+
+# Generate every useful paths from source path
+c3qo_generate_path $dir_script
 
 
 # Default values, can be overriden with command line options
@@ -47,28 +34,28 @@ function action_clean
     local FILES_GCNO=
     local FILES_GCDA=
 
-    if [ ! -d $DIR_BUILD ]
+    if [ ! -d $C3QO_DIR_BUILD ]
     then
-        echo "Nothing to clean, directory does not exist [dir=$DIR_BUILD]"
+        echo "Nothing to clean, directory does not exist [dir=$C3QO_DIR_BUILD]"
         return 0
     fi
 
     # Clean objects, libraries and executables
-    make -C $DIR_BUILD clean
+    make -C $C3QO_DIR_BUILD clean
 
     # Clean coverage data
-    if [ -d $DIR_LCOV ]
+    if [ -d $C3QO_DIR_LCOV ]
     then
-        rm -rf $DIR_LCOV
+        rm -rf $C3QO_DIR_LCOV
     fi
 
-    FILES_GCNO=$(find $DIR_BUILD -name *.gcno)
+    FILES_GCNO=$(find $C3QO_DIR_BUILD -name *.gcno)
     if [ -n "$FILES_GCNO" ]
     then
         rm $FILES_GCNO
     fi
 
-    FILES_GCDA=$(find $DIR_BUILD -name *.gcda)
+    FILES_GCDA=$(find $C3QO_DIR_BUILD -name *.gcda)
     if [ -n "$FILES_GCDA" ]
     then
         rm $FILES_GCDA
@@ -78,41 +65,41 @@ function action_clean
 
 function action_build
 {
-    mkdir -p $DIR_BUILD
+    mkdir -p $C3QO_DIR_BUILD
 
     # Could use cmake's -H and -B options but it's undocumented so better not rely on those
-    cd $DIR_BUILD
-    cmake $CMAKE_OPTIONS $DIR_SOURCE
+    cd $C3QO_DIR_BUILD
+    cmake $CMAKE_OPTIONS $C3QO_DIR_SOURCE
     cd -
 
-    make -C $DIR_BUILD -j 4
+    make -C $C3QO_DIR_BUILD -j 4
 }
 
 
 function action_test
 {
-    make -C $DIR_BUILD test
+    make -C $C3QO_DIR_BUILD test
 }
 
 
 function action_lcov
 {
-    local file_b="$DIR_LCOV/coverage.build"
-    local file_r="$DIR_LCOV/coverage.run"
-    local file_t="$DIR_LCOV/coverage.total"
+    local file_b="$C3QO_DIR_LCOV/coverage.build"
+    local file_r="$C3QO_DIR_LCOV/coverage.run"
+    local file_t="$C3QO_DIR_LCOV/coverage.total"
     local file_b_count=
     local file_r_count=
 
     # Verify that the build directory exists
-    if [ ! -d $DIR_BUILD ]
+    if [ ! -d $C3QO_DIR_BUILD ]
     then
         echo "FAILED: project is not built"
         exit 1
     fi
 
     # Verify that there are files for the analysis
-    file_b_count=$(find $DIR_BUILD -name "*.gcno" | wc -l)
-    file_r_count=$(find $DIR_BUILD -name "*.gcda" | wc -l)
+    file_b_count=$(find $C3QO_DIR_BUILD -name "*.gcno" | wc -l)
+    file_r_count=$(find $C3QO_DIR_BUILD -name "*.gcda" | wc -l)
     if [ $file_b_count -eq 0 ]
     then
         echo "FAILED: no .gcno files available. Did you compile with GCOV?"
@@ -125,29 +112,29 @@ function action_lcov
     fi
 
     # Prepare a directory for LCOV output
-    if [ -d $DIR_LCOV ]
+    if [ -d $C3QO_DIR_LCOV ]
     then
-        rm -r $DIR_LCOV
+        rm -r $C3QO_DIR_LCOV
     fi
-    mkdir $DIR_LCOV
+    mkdir $C3QO_DIR_LCOV
 
     # Analysis of .gcno (build) and .gcda (run) files
-    lcov --directory $DIR_BUILD --capture --initial --output-file $file_b
-    lcov --directory $DIR_BUILD --capture           --output-file $file_r
+    lcov --directory $C3QO_DIR_BUILD --capture --initial --output-file $file_b
+    lcov --directory $C3QO_DIR_BUILD --capture           --output-file $file_r
 
     # Catenate the output of both
-    lcov --directory $DIR_BUILD --add-tracefile $file_b --add-tracefile $file_r --output-file $file_t
+    lcov --directory $C3QO_DIR_BUILD --add-tracefile $file_b --add-tracefile $file_r --output-file $file_t
 
     # Extract only folders after current directory
     lcov --extract $file_t "`pwd`/*" --output-file $file_t
 
-    # Generate an index.html file into $DIR_LCOV with results
-    genhtml --output-directory $DIR_LCOV $file_t
+    # Generate an index.html file into $C3QO_DIR_LCOV with results
+    genhtml --output-directory $C3QO_DIR_LCOV $file_t
 
     # Clean
-    rm $(find $DIR_BUILD -name "*.gcda")
+    rm $(find $C3QO_DIR_BUILD -name "*.gcda")
 
-    echo "HTML report available at: $DIR_LCOV/index.html"
+    echo "HTML report available at: $C3QO_DIR_LCOV/index.html"
 }
 
 
