@@ -5,14 +5,26 @@
 set -eu
 
 
-# Get absolute path
-DIR_CMD=$(pwd)
-DIR_SCRIPT=$(dirname $0)
-DIR_SOURCE=$DIR_CMD/$DIR_SCRIPT
-DIR_BUILD="$DIR_SOURCE/../build"
-DIR_LCOV="$DIR_BUILD/lcov"
+# Get absolute path of a directory
+function get_abs_path()
+{
+    if [ -d $1 ]
+    then
+        echo $(cd $1 > /dev/null && pwd)
+    else
+        # Temporary creation of the folder
+        mkdir -p $1
+        echo $(cd $1 > /dev/null && pwd)
+        rmdir $1
+    fi
+}
 
-echo "[dir_source=$DIR_SOURCE ; dir_build=$DIR_BUILD ; dir_lcov=$DIR_LCOV]"
+# Get absolute path to this script
+DIR_SCRIPT=$(cd $(dirname $0) > /dev/null && pwd)
+
+DIR_SOURCE=$DIR_SCRIPT
+DIR_BUILD=$(get_abs_path $DIR_SOURCE/../build)
+DIR_LCOV=$(get_abs_path $DIR_BUILD/lcov)
 
 
 # Default values, can be overriden with command line options

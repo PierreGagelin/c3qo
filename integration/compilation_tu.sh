@@ -4,13 +4,17 @@
 # No errors or undefined variables allowed
 set -eu
 
-# Get absolute path
-DIR_CMD=$(pwd)
-DIR_SCRIPT=$(dirname $0)
-DIR_SOURCE=$DIR_SCRIPT/..
-DIR_BUILD=$DIR_SOURCE/../build
-DIR_C3QO=$DIR_BUILD/c3qo
-DIR_TEST=$DIR_SOURCE/integration/TF_socket_retry
+# Get absolute path of a directory
+function get_abs_path()
+{
+    echo $(cd $1 > /dev/null && pwd)
+}
+
+# Get absolute path to this script
+DIR_SCRIPT=$(cd $(dirname $0) > /dev/null && pwd)
+
+DIR_SOURCE=$(get_abs_path $DIR_SCRIPT/..)
+DIR_C3QO=$(get_abs_path $DIR_SOURCE/../build/c3qo)
 
 CMD_BUILD=build.sh
 
@@ -27,8 +31,8 @@ echo "Clean build directory and do a GCOV build"
 $DIR_SOURCE/$CMD_BUILD -Gcbt
 
 echo "Execute functional tests"
-$DIR_TEST/tf_socket_us_nb.sh -b $DIR_C3QO -c $DIR_TEST
-$DIR_TEST/tf_network_cli.sh -b $DIR_C3QO -c $DIR_TEST
+$DIR_SCRIPT/tf_socket_us_nb.sh -b $DIR_C3QO -c $DIR_SCRIPT
+$DIR_SCRIPT/tf_network_cli.sh -b $DIR_C3QO -c $DIR_SCRIPT
 
 echo "Make a LCOV report"
 $DIR_SOURCE/$CMD_BUILD -l

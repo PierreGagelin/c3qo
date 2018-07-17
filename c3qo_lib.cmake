@@ -106,8 +106,13 @@ function (c3qo_add_library_protobuf target_name target_sources)
     if (NOT ${C3QO_PROTOBUF})
         return()
     endif ()
+
+    # Generate C++
     protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS "${target_sources}")
+
+    # Generate python
     protobuf_generate_python(PROTO_PY "${target_sources}")
+    add_custom_target(${target_name}_py ALL DEPENDS ${PROTO_PY})
 
     add_library(${target_name} STATIC ${PROTO_SRCS} ${PROTO_HDRS})
 
