@@ -10,13 +10,17 @@ set -eu
 #   - $1 : directory to get an absolute path from
 function get_abs_path()
 {
-    local dir=$1
+    local dir=
+    local ret=
+
+    dir=$1
 
     # Temporary creation of the directory in case it does not exist
     mkdir -p $dir
 
     # Get an absolute path to the directory
-    local ret=$(cd $dir > /dev/null && pwd)
+    ret=$(cd $dir > /dev/null && pwd)
+    dir=$ret
 
     # Remove potentially created (empty) directories
     while [ -z "$(ls -A $dir)" ]
