@@ -21,6 +21,10 @@ $C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -Rcbt
 echo "Clean build directory and do a TESTLESS build"
 $C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -Tcb
 
+echo "Make a package"
+$C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -p
+
+
 echo "Clean build directory and do a GCOV build"
 $C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -Gcbt
 

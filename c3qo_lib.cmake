@@ -81,6 +81,8 @@ function (c3qo_add_executable target_name target_sources)
     c3qo_target_link_flags(${target_name})
 
     target_link_libraries(${target_name} logger)
+
+    install(TARGETS ${target_name} DESTINATION bin)
 endfunction (c3qo_add_executable)
 
 # Add a test unit

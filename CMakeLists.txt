@@ -53,3 +53,8 @@ add_subdirectory(c3qo)
 add_subdirectory(block)
 add_subdirectory(utils)
 
+
+# CPack configuration
+set(CPACK_GENERATOR TGZ)
+include(CPack)
+

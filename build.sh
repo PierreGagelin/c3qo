@@ -26,6 +26,7 @@ TEST_NO="OFF"  # Disable the tests
 ACTION_BUILD="false" # Build the project and compile it
 ACTION_CLEAN="false" # Clean the project
 ACTION_LCOV="false"  # Do a coverage report
+ACTION_PACK="false"  # Create a package
 ACTION_TEST="false"  # Run the tests
 
 
@@ -72,7 +73,12 @@ function action_build
     cmake $CMAKE_OPTIONS $C3QO_DIR_SOURCE
     cd -
 
-    make -C $C3QO_DIR_BUILD -j 4
+    make -j 4 -C $C3QO_DIR_BUILD
+}
+
+function action_package
+{
+    make -j 4 -C $C3QO_DIR_BUILD package
 }
 
 
@@ -138,7 +144,7 @@ function action_lcov
 }
 
 
-while getopts "bchltGLPRST" opt
+while getopts "bchlptGLPRST" opt
 do
     case "${opt}" in
         b)
@@ -152,6 +158,9 @@ do
             ;;
         l)
             ACTION_LCOV="true"
+            ;;
+        p)
+            ACTION_PACK="true"
             ;;
         t)
             ACTION_TEST="true"
@@ -204,6 +213,11 @@ fi
 if [ $ACTION_TEST = "true" ]
 then
     action_test
+fi
+
+if [ $ACTION_PACK = "true" ]
+then
+    action_package
 fi
 
 
