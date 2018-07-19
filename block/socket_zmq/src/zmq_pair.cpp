@@ -11,6 +11,8 @@ extern "C" {
 #include <cstring> // strerror
 
 // Project headers
+#include "block/hello.hpp"
+#include "block/trans_pb.hpp"
 #include "block/zmq_pair.hpp"
 #include "c3qo/manager.hpp"
 #include "utils/logger.hpp"
@@ -69,6 +71,22 @@ static void zmq_pair_callback(void *vctx, int fd, void *socket)
     {
         // Process the configuration line
         m->bk.conf_parse_line(msg.data);
+    }
+    else if (strcmp(msg.topic, "STATS") == 0)
+    {
+        struct trans_pb_notif notif;
+
+        if (strcmp(msg.data, "HELLO") == 0)
+        {
+            struct hello_ctx ctx_hello;
+
+            ctx_hello.bk_id = 12;
+
+            notif.type = BLOCK_HELLO;
+            notif.context.hello = &ctx_hello;
+
+            m->bk.process_notif(ctx->bk_id, 1, &notif);
+        }
     }
 
 end:
@@ -205,9 +223,9 @@ static void zmq_pair_conf(void *vctx, char *conf)
             LOGGER_ERR("Failed to call sscanf: wrong number of matched element [expected=1 ; actual=%d ; addr=%s]", ret, ctx->addr);
             return;
         }
-    }
 
-    LOGGER_INFO("Configure publisher address [addr=%s]", ctx->addr);
+        LOGGER_INFO("Configure socket address [addr=%s]", ctx->addr);
+    }
 }
 
 //

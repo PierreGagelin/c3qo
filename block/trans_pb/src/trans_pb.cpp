@@ -55,7 +55,7 @@ static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, class pb_msg_block 
     bool ok;
 
     // Fill the topic
-    msg_zmq.topic_len = sizeof(topic) - 1;
+    msg_zmq.topic_len = strlen(topic);
     msg_zmq.topic = static_cast<char *>(malloc(msg_zmq.topic_len));
     if (msg_zmq.topic == nullptr)
     {

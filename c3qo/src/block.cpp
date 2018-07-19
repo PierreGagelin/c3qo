@@ -36,7 +36,7 @@ struct bk_if *get_bk_if(const char *b)
     {
         return &project_euler_if;
     }
-    if (strcmp(b, "trans_pb") == 0)
+    if (strcmp(b, "trans_pb_if") == 0)
     {
         return &trans_pb_if;
     }

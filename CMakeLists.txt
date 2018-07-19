@@ -1,7 +1,7 @@
 
 
 cmake_minimum_required(VERSION 2.8)
-project(c3q0)
+project(c3qo)
 
 
 # Generate a JSON file with compilation commands (used with Visual Studio Code)
@@ -52,6 +52,7 @@ include(c3qo_lib.cmake)
 add_subdirectory(c3qo)
 add_subdirectory(block)
 add_subdirectory(utils)
+add_subdirectory(integration)
 
 
 # CPack configuration
