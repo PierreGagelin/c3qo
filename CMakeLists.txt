@@ -57,5 +57,9 @@ add_subdirectory(integration)
 
 # CPack configuration
 set(CPACK_GENERATOR TGZ)
+set(CPACK_PACKAGE_VERSION_MAJOR 0)
+set(CPACK_PACKAGE_VERSION_MINOR 0)
+set(CPACK_PACKAGE_VERSION_PATCH 7)
+set(CPACK_SYSTEM_NAME local)
 include(CPack)
 

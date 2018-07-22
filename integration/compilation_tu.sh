@@ -29,8 +29,8 @@ echo "Clean build directory and do a GCOV build"
 $C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -Gcbt
 
 echo "Execute functional tests"
-$C3QO_DIR_INT/tf_socket_us_nb.sh -b $C3QO_DIR_C3QO -c $C3QO_DIR_INT
-$C3QO_DIR_INT/tf_network_cli.sh -b $C3QO_DIR_C3QO -c $C3QO_DIR_INT
+$C3QO_DIR_INT/tf_socket_us_nb.sh
+$C3QO_DIR_INT/tf_network_cli.sh
 
 echo "Make a LCOV report"
 $C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -l

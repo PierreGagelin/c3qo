@@ -53,7 +53,6 @@ function (c3qo_target_link_flags t_name)
     # Add coverage link flag
     if (${C3QO_COVERAGE})
         set_property(TARGET ${t_name} APPEND PROPERTY LINK_FLAGS --coverage)
-        set(link_flags "${link_flags} ")
     endif ()
 endfunction (c3qo_target_link_flags)
 
@@ -111,6 +110,7 @@ function (c3qo_add_library_protobuf target_name target_sources)
 
     # Generate python for test
     protobuf_generate_python(PROTO_PY "${target_sources}")
+    add_custom_target(${target_name}_py ALL DEPENDS ${PROTO_PY})
     install(FILES ${PROTO_PY} DESTINATION test)
 
     # Generate C++

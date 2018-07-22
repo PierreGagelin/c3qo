@@ -34,6 +34,10 @@ const char *get_flow_type(enum flow_type type)
 //
 // @brief Constructor and destructor
 //
+bk_info::bk_info() : bk(NULL), ctx(NULL), id(0), state(STATE_STOP)
+{
+    // Nothing else to do
+}
 manager_bk::manager_bk()
 {
     // Nothing to do

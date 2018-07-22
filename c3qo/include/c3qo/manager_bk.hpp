@@ -39,7 +39,7 @@ class bk_info
     enum bk_state state;                // Block state
 
   public:
-    bk_info() : bk(NULL), ctx(NULL), id(0), state(STATE_STOP){};
+    bk_info();
 };
 
 //

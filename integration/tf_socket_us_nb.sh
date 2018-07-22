@@ -3,37 +3,26 @@
 # No errors or use of undefined variables allowed
 set -eu
 
-DIR_BIN=""
-DIR_CONFIG=""
+# Get absolute path to this script
+dir_script=$(cd $(dirname $0) > /dev/null && pwd)
 
-while getopts "b:c:" opt
-do
-    case "${opt}" in
-        b)
-            DIR_BIN=$OPTARG
-            ;;
-        c)
-            DIR_CONFIG=$OPTARG
-            ;;
-        *)
-            echo "Invalid option" >&2
-            exit 1
-            ;;
-    esac
-done
+source $dir_script/../c3qo_lib.sh
+
+# Generate every useful paths from source path
+c3qo_generate_path $dir_script/..
 
 
-if [ ! -d $DIR_BIN ]
+if [ ! -d $C3QO_DIR_C3QO ]
 then
-    echo "Failed to run test: c3qo build directory does not exist [dir=$DIR_BIN]"
+    echo "Failed to run test: c3qo build directory does not exist [dir=$C3QO_DIR_C3QO]"
     exit 1
 fi
 
 # Run the client
-$DIR_BIN/c3qo -f $DIR_CONFIG/client_us_nb.txt &
+$C3QO_DIR_C3QO/c3qo -f $C3QO_DIR_INT/client_us_nb.txt &
 
 # Run the server
-$DIR_BIN/c3qo -f $DIR_CONFIG/server_us_nb.txt &
+$C3QO_DIR_C3QO/c3qo -f $C3QO_DIR_INT/server_us_nb.txt &
 
 sleep 1
 
