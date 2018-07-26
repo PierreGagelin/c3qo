@@ -1,9 +1,9 @@
 
 
-#ifdef C3QO_PROTOBUF
-
 // Project headers
 #include "c3qo/manager.hpp"
+
+#ifdef C3QO_PROTOBUF
 
 // Protobuf sources
 #include "block.pb.h"
