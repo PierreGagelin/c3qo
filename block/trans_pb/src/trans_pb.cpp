@@ -1,16 +1,9 @@
 
-#include "block/trans_pb.hpp"
 
 #ifdef C3QO_PROTOBUF
 
-#include <cerrno>
-
 // Project headers
-#include "block/hello.hpp"
-#include "block/zmq_pair.hpp"
 #include "c3qo/manager.hpp"
-#include "utils/logger.hpp"
-#include "utils/socket.hpp"
 
 // Protobuf sources
 #include "block.pb.h"

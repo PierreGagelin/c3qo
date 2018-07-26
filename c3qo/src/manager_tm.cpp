@@ -5,12 +5,8 @@
 //        Is meant to be statically used
 //
 
-// C++ library headers
-#include <cstdlib> // NULL, abs
-
 // Project headers
-#include "c3qo/manager.hpp"
-#include "utils/logger.hpp"
+#include "c3qo/manager_tm.hpp"
 
 //
 // @brief Add or replace an entry in the timer list

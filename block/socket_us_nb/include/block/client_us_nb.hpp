@@ -1,9 +1,6 @@
 #ifndef BLOCK_CLIENT_US_NB_HPP
 #define BLOCK_CLIENT_US_NB_HPP
 
-// C++ library headers
-#include <cstdlib> // size_t
-
 // Project headers
 #include "c3qo/block.hpp"
 

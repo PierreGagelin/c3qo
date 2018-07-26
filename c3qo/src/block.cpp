@@ -2,8 +2,6 @@
 
 #include "c3qo/block.hpp"
 
-#include <cstring> // strcmp
-
 extern struct bk_if hello_if;
 extern struct bk_if client_us_nb_if;
 extern struct bk_if server_us_nb_if;

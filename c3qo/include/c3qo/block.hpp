@@ -1,8 +1,9 @@
 #ifndef C3QO_BLOCK_HPP
 #define C3QO_BLOCK_HPP
 
-// C++ library headers
-#include <cstdlib> // size_t
+// Project headers
+#include "utils/logger.hpp"
+#include "utils/socket.hpp"
 
 struct bk_if *get_bk_if(const char *b);
 

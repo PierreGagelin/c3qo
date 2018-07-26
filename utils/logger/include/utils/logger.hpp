@@ -1,13 +1,8 @@
 #ifndef C3QO_LOGGER_HPP
 #define C3QO_LOGGER_HPP
 
-// System library headers
-extern "C" {
-#include <syslog.h> // syslog
-}
-
-// C++ library headers
-#include <cstdio>
+// Project headers
+#include "utils/include.hpp"
 
 // Open and close connection to syslog
 #define LOGGER_OPEN(name) openlog(name, 0, 0);
@@ -106,7 +101,6 @@ extern enum logger_level logger_level;
 //          - free space used by msg as it's useless (=8KB at the moment)
 //          - does not trigger compilation -Werror (mainly unused variables)
 //
-#include <tuple>
 
 #define LOGGER_EMERG(msg, ...)                                            \
     (void)std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value; \

@@ -1,18 +1,7 @@
 
 
-// C++ library headers
-#include <cerrno>
-#include <cstdlib>
-#include <cstring>
-
-// System library headers
-extern "C" {
-#include <unistd.h> // getopt
-}
-
 // Project headers
 #include "c3qo/manager.hpp"
-#include "utils/logger.hpp"
 
 extern char *optarg; // Comes with getopt
 

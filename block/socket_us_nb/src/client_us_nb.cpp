@@ -6,23 +6,8 @@
 // @note us_asnb stand for unix stream non-block
 //
 
-// C++ library headers
-#include <cstdio>  // snprintf
-#include <cstring> // memset
-
-// System library headers
-extern "C" {
-#include <unistd.h>     // close
-#include <sys/types.h>  // getsockopt
-#include <sys/un.h>     // sockaddr_un
-#include <sys/socket.h> // socket, getsockopt
-}
-
 // Project headers
-#include "block/client_us_nb.hpp"
 #include "c3qo/manager.hpp"
-#include "utils/logger.hpp"
-#include "utils/socket.hpp"
 
 // One function uses the other: need definition
 static void client_us_nb_connect(struct client_us_nb_ctx *ctx);

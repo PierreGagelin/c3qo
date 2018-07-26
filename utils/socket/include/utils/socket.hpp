@@ -1,12 +1,8 @@
 #ifndef C3QO_SOCKET_HPP
 #define C3QO_SOCKET_HPP
 
-// System library headers
-extern "C" {
-#include <sys/types.h>  // sockaddr, socklen_t
-#include <sys/socket.h> // sockaddr, socklen_t
-#include <zmq.h>        // zmq_*
-}
+// Project headers
+#include "utils/include.hpp"
 
 //
 // @struct c3qo_zmq_msg

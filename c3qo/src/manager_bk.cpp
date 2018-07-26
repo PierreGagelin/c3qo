@@ -1,14 +1,7 @@
 
 
-// C++ library headers
-#include <cerrno>  // errno
-#include <cstdio>  // fopen, fgets, sscanf
-#include <cstring> // memset, strerror
-
 // Project headers
-#include "c3qo/block.hpp"
 #include "c3qo/manager_bk.hpp"
-#include "utils/logger.hpp"
 
 //
 // @brief Convert flow type into a string

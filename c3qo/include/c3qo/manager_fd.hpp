@@ -1,13 +1,9 @@
 #ifndef C3QO_MANAGER_FD_HPP
 #define C3QO_MANAGER_FD_HPP
 
-// C++ library headers
-#include <vector>
-
-// System library headers
-
-// ZeroMQ header
-#include <zmq.h>
+// Project headers
+#include "utils/logger.hpp"
+#include "utils/socket.hpp"
 
 // Routine to call when socket or file descriptor is ready
 struct fd_call

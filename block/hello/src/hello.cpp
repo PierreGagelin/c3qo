@@ -1,12 +1,7 @@
 
 
-// C++ library headers
-#include <cstring> // strnlen
-
 // Project headers
-#include "block/hello.hpp"
 #include "c3qo/manager.hpp"
-#include "utils/logger.hpp"
 
 // Managers shall be linked
 extern struct manager *m;

@@ -1,9 +1,8 @@
 #ifndef C3QO_MANAGER_TM_HPP
 #define C3QO_MANAGER_TM_HPP
 
-// C++ library headers
-#include <forward_list> // forward_list container
-#include <ctime>        // struct timespec, clockid_t, clock_get(res/time)
+// Project headers
+#include "utils/logger.hpp"
 
 #define NSEC_MAX (1000 * 1000 * 1000) // Maximum number of nsec + 1
 

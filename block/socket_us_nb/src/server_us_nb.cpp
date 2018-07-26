@@ -6,23 +6,8 @@
 // @note us_asnb stand for unix stream non-block
 //
 
-// C++ library headers
-#include <cstdio>  // snprintf
-#include <cstring> // memset
-
-// System library headers
-extern "C" {
-#include <unistd.h>     // close, unlink
-#include <sys/types.h>  // listen
-#include <sys/un.h>     // sockaddr_un
-#include <sys/socket.h> // socket, listen
-}
-
 // Project headers
-#include "block/server_us_nb.hpp"
 #include "c3qo/manager.hpp"
-#include "utils/logger.hpp"
-#include "utils/socket.hpp"
 
 #define SOCKET_NAME "/tmp/server_us_nb"
 #define SOCKET_READ_SIZE 256

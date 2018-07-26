@@ -1,13 +1,5 @@
 
 
-// C++ library headers
-#include <cerrno>
-#include <cmath>
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
-#include <vector>
-
 // Project headers
 #include "utils/logger.hpp"
 

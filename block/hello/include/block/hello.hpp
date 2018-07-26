@@ -1,9 +1,6 @@
 #ifndef BLOCK_HELLO_HPP
 #define BLOCK_HELLO_HPP
 
-// C++ library headers
-#include <cstdlib> // size_t
-
 // Project headers
 #include "c3qo/block.hpp"
 

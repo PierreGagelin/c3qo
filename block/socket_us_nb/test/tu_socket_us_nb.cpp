@@ -3,11 +3,7 @@
 //
 
 // Project libraries
-#include "block/client_us_nb.hpp"
-#include "block/server_us_nb.hpp"
-#include "c3qo/block.hpp"
 #include "c3qo/manager.hpp"
-#include "utils/logger.hpp"
 
 // Gtest library
 #include "gtest/gtest.h"

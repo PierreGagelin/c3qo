@@ -1,14 +1,5 @@
 
 
-// C++ library headers
-#include <cstdlib> // NULL
-#include <cstring> // memcpy
-
-// System library headers
-extern "C" {
-#include <unistd.h> // getopt
-}
-
 // Project headers
 #include "utils/logger.hpp"
 #include "utils/socket.hpp"

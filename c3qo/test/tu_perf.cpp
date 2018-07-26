@@ -2,13 +2,8 @@
 // @brief Test file for the block manager
 //
 
-// C++ library headers
-#include <string> // stoul
-
 // Project headers
-#include "c3qo/block.hpp"
 #include "c3qo/manager.hpp"
-#include "utils/logger.hpp"
 
 // Gtest library
 #include "gtest/gtest.h"

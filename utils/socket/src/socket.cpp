@@ -2,18 +2,6 @@
 // @brief API to manage socket
 //
 
-// C++ library headers
-#include <cstdlib> // free
-#include <cerrno>  // errno
-#include <cstring> // strerror
-#include <new>
-
-// System library headers
-extern "C" {
-#include <fcntl.h> // fnctl
-#include <unistd.h>
-}
-
 // Project headers
 #include "utils/socket.hpp"
 #include "utils/logger.hpp"

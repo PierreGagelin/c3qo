@@ -1,13 +1,14 @@
 #ifndef C3QO_MANAGER_BK_HPP
 #define C3QO_MANAGER_BK_HPP
 
-// C++ library headers
-#include <cstdlib>       // size_t, strtoul
-#include <unordered_map> // unordered_map container
-#include <vector>        // vector
-
 // Project headers
-#include "c3qo/block.hpp" // struct bk_if, enum bk_type, enum bk_state
+#include "block/hello.hpp"
+#include "block/client_us_nb.hpp"
+#include "block/server_us_nb.hpp"
+#include "block/zmq_pair.hpp"
+#include "block/project_euler.hpp"
+#include "block/trans_pb.hpp"
+#include "c3qo/block.hpp"
 
 #define MAX_NAME 32u
 

@@ -1,22 +1,7 @@
 
-// System library headers
-extern "C" {
-#include <zmq.h> // zmq_*
-}
-
-// C++ library headers
-#include <cerrno>  // errno
-#include <cstdio>  // sscanf
-#include <cstdlib> // size_t, NULL
-#include <cstring> // strerror
 
 // Project headers
-#include "block/hello.hpp"
-#include "block/trans_pb.hpp"
-#include "block/zmq_pair.hpp"
 #include "c3qo/manager.hpp"
-#include "utils/logger.hpp"
-#include "utils/socket.hpp"
 
 // Managers shall be linked
 extern struct manager *m;

@@ -9,14 +9,8 @@
 // Is meant to be a static management of every fd of the process
 //
 
-// C++ library headers
-#include <cstdlib> // NULL
-#include <cstring> // memset, strerror
-#include <cerrno>  // errno
-
 // Project headers
-#include "c3qo/manager.hpp"
-#include "utils/logger.hpp"
+#include "c3qo/manager_fd.hpp"
 
 //
 // @brief Find index of an entry

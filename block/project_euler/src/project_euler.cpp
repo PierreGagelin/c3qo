@@ -4,13 +4,8 @@
 // https://projecteuler.net/
 //
 
-// C++ library headers
-#include <cstring>
-
 // Project headers
-#include "block/project_euler.hpp"
 #include "c3qo/manager.hpp"
-#include "utils/logger.hpp"
 
 #include "problem.hpp"
 
