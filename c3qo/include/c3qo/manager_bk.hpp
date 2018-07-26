@@ -2,7 +2,7 @@
 #define C3QO_MANAGER_BK_HPP
 
 // C++ library headers
-#include <cstdlib>       // size_t, malloc, free, strtoul
+#include <cstdlib>       // size_t, strtoul
 #include <unordered_map> // unordered_map container
 #include <vector>        // vector
 

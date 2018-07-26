@@ -108,11 +108,11 @@ static void *zmq_pair_init(int bk_id)
     struct zmq_pair_ctx *ctx;
 
     // Create a block context
-    ctx = (struct zmq_pair_ctx *)malloc(sizeof(*ctx));
-    if (ctx == NULL)
+    ctx = new(std::nothrow) struct zmq_pair_ctx;
+    if (ctx == nullptr)
     {
-        LOGGER_ERR("Failed to initialize block: %s [bk_id=%d ; errno=%d]", strerror(errno), bk_id, errno);
-        return NULL;
+        LOGGER_ERR("Failed to initialize block: not enough memory [bk_id=%d]", bk_id);
+        return ctx;
     }
     ctx->bk_id = bk_id;
 
@@ -294,7 +294,7 @@ static void zmq_pair_stop(void *vctx)
 
     LOGGER_INFO("Stop block ZMQ Pair [bk_id=%d]", ctx->bk_id);
 
-    free(ctx);
+    delete ctx;
 }
 
 //

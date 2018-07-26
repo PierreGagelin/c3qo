@@ -22,7 +22,7 @@ static void *trans_pb_init(int bk_id)
 {
     struct trans_pb_ctx *ctx;
 
-    ctx = (struct trans_pb_ctx *)malloc(sizeof(*ctx));
+    ctx = new(std::nothrow) struct trans_pb_ctx;
     if (ctx == nullptr)
     {
         LOGGER_ERR("Failed to initialize block: could not reserve memory for the context [bk_id=%d]", bk_id);
@@ -45,8 +45,7 @@ static void trans_pb_stop(void *vctx)
     }
     ctx = (struct trans_pb_ctx *)vctx;
 
-    // Free the context structure
-    free(ctx);
+    delete ctx;
 }
 
 static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, class pb_msg_block &msg_bk) noexcept
@@ -56,7 +55,7 @@ static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, class pb_msg_block 
 
     // Fill the topic
     msg_zmq.topic_len = strlen(topic);
-    msg_zmq.topic = static_cast<char *>(malloc(msg_zmq.topic_len));
+    msg_zmq.topic = new(std::nothrow) char[msg_zmq.topic_len];
     if (msg_zmq.topic == nullptr)
     {
         LOGGER_ERR("Failed to serialize message: %s [errno=%d]", strerror(errno), errno);
@@ -66,11 +65,11 @@ static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, class pb_msg_block 
 
     // Fill the data
     msg_zmq.data_len = msg_bk.ByteSizeLong();
-    msg_zmq.data = static_cast<char *>(malloc(msg_zmq.data_len));
+    msg_zmq.data = new(std::nothrow) char[msg_zmq.data_len];
     if (msg_zmq.data == nullptr)
     {
         LOGGER_ERR("Failed to serialize message: %s [errno=%d]", strerror(errno), errno);
-        free(msg_zmq.topic);
+        delete msg_zmq.topic;
         return;
     }
     ok = msg_bk.SerializeToArray(msg_zmq.data, msg_zmq.data_len);

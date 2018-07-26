@@ -217,8 +217,8 @@ static void *server_us_nb_init(int bk_id)
 {
     struct server_us_nb_ctx *ctx;
 
-    ctx = (struct server_us_nb_ctx *)malloc(sizeof(*ctx));
-    if (ctx == NULL)
+    ctx = new(std::nothrow) struct server_us_nb_ctx;
+    if (ctx == nullptr)
     {
         LOGGER_ERR("Failed to initialize block: could not reserve memory for the context [bk_id=%d]", bk_id);
         return ctx;
@@ -355,8 +355,7 @@ static void server_us_nb_stop(void *vctx)
     // Remove UNIX socket
     unlink(SOCKET_NAME);
 
-    // Free the context structure
-    free(ctx);
+    delete ctx;
 }
 
 //

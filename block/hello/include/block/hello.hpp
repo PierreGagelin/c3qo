@@ -2,7 +2,7 @@
 #define BLOCK_HELLO_HPP
 
 // C++ library headers
-#include <cstdlib> // malloc, size_t
+#include <cstdlib> // size_t
 
 // Project headers
 #include "c3qo/block.hpp"

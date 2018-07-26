@@ -3,9 +3,10 @@
 //
 
 // C++ library headers
-#include <cstdlib> // malloc
+#include <cstdlib> // free
 #include <cerrno>  // errno
 #include <cstring> // strerror
+#include <new>
 
 // System library headers
 extern "C" {
@@ -222,7 +223,7 @@ bool socket_zmq_read(void *socket, char **data, size_t *len, int flags)
 
     // Copy the message and add a terminal null byte
     size = zmq_msg_size(&part) + 1;
-    msg = (char *)malloc(size);
+    msg = new(std::nothrow) char[size];
     if (msg == NULL)
     {
         LOGGER_ERR("Failed to receive data from ZMQ socket: %s [errno=%d]", strerror(errno), errno);

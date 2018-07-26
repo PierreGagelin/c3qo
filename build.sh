@@ -141,7 +141,7 @@ function action_lcov
     lcov --directory $C3QO_DIR_BUILD --add-tracefile $file_b --add-tracefile $file_r --output-file $file_t
 
     # Extract only folders after current directory
-    lcov --extract $file_t "`pwd`/*" --output-file $file_t
+    lcov --extract $file_t "$C3QO_DIR_SOURCE/*" --output-file $file_t
 
     # Generate an index.html file into $C3QO_DIR_LCOV with results
     genhtml --output-directory $C3QO_DIR_LCOV $file_t

@@ -2,7 +2,7 @@
 #define BLOCK_CLIENT_US_NB_HPP
 
 // C++ library headers
-#include <cstdlib> // malloc, size_t
+#include <cstdlib> // size_t
 
 // Project headers
 #include "c3qo/block.hpp"

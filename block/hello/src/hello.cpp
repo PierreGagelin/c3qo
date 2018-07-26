@@ -1,8 +1,7 @@
 
 
 // C++ library headers
-#include <cstdlib> // size_t, malloc
-#include <cstring> // memset, strnlen
+#include <cstring> // strnlen
 
 // Project headers
 #include "block/hello.hpp"
@@ -16,8 +15,8 @@ static void *hello_init(int bk_id)
 {
     struct hello_ctx *ctx;
 
-    ctx = (struct hello_ctx *)malloc(sizeof(*ctx));
-    if (ctx == NULL)
+    ctx = new(std::nothrow) struct hello_ctx;
+    if (ctx == nullptr)
     {
         LOGGER_ERR("Failed to initialize block: could not reserve memory for the context [bk_id=%d]", bk_id);
         return ctx;
@@ -77,8 +76,7 @@ static void hello_stop(void *vctx)
     }
     ctx = (struct hello_ctx *)vctx;
 
-    // Free the context structure
-    free(ctx);
+    delete ctx;
 }
 
 static int hello_rx(void *vctx, void *vdata)

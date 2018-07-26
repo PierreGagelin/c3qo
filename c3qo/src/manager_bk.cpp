@@ -417,7 +417,7 @@ void manager_bk::block_del(int id)
     const auto &it = bk_map_.find(id);
     if (it == bk_map_.end())
     {
-        LOGGER_WARNING("Cannot delete block: unknown block ID [bk_id=%d]", id);
+        // Block does not exist, nothing to do
         return;
     }
 
