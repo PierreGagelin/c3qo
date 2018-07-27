@@ -16,16 +16,16 @@ bool manager_tm::add(struct timer &tm)
     struct timespec t;
 
     // Verify user input
-    if (tm.callback == NULL)
+    if (tm.callback == nullptr)
     {
-        LOGGER_WARNING("Cannot add timer: NULL callback [tid=%d ; sec=%ld ; nsec=%ld]", tm.tid, (long)tm.time.tv_sec, (long)tm.time.tv_nsec);
+        LOGGER_WARNING("Cannot add timer: nullptr callback [tid=%d ; sec=%ld ; nsec=%ld]", tm.tid, static_cast<long>(tm.time.tv_sec), static_cast<long>(tm.time.tv_nsec));
         return false;
     }
 
     // Convert relative time to absolute time
     if (clock_gettime(CLOCK_REALTIME, &t) == -1)
     {
-        LOGGER_ERR("Failed to add timer: clock_gettime failed [tid=%d ; sec=%ld ; nsec=%ld]", tm.tid, (long)tm.time.tv_sec, (long)tm.time.tv_nsec);
+        LOGGER_ERR("Failed to add timer: clock_gettime failed [tid=%d ; sec=%ld ; nsec=%ld]", tm.tid, static_cast<long>(tm.time.tv_sec), static_cast<long>(tm.time.tv_nsec));
         return false;
     }
     tm.time.tv_sec += t.tv_sec;
@@ -65,7 +65,7 @@ void manager_tm::check_exp()
 
     if (clock_gettime(CLOCK_REALTIME, &time) == -1)
     {
-        LOGGER_ERR("Failed to check expiration: clock_gettime failed [sec=%ld ; nsec=%ld]", (long)time.tv_sec, (long)time.tv_nsec);
+        LOGGER_ERR("Failed to check expiration: clock_gettime failed [sec=%ld ; nsec=%ld]", static_cast<long>(time.tv_sec), static_cast<long>(time.tv_nsec));
         return;
     }
 

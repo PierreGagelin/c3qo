@@ -38,7 +38,7 @@ struct bk_if *get_bk_if(const char *b)
     {
         return &trans_pb_if;
     }
-    return NULL;
+    return nullptr;
 }
 
 //

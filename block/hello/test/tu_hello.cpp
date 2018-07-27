@@ -50,25 +50,25 @@ TEST_F(tu_hello, hello)
 
     // Initialize, configure and start the block
     ctx = hello_if.init(1);
-    ASSERT_NE(ctx, (void *)NULL);
+    ASSERT_NE(ctx, nullptr);
     hello_if.conf(ctx, conf);
     hello_if.start(ctx);
 
     // Verify binding (block hello only increment port output)
     for (int i = 0; i < 8; i++)
     {
-        EXPECT_EQ(hello_if.rx(ctx, NULL), i);
+        EXPECT_EQ(hello_if.rx(ctx, nullptr), i);
     }
     for (int i = 0; i < 8; i++)
     {
-        EXPECT_EQ(hello_if.tx(ctx, NULL), i);
+        EXPECT_EQ(hello_if.tx(ctx, nullptr), i);
     }
 
     // Do not forward notification
-    EXPECT_EQ(hello_if.ctrl(ctx, NULL), 0);
+    EXPECT_EQ(hello_if.ctrl(ctx, nullptr), 0);
 
     // Block should count 16 data (2 characters)
-    EXPECT_EQ(hello_if.get_stats(ctx, stats, sizeof(stats)), (size_t)2);
+    EXPECT_EQ(hello_if.get_stats(ctx, stats, sizeof(stats)), 2u);
     count = atoi(stats);
     EXPECT_EQ(count, 16);
 
@@ -89,26 +89,26 @@ TEST_F(tu_hello, error)
     logger_set_level(LOGGER_LEVEL_CRIT);
 
     ctx = hello_if.init(1);
-    ASSERT_NE(ctx, (void *)NULL);
+    ASSERT_NE(ctx, nullptr);
 
-    hello_if.conf(NULL, conf);
-    hello_if.conf(ctx, NULL);
+    hello_if.conf(nullptr, conf);
+    hello_if.conf(ctx, nullptr);
 
-    hello_if.start(NULL);
+    hello_if.start(nullptr);
 
     // Flow without context should return 0 to drop
-    EXPECT_EQ(hello_if.rx(NULL, NULL), 0);
-    EXPECT_EQ(hello_if.tx(NULL, NULL), 0);
-    EXPECT_EQ(hello_if.ctrl(NULL, NULL), 0);
+    EXPECT_EQ(hello_if.rx(nullptr, nullptr), 0);
+    EXPECT_EQ(hello_if.tx(nullptr, nullptr), 0);
+    EXPECT_EQ(hello_if.ctrl(nullptr, nullptr), 0);
 
     // Get statistics without buffer or context
-    EXPECT_EQ(hello_if.get_stats(NULL, stats, 12), (size_t)0);
-    EXPECT_EQ(hello_if.get_stats(ctx, NULL, 12), (size_t)0);
-    EXPECT_EQ(hello_if.get_stats(ctx, stats, 0), (size_t)0);
+    EXPECT_EQ(hello_if.get_stats(nullptr, stats, 12), 0u);
+    EXPECT_EQ(hello_if.get_stats(ctx, nullptr, 12), 0u);
+    EXPECT_EQ(hello_if.get_stats(ctx, stats, 0), 0u);
 
     // Get statistics with a short buffer
-    EXPECT_EQ(hello_if.get_stats(ctx, stats, 1), (size_t)0);
+    EXPECT_EQ(hello_if.get_stats(ctx, stats, 1), 0u);
 
-    hello_if.stop(NULL);
+    hello_if.stop(nullptr);
     hello_if.stop(ctx);
 }

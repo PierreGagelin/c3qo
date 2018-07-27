@@ -12,7 +12,7 @@ void solve_problem_1(char *param)
 
     // Retrieve argument
     errno = 0;
-    max = strtoul(param, NULL, 10);
+    max = strtoul(param, nullptr, 10);
     if (errno != 0)
     {
         LOGGER_ERR("Failed to parse configuration line: first argument has to be an integer");

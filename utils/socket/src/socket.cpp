@@ -196,7 +196,7 @@ bool socket_zmq_read(void *socket, char **data, size_t *len, int flags)
     bool more;
 
     // Initialization
-    *data = NULL;
+    *data = nullptr;
     *len = 0;
 
     // Receive a message
@@ -212,7 +212,7 @@ bool socket_zmq_read(void *socket, char **data, size_t *len, int flags)
     // Copy the message and add a terminal null byte
     size = zmq_msg_size(&part) + 1;
     msg = new(std::nothrow) char[size];
-    if (msg == NULL)
+    if (msg == nullptr)
     {
         LOGGER_ERR("Failed to receive data from ZMQ socket: %s [errno=%d]", strerror(errno), errno);
         zmq_msg_close(&part);
@@ -270,7 +270,7 @@ void socket_zmq_flush(void *socket)
         size_t len;
 
         more = socket_zmq_read(socket, &data, &len);
-        if (data != NULL)
+        if (data != nullptr)
         {
             free(data);
         }
@@ -292,7 +292,7 @@ int socket_zmq_get_event(void *monitor)
 
     // Retrieve event in the first message part
     more = socket_zmq_read(monitor, (char **)&data, &len, 0);
-    if (data != NULL)
+    if (data != nullptr)
     {
         event = *(uint16_t *)(data);
         free(data);
@@ -306,7 +306,7 @@ int socket_zmq_get_event(void *monitor)
     if (more == true)
     {
         more = socket_zmq_read(monitor, (char **)&data, &len, 0);
-        if (data != NULL)
+        if (data != nullptr)
         {
             free(data);
         }

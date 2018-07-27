@@ -14,7 +14,7 @@ extern struct manager *m;
 std::vector<std::string> zozo_l_asticot;
 void tm_callback(void *arg)
 {
-    zozo_l_asticot.push_back(std::string((char *)arg));
+    zozo_l_asticot.push_back(std::string(static_cast<const char *>(arg)));
 }
 
 // Derive from the manager_tm class
@@ -73,7 +73,7 @@ TEST_F(tu_manager_tm, manager_tm_expiration)
         // Sleep 10 ms
         sleep.tv_sec = 0;
         sleep.tv_usec = 10 * 1000;
-        EXPECT_EQ(select(0, NULL, NULL, NULL, &sleep), 0);
+        EXPECT_EQ(select(0, nullptr, nullptr, nullptr, &sleep), 0);
 
         // Check timer expiration
         check_exp();
@@ -142,7 +142,7 @@ TEST_F(tu_manager_tm, manager_tm_order)
         // Sleep 20 ms
         sleep.tv_sec = 0;
         sleep.tv_usec = 20 * 1000;
-        EXPECT_EQ(select(0, NULL, NULL, NULL, &sleep), 0);
+        EXPECT_EQ(select(0, nullptr, nullptr, nullptr, &sleep), 0);
 
         // Check timer expiration
         ASSERT_NE(clock_gettime(CLOCK_REALTIME, &time_cur), -1);
@@ -204,7 +204,7 @@ TEST_F(tu_manager_tm, manager_tm_id)
         // Sleep 10 ms
         sleep.tv_sec = 0;
         sleep.tv_usec = 10 * 1000;
-        EXPECT_EQ(select(0, NULL, NULL, NULL, &sleep), 0);
+        EXPECT_EQ(select(0, nullptr, nullptr, nullptr, &sleep), 0);
 
         // Check timer expiration
         check_exp();

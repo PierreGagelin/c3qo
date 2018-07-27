@@ -34,12 +34,12 @@ static void hello_conf(void *vctx, char *conf)
     size_t len;
 
     // Verify input
-    if ((vctx == NULL) || (conf == NULL))
+    if ((vctx == nullptr) || (conf == nullptr))
     {
-        LOGGER_ERR("Failed to configure block: NULL context or conf");
+        LOGGER_ERR("Failed to configure block: nullptr context or conf");
         return;
     }
-    ctx = (struct hello_ctx *)vctx;
+    ctx = static_cast<struct hello_ctx *>(vctx);
     len = strnlen(conf, sizeof(ctx->name));
     if (len == sizeof(ctx->name))
     {
@@ -64,12 +64,12 @@ static void hello_stop(void *vctx)
 {
     struct hello_ctx *ctx;
 
-    if (vctx == NULL)
+    if (vctx == nullptr)
     {
-        LOGGER_ERR("Failed to stop block: NULL context");
+        LOGGER_ERR("Failed to stop block: nullptr context");
         return;
     }
-    ctx = (struct hello_ctx *)vctx;
+    ctx = static_cast<struct hello_ctx *>(vctx);
 
     delete ctx;
 }
@@ -79,12 +79,12 @@ static int hello_rx(void *vctx, void *vdata)
     struct hello_ctx *ctx;
     int ret;
 
-    if (vctx == NULL)
+    if (vctx == nullptr)
     {
-        LOGGER_ERR("Failed to process RX data: NULL context");
+        LOGGER_ERR("Failed to process RX data: nullptr context");
         return 0;
     }
-    ctx = (struct hello_ctx *)vctx;
+    ctx = static_cast<struct hello_ctx *>(vctx);
 
     LOGGER_DEBUG("Process RX data [bk_id=%d ; data=%p]", ctx->bk_id, vdata);
 
@@ -99,12 +99,12 @@ static int hello_tx(void *vctx, void *vdata)
     struct hello_ctx *ctx;
     int ret;
 
-    if (vctx == NULL)
+    if (vctx == nullptr)
     {
-        LOGGER_ERR("Failed to process TX data: NULL context");
+        LOGGER_ERR("Failed to process TX data: nullptr context");
         return 0;
     }
-    ctx = (struct hello_ctx *)vctx;
+    ctx = static_cast<struct hello_ctx *>(vctx);
 
     LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", ctx->bk_id, vdata);
 
@@ -118,12 +118,12 @@ static int hello_ctrl(void *vctx, void *vnotif)
 {
     struct hello_ctx *ctx;
 
-    if (vctx == NULL)
+    if (vctx == nullptr)
     {
-        LOGGER_ERR("Failed to notify block: NULL context");
+        LOGGER_ERR("Failed to notify block: nullptr context");
         return 0;
     }
-    ctx = (struct hello_ctx *)vctx;
+    ctx = static_cast<struct hello_ctx *>(vctx);
 
     // Send a message
     m->bk.process_tx(ctx->bk_id, ctx->count % 8, vnotif);
@@ -138,29 +138,29 @@ static size_t hello_get_stats(void *vctx, char *buf, size_t len)
     size_t written;
     struct hello_ctx *ctx;
 
-    if ((vctx == NULL) || (buf == NULL) || (len == 0))
+    if ((vctx == nullptr) || (buf == nullptr) || (len == 0))
     {
-        LOGGER_ERR("Failed to get block statistics: NULL context or NULL buffer");
+        LOGGER_ERR("Failed to get block statistics: nullptr context or nullptr buffer");
         return 0;
     }
-    ctx = (struct hello_ctx *)vctx;
+    ctx = static_cast<struct hello_ctx *>(vctx);
 
     LOGGER_DEBUG("Get block statistics [ctx=%p ; buf=%p ; len=%lu]", ctx, buf, len);
 
-    written = 0;
+    written = 0u;
     ret = snprintf(buf, len, "%d", ctx->count);
     if (ret < 0)
     {
         LOGGER_ERR("Failed snprintf [ctx=%p ; buf=%p ; len=%lu]", ctx, buf, len);
         return 0;
     }
-    else if ((size_t)ret >= len)
+    else if (static_cast<size_t>(ret) >= len)
     {
         return written;
     }
     else
     {
-        written = (size_t)ret;
+        written = static_cast<size_t>(ret);
     }
 
     return written;
@@ -172,7 +172,7 @@ static size_t hello_get_stats(void *vctx, char *buf, size_t len)
 struct bk_if hello_if = {
     .init = hello_init,
     .conf = hello_conf,
-    .bind = NULL,
+    .bind = nullptr,
     .start = hello_start,
     .stop = hello_stop,
 

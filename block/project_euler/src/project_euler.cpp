@@ -46,13 +46,13 @@ static void project_euler_conf(void *vctx, char *conf)
 
     // Retrieve problem number
     token = strtok(conf, " ");
-    if (token == NULL)
+    if (token == nullptr)
     {
         LOGGER_ERR("Failed to parse configuration line: no problem index found");
         return;
     }
     errno = 0;
-    index = (int)strtol(token, NULL, 10);
+    index = static_cast<int>(strtol(token, nullptr, 10));
     if (errno != 0)
     {
         LOGGER_ERR("Failed to parse configuration line: first argument has to be an integer");
@@ -60,7 +60,7 @@ static void project_euler_conf(void *vctx, char *conf)
     }
 
     // Retrieve argument (optional)
-    arg = strtok(NULL, "\0");
+    arg = strtok(nullptr, "\0");
 
     solve_problem(index, arg);
 }

@@ -84,7 +84,7 @@ static void server_us_nb_remove(struct server_us_nb_ctx *ctx, int i)
 
     LOGGER_DEBUG("Remove file descriptor from block server_us_nb [fd=%d ; fd_count_old=%d ; fd_count_new=%d]", ctx->fd[i], ctx->fd_count, ctx->fd_count - 1);
 
-    m->fd.remove(ctx->fd[i], NULL, true);
+    m->fd.remove(ctx->fd[i], nullptr, true);
     close(ctx->fd[i]);
     ctx->fd[i] = -1;
     ctx->fd_count--;
@@ -124,7 +124,7 @@ static void server_us_nb_flush_fd(struct server_us_nb_ctx *ctx, int fd)
             LOGGER_DEBUG("Received data on socket [bk_id=%d ; fd=%d ; buf=%p ; size=%zd]", ctx->bk_id, fd, buf, ret);
 
             ctx->rx_pkt_count += 1;
-            ctx->rx_pkt_bytes += (size_t)ret;
+            ctx->rx_pkt_bytes += static_cast<size_t>(ret);
 
             // For the moment this is OK because the data flow is synchronous
             // Need to fix it if asynchronous data flow arrives
@@ -144,12 +144,12 @@ static void server_us_nb_handler(void *vctx, int fd, void *socket)
 
     (void) socket;
 
-    if (vctx == NULL)
+    if (vctx == nullptr)
     {
         LOGGER_ERR("Failed to handle file descriptor callback [fd=%d]", fd);
         return;
     }
-    ctx = (struct server_us_nb_ctx *)vctx;
+    ctx = static_cast<struct server_us_nb_ctx *>(vctx);
 
     LOGGER_DEBUG("Handle file descriptor callback [ctx=%p ; fd=%d]", ctx, fd);
 
@@ -177,7 +177,7 @@ static void server_us_nb_handler(void *vctx, int fd, void *socket)
         }
 
         // Register the fd for event
-        if (m->fd.add(ctx, &server_us_nb_handler, fd_client, NULL, true) == false)
+        if (m->fd.add(ctx, &server_us_nb_handler, fd_client, nullptr, true) == false)
         {
             LOGGER_ERR("Failed to register callback on new client socket [fd=%d ; callback=%p]", fd_client, &server_us_nb_handler);
             server_us_nb_remove_fd(ctx, fd_client);
@@ -235,12 +235,12 @@ static void server_us_nb_bind(void *vctx, int port, int bk_id)
     struct server_us_nb_ctx *ctx;
 
     // Verify input
-    if ((vctx == NULL) || (port != 0))
+    if ((vctx == nullptr) || (port != 0))
     {
-        LOGGER_ERR("Failed to bind block: NULL context or port not in range [port=%d ; range=[0,0]]", port);
+        LOGGER_ERR("Failed to bind block: nullptr context or port not in range [port=%d ; range=[0,0]]", port);
         return;
     }
-    ctx = (struct server_us_nb_ctx *)vctx;
+    ctx = static_cast<struct server_us_nb_ctx *>(vctx);
 
     // Bind to a block
     ctx->bind = bk_id;
@@ -255,12 +255,12 @@ static void server_us_nb_start(void *vctx)
     struct sockaddr_un srv_addr;
     int ret;
 
-    if (vctx == NULL)
+    if (vctx == nullptr)
     {
-        LOGGER_ERR("Failed to start block: NULL context");
+        LOGGER_ERR("Failed to start block: nullptr context");
         return;
     }
-    ctx = (struct server_us_nb_ctx *)vctx;
+    ctx = static_cast<struct server_us_nb_ctx *>(vctx);
 
     // Creation of the server socket
     ctx->fd[0] = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -272,7 +272,7 @@ static void server_us_nb_start(void *vctx)
     }
 
     // Register the file descriptor for reading
-    if (m->fd.add(ctx, &server_us_nb_handler, ctx->fd[0], NULL, true) == false)
+    if (m->fd.add(ctx, &server_us_nb_handler, ctx->fd[0], nullptr, true) == false)
     {
         LOGGER_ERR("Failed to register callback on server socket [fd=%d ; callback=%p]", ctx->fd[0], &server_us_nb_handler);
         server_us_nb_remove_fd(ctx, ctx->fd[0]);
@@ -316,12 +316,12 @@ static void server_us_nb_stop(void *vctx)
     struct server_us_nb_ctx *ctx;
     int i;
 
-    if (vctx == NULL)
+    if (vctx == nullptr)
     {
         LOGGER_ERR("Failed to stop block");
         return;
     }
-    ctx = (struct server_us_nb_ctx *)vctx;
+    ctx = static_cast<struct server_us_nb_ctx *>(vctx);
 
     LOGGER_INFO("Stop block [ctx=%p]", ctx);
 
@@ -357,12 +357,12 @@ static size_t server_us_nb_get_stats(void *vctx, char *buf, size_t len)
     size_t count;
     struct server_us_nb_ctx *ctx;
 
-    if (vctx == NULL)
+    if (vctx == nullptr)
     {
         LOGGER_ERR("Failed to get block statistics");
         return 0;
     }
-    ctx = (struct server_us_nb_ctx *)vctx;
+    ctx = static_cast<struct server_us_nb_ctx *>(vctx);
 
     LOGGER_DEBUG("Get block statistics [ctx=%p ; buf=%p ; len=%lu]", ctx, buf, len);
 
@@ -374,7 +374,7 @@ static size_t server_us_nb_get_stats(void *vctx, char *buf, size_t len)
     }
     else
     {
-        count = (size_t)ret;
+        count = static_cast<size_t>(ret);
     }
 
     if (count > len)
@@ -391,12 +391,12 @@ static int server_us_nb_tx(void *vctx, void *vdata)
 {
     struct server_us_nb_ctx *ctx;
 
-    if (vctx == NULL)
+    if (vctx == nullptr)
     {
-        LOGGER_ERR("Failed to process TX data: NULL context");
+        LOGGER_ERR("Failed to process TX data: nullptr context");
         return 0;
     }
-    ctx = (struct server_us_nb_ctx *)vctx;
+    ctx = static_cast<struct server_us_nb_ctx *>(vctx);
 
     LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", ctx->bk_id, vdata);
 
@@ -411,7 +411,7 @@ static int server_us_nb_tx(void *vctx, void *vdata)
         {
             continue;
         }
-        socket_nb_write(ctx->fd[i], (char *)vdata, SOCKET_READ_SIZE);
+        socket_nb_write(ctx->fd[i], static_cast<const char *>(vdata), SOCKET_READ_SIZE);
     }
 
     // Drop the buffer
@@ -421,14 +421,14 @@ static int server_us_nb_tx(void *vctx, void *vdata)
 // Declare the interface for this block
 struct bk_if server_us_nb_if = {
     .init = server_us_nb_init,
-    .conf = NULL,
+    .conf = nullptr,
     .bind = server_us_nb_bind,
     .start = server_us_nb_start,
     .stop = server_us_nb_stop,
 
     .get_stats = server_us_nb_get_stats,
 
-    .rx = NULL,
+    .rx = nullptr,
     .tx = server_us_nb_tx,
-    .ctrl = NULL,
+    .ctrl = nullptr,
 };

@@ -33,10 +33,10 @@ static void trans_pb_stop(void *vctx)
 
     if (vctx == nullptr)
     {
-        LOGGER_ERR("Failed to stop block: NULL context");
+        LOGGER_ERR("Failed to stop block: nullptr context");
         return;
     }
-    ctx = (struct trans_pb_ctx *)vctx;
+    ctx = static_cast<struct trans_pb_ctx *>(vctx);
 
     delete ctx;
 }
@@ -108,7 +108,7 @@ static int trans_pb_ctrl(void *vctx, void *vnotif)
 
     if ((vctx == nullptr) || (vnotif == nullptr))
     {
-        LOGGER_ERR("trans_pb control failed: NULL argument [ctx=%p ; notif=%p]", vctx, vnotif);
+        LOGGER_ERR("trans_pb control failed: nullptr argument [ctx=%p ; notif=%p]", vctx, vnotif);
         return 0;
     }
     notif = static_cast<struct trans_pb_notif *>(vnotif);

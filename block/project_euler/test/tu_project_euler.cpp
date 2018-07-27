@@ -44,9 +44,9 @@ TEST_F(tu_project_euler, problem_1)
     char conf100[] = "1 100";
     char conf1000[] = "1 1000";
 
-    project_euler_if.conf(NULL, conf10);
-    project_euler_if.conf(NULL, conf100);
-    project_euler_if.conf(NULL, conf1000);
+    project_euler_if.conf(nullptr, conf10);
+    project_euler_if.conf(nullptr, conf100);
+    project_euler_if.conf(nullptr, conf1000);
 }
 
 TEST_F(tu_project_euler, problem_2)
@@ -56,10 +56,10 @@ TEST_F(tu_project_euler, problem_2)
     char conf1000[] = "2 1000";
     char conf4000000[] = "2 4000000";
 
-    project_euler_if.conf(NULL, conf10);
-    project_euler_if.conf(NULL, conf100);
-    project_euler_if.conf(NULL, conf1000);
-    project_euler_if.conf(NULL, conf4000000);
+    project_euler_if.conf(nullptr, conf10);
+    project_euler_if.conf(nullptr, conf100);
+    project_euler_if.conf(nullptr, conf1000);
+    project_euler_if.conf(nullptr, conf4000000);
 }
 
 
@@ -67,7 +67,7 @@ TEST_F(tu_project_euler, problem_3)
 {
     char conf[] = "3 600851475143";
 
-    project_euler_if.conf(NULL, conf);
+    project_euler_if.conf(nullptr, conf);
 }
 
 
@@ -75,5 +75,5 @@ TEST_F(tu_project_euler, problem_51)
 {
     char conf[] = "51 useless";
 
-    project_euler_if.conf(NULL, conf);
+    project_euler_if.conf(nullptr, conf);
 }

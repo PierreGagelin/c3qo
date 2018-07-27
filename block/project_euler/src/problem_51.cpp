@@ -17,7 +17,7 @@ static inline void add_prime(std::vector<uint32_t> &prime_vec)
         bool is_prime = true;
         uint32_t root;
 
-        root = (uint32_t)sqrt((double)prime);
+        root = static_cast<uint32_t>(sqrt((double)prime));
 
         while ((*it <= root) && (it != end))
         {
@@ -53,7 +53,7 @@ static inline void add_prime_digit(std::vector<uint32_t> &prime_vec)
     prime = prime_vec.back();
     for (digit = 1; digit != 10; digit++)
     {
-        power = (uint32_t)pow((double)10, (double)digit);
+        power = static_cast<uint32_t>(pow((double)10, (double)digit));
         if ((prime / power) == 0)
         {
             break;
@@ -66,7 +66,7 @@ static inline void add_prime_digit(std::vector<uint32_t> &prime_vec)
     }
 
     digit++;
-    power = (uint32_t)pow((double)10, (double)digit);
+    power = static_cast<uint32_t>(pow((double)10, (double)digit));
 
     while ((prime_vec.back() / power) == 0)
     {

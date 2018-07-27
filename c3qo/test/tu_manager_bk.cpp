@@ -104,10 +104,10 @@ TEST_F(tu_manager_bk, manager_bk_conf)
         const class bk_info *bi;
 
         bi = block_get(i);
-        ASSERT_NE(bi, (void *)NULL);
+        ASSERT_NE(bi, nullptr);
 
         EXPECT_EQ(bi->id, i);
-        EXPECT_NE(bi->ctx, (void *)NULL);
+        EXPECT_NE(bi->ctx, nullptr);
         EXPECT_EQ(bi->state, STATE_START);
 
         switch (i)
@@ -167,8 +167,8 @@ TEST_F(tu_manager_bk, manager_bk_flow)
     // Retrieve block 1 and block 2
     bk_1 = m->bk.block_get(1);
     bk_2 = m->bk.block_get(2);
-    ASSERT_NE(bk_1, (void *)NULL);
-    ASSERT_NE(bk_2, (void *)NULL);
+    ASSERT_NE(bk_1, nullptr);
+    ASSERT_NE(bk_2, nullptr);
 
     // No data should have gone through blocks
     bk_1->bk->get_stats(bk_1->ctx, stats, sizeof(stats));

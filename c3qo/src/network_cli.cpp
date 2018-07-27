@@ -19,9 +19,9 @@ int main(int argc, char **argv)
     logger_set_level(LOGGER_LEVEL_DEBUG);
 
     // Get specifications from CLI
-    addr = NULL;
-    topic = NULL;
-    payload = NULL;
+    addr = nullptr;
+    topic = nullptr;
+    payload = nullptr;
     while ((opt = getopt(argc, argv, "ha:l:p:t:")) != -1)
     {
         switch (opt)
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
             enum logger_level level;
 
             errno = 0;
-            level = (enum logger_level)strtol(optarg, NULL, 10);
+            level = (enum logger_level)strtol(optarg, nullptr, 10);
             if (errno != 0)
             {
                 LOGGER_ERR("Failed to set log from CLI [level=%s]", optarg);
@@ -70,23 +70,23 @@ int main(int argc, char **argv)
         break;
 
         default:
-            LOGGER_WARNING("Unknown CLI option [opt=%c]", (char)opt);
+            LOGGER_WARNING("Unknown CLI option [opt=%c]", static_cast<char>(opt));
         }
     }
 
     // Verify input
     {
-        if (addr == NULL)
+        if (addr == nullptr)
         {
             LOGGER_DEBUG("No connection address given by CLI, using default [addr=%s]", addr_def);
             addr = addr_def;
         }
-        if (payload == NULL)
+        if (payload == nullptr)
         {
             LOGGER_DEBUG("No configuration line given by CLI, using default [payload=%s]", payload_def);
             payload = payload_def;
         }
-        if (topic == NULL)
+        if (topic == nullptr)
         {
             LOGGER_DEBUG("No configuration topic given by CLI, using default [topic=%s]", topic_def);
             topic = topic_def;
@@ -94,7 +94,7 @@ int main(int argc, char **argv)
     }
 
     void *ctx = zmq_ctx_new();
-    if (ctx == NULL)
+    if (ctx == nullptr)
     {
         LOGGER_ERR("Failed");
         return 1;
@@ -102,7 +102,7 @@ int main(int argc, char **argv)
 
     // Create a client
     void *client = zmq_socket(ctx, ZMQ_PAIR);
-    if (client == NULL)
+    if (client == nullptr)
     {
         LOGGER_ERR("Failed");
         return 1;
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 
     // Create a socket to monitor another one
     void *monitor = zmq_socket(ctx, ZMQ_PAIR);
-    if (monitor == NULL)
+    if (monitor == nullptr)
     {
         LOGGER_ERR("Failed");
         return 1;

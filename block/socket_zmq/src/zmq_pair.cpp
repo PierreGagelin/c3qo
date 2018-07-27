@@ -18,20 +18,20 @@ static void zmq_pair_callback(void *vctx, int fd, void *socket)
     (void)fd;
 
     // Verify input
-    if (vctx == NULL)
+    if (vctx == nullptr)
     {
-        LOGGER_ERR("Failed to execute callback: NULL context [socket=%p]", socket);
+        LOGGER_ERR("Failed to execute callback: nullptr context [socket=%p]", socket);
         return;
     }
-    ctx = (struct zmq_pair_ctx *)vctx;
+    ctx = static_cast<struct zmq_pair_ctx *>(vctx);
     if (socket != ctx->zmq_sock)
     {
         LOGGER_ERR("Failed to execute ZMQ callback: unknown socket [socket=%p ; expected=%p]", socket, ctx->zmq_sock);
         return;
     }
 
-    msg.topic = NULL;
-    msg.data = NULL;
+    msg.topic = nullptr;
+    msg.data = nullptr;
 
     // Get a topic and payload
     more = socket_zmq_read(ctx->zmq_sock, &msg.topic, &msg.topic_len);
@@ -75,11 +75,11 @@ static void zmq_pair_callback(void *vctx, int fd, void *socket)
     }
 
 end:
-    if (msg.topic != NULL)
+    if (msg.topic != nullptr)
     {
         free(msg.topic);
     }
-    if (msg.data != NULL)
+    if (msg.data != nullptr)
     {
         free(msg.data);
     }
@@ -103,21 +103,21 @@ static void *zmq_pair_init(int bk_id)
 
     // Create a ZMQ context
     ctx->zmq_ctx = zmq_ctx_new();
-    if (ctx->zmq_ctx == NULL)
+    if (ctx->zmq_ctx == nullptr)
     {
         LOGGER_ERR("Failed to initialize block: out of memory for ZMQ context [bk_id=%d]", bk_id);
         free(ctx);
-        return NULL;
+        return nullptr;
     }
 
     // Create a ZMQ socket
     ctx->zmq_sock = zmq_socket(ctx->zmq_ctx, ZMQ_PAIR);
-    if (ctx->zmq_sock == NULL)
+    if (ctx->zmq_sock == nullptr)
     {
         LOGGER_ERR("Failed to create ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), bk_id, errno);
         zmq_ctx_term(ctx->zmq_ctx);
         free(ctx);
-        return NULL;
+        return nullptr;
     }
 
     // Default value for the connection
@@ -141,19 +141,19 @@ static void zmq_pair_conf(void *vctx, char *conf)
     int ret;
 
     // Verify input
-    if ((vctx == NULL) || (conf == NULL))
+    if ((vctx == nullptr) || (conf == nullptr))
     {
-        LOGGER_ERR("Failed to configure block: NULL context or conf");
+        LOGGER_ERR("Failed to configure block: nullptr context or conf");
         return;
     }
-    ctx = (struct zmq_pair_ctx *)vctx;
+    ctx = static_cast<struct zmq_pair_ctx *>(vctx);
 
     LOGGER_INFO("Configure block [bk_id=%d ; conf=%s]", ctx->bk_id, conf);
 
     // Retrieve socket type
     {
         pos = strstr(conf, NEEDLE_TYPE);
-        if (pos == NULL)
+        if (pos == nullptr)
         {
             LOGGER_ERR("Failed to configure block: type of socket is required [bk_id=%d ; conf=%s]", ctx->bk_id, conf);
             return;
@@ -191,7 +191,7 @@ static void zmq_pair_conf(void *vctx, char *conf)
     // Retrieve socket address
     {
         pos = strstr(conf, NEEDLE_ADDR);
-        if (pos == NULL)
+        if (pos == nullptr)
         {
             LOGGER_ERR("Failed to configure block: address of socket is required [bk_id=%d ; conf=%s]", ctx->bk_id, conf);
             return;
@@ -221,12 +221,12 @@ static void zmq_pair_start(void *vctx)
     struct zmq_pair_ctx *ctx;
     int ret;
 
-    if (vctx == NULL)
+    if (vctx == nullptr)
     {
-        LOGGER_ERR("Failed to start block: NULL context");
+        LOGGER_ERR("Failed to start block: nullptr context");
         return;
     }
-    ctx = (struct zmq_pair_ctx *)vctx;
+    ctx = static_cast<struct zmq_pair_ctx *>(vctx);
 
     LOGGER_INFO("Start block ZMQ Pair [bk_id=%d]", ctx->bk_id);
 
@@ -264,12 +264,12 @@ static void zmq_pair_stop(void *vctx)
     struct zmq_pair_ctx *ctx;
 
     // Verify input
-    if (vctx == NULL)
+    if (vctx == nullptr)
     {
-        LOGGER_ERR("Failed to stop block: NULL context");
+        LOGGER_ERR("Failed to stop block: nullptr context");
         return;
     }
-    ctx = (struct zmq_pair_ctx *)vctx;
+    ctx = static_cast<struct zmq_pair_ctx *>(vctx);
 
     // Remove the socket's callback
     m->fd.remove(-1, ctx->zmq_sock, true);
@@ -291,13 +291,13 @@ static int zmq_pair_tx(void *vctx, void *vdata)
     struct c3qo_zmq_msg *data;
     bool ok;
 
-    if ((vctx == NULL) || (vdata == NULL))
+    if ((vctx == nullptr) || (vdata == nullptr))
     {
-        LOGGER_ERR("Failed to process buffer: NULL context or data");
+        LOGGER_ERR("Failed to process buffer: nullptr context or data");
         return 0;
     }
-    ctx = (struct zmq_pair_ctx *)vctx;
-    data = (struct c3qo_zmq_msg *)vdata;
+    ctx = static_cast<struct zmq_pair_ctx *>(vctx);
+    data = static_cast<struct c3qo_zmq_msg *>(vdata);
 
     // Send topic and data
     ok = socket_zmq_write(ctx->zmq_sock, data->topic, data->topic_len, ZMQ_DONTWAIT | ZMQ_SNDMORE);
@@ -318,13 +318,13 @@ static int zmq_pair_tx(void *vctx, void *vdata)
 struct bk_if zmq_pair_if = {
     .init = zmq_pair_init,
     .conf = zmq_pair_conf,
-    .bind = NULL,
+    .bind = nullptr,
     .start = zmq_pair_start,
     .stop = zmq_pair_stop,
 
-    .get_stats = NULL,
+    .get_stats = nullptr,
 
-    .rx = NULL,
+    .rx = nullptr,
     .tx = zmq_pair_tx,
-    .ctrl = NULL,
+    .ctrl = nullptr,
 };

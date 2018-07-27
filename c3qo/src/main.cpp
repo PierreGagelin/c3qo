@@ -13,7 +13,7 @@ int main(int argc, char **argv)
     LOGGER_OPEN("c3qo");
     logger_set_level(LOGGER_LEVEL_DEBUG);
 
-    filename = NULL;
+    filename = nullptr;
     while ((opt = getopt(argc, argv, "hf:l:")) != -1)
     {
         switch (opt)
@@ -36,7 +36,7 @@ int main(int argc, char **argv)
             enum logger_level level;
 
             errno = 0;
-            level = (enum logger_level)strtol(optarg, NULL, 10);
+            level = (enum logger_level)strtol(optarg, nullptr, 10);
             if (errno != 0)
             {
                 LOGGER_ERR("Failed to call strtol for log level: %s [errno=%d ; level=%s]", strerror(errno), errno, optarg);
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
     m = new struct manager;
 
     // Parse configuration file
-    if (filename != NULL)
+    if (filename != nullptr)
     {
         bool conf;
 

@@ -23,7 +23,7 @@ int manager_fd::find(int fd, void *socket)
     size_t i;
 
     // Verify input
-    if ((fd < 0) && (socket == NULL))
+    if ((fd < 0) && (socket == nullptr))
     {
         return -1;
     }
@@ -62,14 +62,14 @@ bool manager_fd::add(void *ctx, void (*callback)(void *, int, void *), int fd, v
     int index;
 
     // Verify user input
-    if ((fd < 0) && (socket == NULL))
+    if ((fd < 0) && (socket == nullptr))
     {
-        LOGGER_WARNING("Cannot add entry: negative file descriptor or NULL socket [fd=%d ; socket=%p]", fd, socket);
+        LOGGER_WARNING("Cannot add entry: negative file descriptor or nullptr socket [fd=%d ; socket=%p]", fd, socket);
         return false;
     }
-    if (callback == NULL)
+    if (callback == nullptr)
     {
-        LOGGER_WARNING("Cannot add entry: NULL callback [fd=%d ; socket=%p ; callback=%p]", fd, socket, callback);
+        LOGGER_WARNING("Cannot add entry: nullptr callback [fd=%d ; socket=%p ; callback=%p]", fd, socket, callback);
         return false;
     }
 

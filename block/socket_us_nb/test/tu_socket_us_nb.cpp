@@ -133,8 +133,8 @@ TEST_F(tu_socket_us_nb, connect_retry)
     // Initialize client and server
     ctx_s = (struct server_us_nb_ctx *)server_us_nb_if.init(1);
     ctx_c = (struct client_us_nb_ctx *)client_us_nb_if.init(2);
-    ASSERT_TRUE(ctx_s != NULL);
-    ASSERT_TRUE(ctx_c != NULL);
+    ASSERT_NE(ctx_s, nullptr);
+    ASSERT_NE(ctx_c, nullptr);
     EXPECT_TRUE(ctx_c->connected == false);
     EXPECT_TRUE(ctx_s->fd_count == 0);
 
@@ -171,8 +171,8 @@ TEST_F(tu_socket_us_nb, data)
     // Initialize client and server
     ctx_s = (struct server_us_nb_ctx *)server_us_nb_if.init(1);
     ctx_c = (struct client_us_nb_ctx *)client_us_nb_if.init(2);
-    ASSERT_NE(ctx_s, (void *)NULL);
-    ASSERT_NE(ctx_c, (void *)NULL);
+    ASSERT_NE(ctx_s, nullptr);
+    ASSERT_NE(ctx_c, nullptr);
     EXPECT_EQ(ctx_c->connected, false);
     EXPECT_EQ(ctx_s->fd_count, 0);
 
@@ -190,15 +190,15 @@ TEST_F(tu_socket_us_nb, data)
 
     // Send data from client to server
     client_us_nb_if.tx(ctx_c, (void *)"hello world");
-    EXPECT_EQ(ctx_s->rx_pkt_count, (size_t)0);
+    EXPECT_EQ(ctx_s->rx_pkt_count, 0u);
     m->fd.poll_fd();
-    EXPECT_EQ(ctx_s->rx_pkt_count, (size_t)1);
+    EXPECT_EQ(ctx_s->rx_pkt_count, 1u);
 
     // Send data from server to client
     server_us_nb_if.tx(ctx_s, (void *)"hello world");
-    EXPECT_EQ(ctx_c->rx_pkt_count, (size_t)0);
+    EXPECT_EQ(ctx_c->rx_pkt_count, 0u);
     m->fd.poll_fd();
-    EXPECT_EQ(ctx_c->rx_pkt_count, (size_t)1);
+    EXPECT_EQ(ctx_c->rx_pkt_count, 1u);
 
     server_us_nb_if.stop(ctx_s);
     client_us_nb_if.stop(ctx_c);
@@ -213,18 +213,18 @@ TEST_F(tu_socket_us_nb, error)
     logger_set_level(LOGGER_LEVEL_CRIT);
 
     // Bind client and server to 0
-    server_us_nb_if.bind(NULL, 0, 0);
-    client_us_nb_if.bind(NULL, 0, 0);
+    server_us_nb_if.bind(nullptr, 0, 0);
+    client_us_nb_if.bind(nullptr, 0, 0);
 
     // Connect client and server
-    server_us_nb_if.start(NULL);
-    client_us_nb_if.start(NULL);
+    server_us_nb_if.start(nullptr);
+    client_us_nb_if.start(nullptr);
 
     // Connect client and server
-    server_us_nb_if.stop(NULL);
-    client_us_nb_if.stop(NULL);
+    server_us_nb_if.stop(nullptr);
+    client_us_nb_if.stop(nullptr);
 
     // Connect client and server
-    server_us_nb_if.tx(NULL, NULL);
-    client_us_nb_if.tx(NULL, NULL);
+    server_us_nb_if.tx(nullptr, nullptr);
+    client_us_nb_if.tx(nullptr, nullptr);
 }

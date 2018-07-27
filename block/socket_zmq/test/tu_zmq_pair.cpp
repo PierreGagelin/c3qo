@@ -51,8 +51,8 @@ TEST_F(tu_zmq_pair, data)
     // Initialize two ZMQ pairs
     ctx_s = (struct zmq_pair_ctx *)zmq_pair_if.init(1);
     ctx_c = (struct zmq_pair_ctx *)zmq_pair_if.init(2);
-    ASSERT_NE(ctx_s, (void *)NULL);
-    ASSERT_NE(ctx_c, (void *)NULL);
+    ASSERT_NE(ctx_s, nullptr);
+    ASSERT_NE(ctx_c, nullptr);
 
     // Configure them
     zmq_pair_if.conf(ctx_s, conf_s);
@@ -71,9 +71,10 @@ TEST_F(tu_zmq_pair, data)
     {
         struct c3qo_zmq_msg data;
 
-        data.topic = (char *)"hello";
+        //FIXME: we shouldn't use such cast -> change API to use a std::string?
+        data.topic = static_cast<char *>("hello");
         data.topic_len = strlen(data.topic);
-        data.data = (char *)"world";
+        data.data = static_cast<char *>("world");
         data.data_len = strlen(data.data);
 
         zmq_pair_if.tx(ctx_s, (void *)&data);

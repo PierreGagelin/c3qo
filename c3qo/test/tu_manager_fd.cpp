@@ -59,12 +59,12 @@ TEST_F(tu_manager_fd, manager_fd)
 
     // Open a file and get its file descriptor
     file = fopen(fname, "w+");
-    ASSERT_NE(file, (void *)NULL);
+    ASSERT_NE(file, nullptr);
     fd = fileno(file);
     ASSERT_NE(fd, -1);
 
     // Add a file descriptor to be managed for reading
-    EXPECT_EQ(add(NULL, &fd_callback, fd, NULL, true), true);
+    EXPECT_EQ(add(nullptr, &fd_callback, fd, nullptr, true), true);
 
     // Write into the managed
     fprintf(file, "hello world!");
@@ -76,6 +76,6 @@ TEST_F(tu_manager_fd, manager_fd)
     EXPECT_EQ(fd_called, true);
 
     // Clean the file descriptor manager
-    remove(fd, NULL, true);
+    remove(fd, nullptr, true);
     fclose(file);
 }

@@ -27,7 +27,7 @@ const char *get_flow_type(enum flow_type type)
 //
 // @brief Constructor and destructor
 //
-bk_info::bk_info() : bk(NULL), ctx(NULL), id(0), state(STATE_STOP)
+bk_info::bk_info() : bk(nullptr), ctx(nullptr), id(0), state(STATE_STOP)
 {
     // Nothing else to do
 }
@@ -63,7 +63,7 @@ bool manager_bk::block_add(int id, const char *type)
 
     // Retrieve block type
     ret = snprintf(block->type, sizeof(block->type), "%s_if", type);
-    if ((ret < 0) || ((size_t)ret >= sizeof(block->type)))
+    if ((ret < 0) || (static_cast<size_t>(ret) >= sizeof(block->type)))
     {
         // snprintf failed or not enough room to append "_if"
         LOGGER_ERR("Failed to call snprintf [ret=%d ; max_len=%u]", ret, MAX_NAME - 4u);
@@ -71,7 +71,7 @@ bool manager_bk::block_add(int id, const char *type)
     }
 
     block->bk = get_bk_if(block->type);
-    if (block->bk == NULL)
+    if (block->bk == nullptr)
     {
         LOGGER_ERR("Failed to find block interface [name=%s]", block->type);
         goto error;
@@ -117,7 +117,7 @@ bool manager_bk::block_init(int id)
 
     LOGGER_INFO("Initialize block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second->id, it->second->type, get_bk_state(STATE_INIT));
 
-    if (it->second->bk->init != NULL)
+    if (it->second->bk->init != nullptr)
     {
         it->second->ctx = it->second->bk->init(it->second->id);
     }
@@ -147,7 +147,7 @@ bool manager_bk::block_conf(int id, char *conf)
 
     LOGGER_INFO("Configure block [bk_id=%d ; bk_type=%s ; conf=%s]", id, it->second->type, conf);
 
-    if (it->second->bk->conf != NULL)
+    if (it->second->bk->conf != nullptr)
     {
         it->second->bk->conf(it->second->ctx, conf);
     }
@@ -179,7 +179,7 @@ bool manager_bk::block_bind(int id, int port, int bk_id)
 
     LOGGER_INFO("Bind block [bk_id=%d ; port=%d ; bk_id_dest=%d]", source->first, port, bk_id);
 
-    if (source->second->bk->bind != NULL)
+    if (source->second->bk->bind != nullptr)
     {
         source->second->bk->bind(source->second->ctx, port, bk_id);
     }
@@ -225,7 +225,7 @@ bool manager_bk::block_start(int id)
 
     LOGGER_INFO("Start block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second->id, it->second->type, get_bk_state(STATE_START));
 
-    if (it->second->bk->start != NULL)
+    if (it->second->bk->start != nullptr)
     {
         it->second->bk->start(it->second->ctx);
     }
@@ -261,7 +261,7 @@ bool manager_bk::block_stop(int id)
 
     LOGGER_INFO("Stop block [bk_id=%d ; bk_type=%s ; bk_state=%s]", id, it->second->type, get_bk_state(STATE_STOP));
 
-    if (it->second->bk->stop != NULL)
+    if (it->second->bk->stop != nullptr)
     {
         it->second->bk->stop(it->second->ctx);
     }
@@ -300,7 +300,7 @@ void manager_bk::block_flow(int bk_id, int port, void *data, enum flow_type type
     while (true)
     {
         // Find the source port in bindings
-        const struct bind_info *bind = NULL;
+        const struct bind_info *bind = nullptr;
         for (const auto &it : src->bind)
         {
             if (it.port == port)
@@ -310,7 +310,7 @@ void manager_bk::block_flow(int bk_id, int port, void *data, enum flow_type type
                 break;
             }
         }
-        if (bind == NULL)
+        if (bind == nullptr)
         {
             LOGGER_ERR("Failed to find route for data flow: source port not found [bk_id=%d ; port=%d]", src->id, port);
             return;
@@ -394,7 +394,7 @@ const class bk_info *manager_bk::block_get(int id)
     if (it == bk_map_.end())
     {
         LOGGER_WARNING("Cannot get block: unknown block ID [bk_id=%d]", id);
-        return NULL;
+        return nullptr;
     }
 
     return it->second;
@@ -450,7 +450,7 @@ bool manager_bk::exec_cmd(enum bk_cmd cmd, int id, char *arg)
     {
     case CMD_ADD:
     {
-        if ((arg == NULL) || ((arg = strtok(arg, " ")) == 0))
+        if ((arg == nullptr) || ((arg = strtok(arg, " ")) == 0))
         {
             LOGGER_ERR("Failed to add block: block type required as third argument");
             return false;
@@ -464,7 +464,7 @@ bool manager_bk::exec_cmd(enum bk_cmd cmd, int id, char *arg)
     }
     case CMD_CONF:
     {
-        if (arg == NULL)
+        if (arg == nullptr)
         {
             LOGGER_ERR("Failed to configure block: configuration entry required as third argument");
             return false;
@@ -478,7 +478,7 @@ bool manager_bk::exec_cmd(enum bk_cmd cmd, int id, char *arg)
         int dest;
         int nb_arg;
 
-        if (arg == NULL)
+        if (arg == nullptr)
         {
             LOGGER_DEBUG("Failed to bind block: configuration entry required as third argument");
             return false;
@@ -527,13 +527,13 @@ bool manager_bk::conf_parse_line(char *line)
 
     // Retrieve command
     token = strtok(line, " ");
-    if (token == NULL)
+    if (token == nullptr)
     {
         LOGGER_ERR("Failed to parse configuration line: no command");
         return false;
     }
     errno = 0;
-    cmd = (enum bk_cmd)strtol(token, NULL, 10);
+    cmd = (enum bk_cmd)strtol(token, nullptr, 10);
     if (errno != 0)
     {
         LOGGER_ERR("Failed to parse configuration line: command should be a decimal integer [bk_cmd=%s]", token);
@@ -541,14 +541,14 @@ bool manager_bk::conf_parse_line(char *line)
     }
 
     // Retrieve block identifier
-    token = strtok(NULL, " ");
-    if (token == NULL)
+    token = strtok(nullptr, " ");
+    if (token == nullptr)
     {
         LOGGER_ERR("Failed to parse configuration line: no block identifier");
         return false;
     }
     errno = 0;
-    id = (enum bk_cmd)strtol(token, NULL, 10);
+    id = (enum bk_cmd)strtol(token, nullptr, 10);
     if (errno != 0)
     {
         LOGGER_ERR("Failed to parse configuration line: block identifier should be a decimal integer [bk_id=%s]", token);
@@ -556,7 +556,7 @@ bool manager_bk::conf_parse_line(char *line)
     }
 
     // Retrieve argument (optional)
-    arg = strtok(NULL, "\0");
+    arg = strtok(nullptr, "\0");
 
     return exec_cmd(cmd, id, arg);
 }
@@ -572,7 +572,7 @@ bool manager_bk::conf_parse(const char *filename)
     bool conf_success;
 
     file = fopen(filename, "r");
-    if (file == NULL)
+    if (file == nullptr)
     {
         LOGGER_ERR("Couldn't open configuration file [filename=%s]", filename);
         return false;
@@ -588,7 +588,7 @@ bool manager_bk::conf_parse(const char *filename)
         ssize_t written;
 
         // Read a line
-        line = NULL;
+        line = nullptr;
         written = getline(&line, &len, file);
         if (written == -1)
         {
@@ -666,7 +666,7 @@ size_t manager_bk::conf_get(char *buf, size_t len)
         }
         else
         {
-            w += (size_t)ret;
+            w += static_cast<size_t>(ret);
         }
 
         // Stop if there's no more room in buf
