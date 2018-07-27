@@ -202,12 +202,7 @@ static void *server_us_nb_init(int bk_id)
 {
     struct server_us_nb_ctx *ctx;
 
-    ctx = new(std::nothrow) struct server_us_nb_ctx;
-    if (ctx == nullptr)
-    {
-        LOGGER_ERR("Failed to initialize block: could not reserve memory for the context [bk_id=%d]", bk_id);
-        return ctx;
-    }
+    ctx = new struct server_us_nb_ctx;
 
     memset(ctx->fd, -1, sizeof(ctx->fd));
     ctx->bk_id = bk_id;

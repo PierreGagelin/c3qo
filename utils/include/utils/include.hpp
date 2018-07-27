@@ -13,6 +13,7 @@ extern "C"
 }
 
 // C++ headers
+#include <cassert>
 #include <cerrno>
 #include <cmath>
 #include <cstdint>

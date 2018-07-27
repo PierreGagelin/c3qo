@@ -93,32 +93,17 @@ static void *zmq_pair_init(int bk_id)
     struct zmq_pair_ctx *ctx;
 
     // Create a block context
-    ctx = new(std::nothrow) struct zmq_pair_ctx;
-    if (ctx == nullptr)
-    {
-        LOGGER_ERR("Failed to initialize block: not enough memory [bk_id=%d]", bk_id);
-        return ctx;
-    }
+    ctx = new struct zmq_pair_ctx;
+
     ctx->bk_id = bk_id;
 
     // Create a ZMQ context
     ctx->zmq_ctx = zmq_ctx_new();
-    if (ctx->zmq_ctx == nullptr)
-    {
-        LOGGER_ERR("Failed to initialize block: out of memory for ZMQ context [bk_id=%d]", bk_id);
-        free(ctx);
-        return nullptr;
-    }
+    assert(ctx->zmq_ctx != nullptr);
 
     // Create a ZMQ socket
     ctx->zmq_sock = zmq_socket(ctx->zmq_ctx, ZMQ_PAIR);
-    if (ctx->zmq_sock == nullptr)
-    {
-        LOGGER_ERR("Failed to create ZMQ socket: %s [bk_id=%d ; errno=%d]", strerror(errno), bk_id, errno);
-        zmq_ctx_term(ctx->zmq_ctx);
-        free(ctx);
-        return nullptr;
-    }
+    assert(ctx->zmq_sock != nullptr);
 
     // Default value for the connection
     ctx->client = false;

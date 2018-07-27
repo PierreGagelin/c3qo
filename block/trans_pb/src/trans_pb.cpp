@@ -15,12 +15,7 @@ static void *trans_pb_init(int bk_id)
 {
     struct trans_pb_ctx *ctx;
 
-    ctx = new(std::nothrow) struct trans_pb_ctx;
-    if (ctx == nullptr)
-    {
-        LOGGER_ERR("Failed to initialize block: could not reserve memory for the context [bk_id=%d]", bk_id);
-        return ctx;
-    }
+    ctx = new struct trans_pb_ctx;
 
     ctx->bk_id = bk_id;
 
@@ -43,29 +38,19 @@ static void trans_pb_stop(void *vctx)
 
 static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, class pb_msg_block &msg_bk) noexcept
 {
-    const char *topic = "BLOCK.MSG";
-    bool ok;
+    const char topic[] = "BLOCK.MSG";
 
-    // Fill the topic
-    msg_zmq.topic_len = strlen(topic);
-    msg_zmq.topic = new(std::nothrow) char[msg_zmq.topic_len];
-    if (msg_zmq.topic == nullptr)
-    {
-        LOGGER_ERR("Failed to serialize message: %s [errno=%d]", strerror(errno), errno);
-        return;
-    }
+    // Fill the topic (forget about the '\0' in ZeroMQ messages)
+    msg_zmq.topic_len = sizeof(topic) - 1;
+    msg_zmq.topic = new char[msg_zmq.topic_len];
     memcpy(msg_zmq.topic, topic, msg_zmq.topic_len);
 
     // Fill the data
     msg_zmq.data_len = msg_bk.ByteSizeLong();
-    msg_zmq.data = new(std::nothrow) char[msg_zmq.data_len];
-    if (msg_zmq.data == nullptr)
-    {
-        LOGGER_ERR("Failed to serialize message: %s [errno=%d]", strerror(errno), errno);
-        delete msg_zmq.topic;
-        return;
-    }
-    ok = msg_bk.SerializeToArray(msg_zmq.data, msg_zmq.data_len);
+    msg_zmq.data = new char[msg_zmq.data_len];
+
+    // Serialize the message
+    bool ok = msg_bk.SerializeToArray(msg_zmq.data, msg_zmq.data_len);
     if (ok == false)
     {
         LOGGER_ERR("Failed to serialize hello message: protobuf error");

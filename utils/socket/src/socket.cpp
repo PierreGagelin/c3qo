@@ -211,13 +211,7 @@ bool socket_zmq_read(void *socket, char **data, size_t *len, int flags)
 
     // Copy the message and add a terminal null byte
     size = zmq_msg_size(&part) + 1;
-    msg = new(std::nothrow) char[size];
-    if (msg == nullptr)
-    {
-        LOGGER_ERR("Failed to receive data from ZMQ socket: %s [errno=%d]", strerror(errno), errno);
-        zmq_msg_close(&part);
-        return false;
-    }
+    msg = new char[size];
     memcpy(msg, zmq_msg_data(&part), size - 1);
     msg[size - 1] = '\0';
 

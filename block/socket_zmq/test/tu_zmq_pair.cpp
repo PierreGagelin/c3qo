@@ -69,16 +69,18 @@ TEST_F(tu_zmq_pair, data)
     // Some messages are lost because subscription can take some time
     for (int i = 0; i < 10; i++)
     {
-        struct c3qo_zmq_msg data;
+        struct c3qo_zmq_msg msg;
+        char topic[] = "hello";
+        char data[] = "world";
 
         //FIXME: we shouldn't use such cast -> change API to use a std::string?
-        data.topic = static_cast<char *>("hello");
-        data.topic_len = strlen(data.topic);
-        data.data = static_cast<char *>("world");
-        data.data_len = strlen(data.data);
+        msg.topic = topic;
+        msg.topic_len = strlen(msg.topic);
+        msg.data = data;
+        msg.data_len = strlen(msg.data);
 
-        zmq_pair_if.tx(ctx_s, (void *)&data);
-        zmq_pair_if.tx(ctx_c, (void *)&data);
+        zmq_pair_if.tx(ctx_s, (void *)&msg);
+        zmq_pair_if.tx(ctx_c, (void *)&msg);
 
         m->fd.poll_fd();
     }

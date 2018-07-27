@@ -10,12 +10,7 @@ static void *hello_init(int bk_id)
 {
     struct hello_ctx *ctx;
 
-    ctx = new(std::nothrow) struct hello_ctx;
-    if (ctx == nullptr)
-    {
-        LOGGER_ERR("Failed to initialize block: could not reserve memory for the context [bk_id=%d]", bk_id);
-        return ctx;
-    }
+    ctx = new struct hello_ctx;
 
     // Default values :
     //   - register the block ID

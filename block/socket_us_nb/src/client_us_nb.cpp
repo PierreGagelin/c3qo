@@ -205,12 +205,7 @@ static void *client_us_nb_init(int bk_id)
     struct client_us_nb_ctx *ctx;
 
     // Reserve memory for the context
-    ctx = new(std::nothrow) struct client_us_nb_ctx;
-    if (ctx == nullptr)
-    {
-        LOGGER_ERR("Failed to initialize block: could not reserve memory for the context [bk_id=%d]", bk_id);
-        return ctx;
-    }
+    ctx = new struct client_us_nb_ctx;
 
     ctx->bk_id = bk_id;
 
