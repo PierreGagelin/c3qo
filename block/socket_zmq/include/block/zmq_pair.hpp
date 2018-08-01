@@ -37,6 +37,16 @@ struct zmq_pair_ctx
     unsigned long tx_pkt_count;
 };
 
-extern struct bk_if zmq_pair_if;
+struct bk_zmq_pair : block
+{
+    bk_zmq_pair();
+    ~bk_zmq_pair();
+
+    virtual void init_() override final;
+    virtual void conf_(char *conf) override final;
+    virtual void start_() override final;
+    virtual void stop_() override final;
+    virtual int tx_(void *vdata) override final;
+};
 
 #endif // BLOCK_PUB_SUB_HPP

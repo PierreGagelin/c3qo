@@ -6,7 +6,7 @@
 //
 // @brief Convert flow type into a string
 //
-const char *get_flow_type(enum flow_type type)
+const char *flow_type_to_string(enum flow_type type)
 {
     switch (type)
     {
@@ -25,12 +25,40 @@ const char *get_flow_type(enum flow_type type)
 }
 
 //
+// @brief Retrieve a block interface pointer
+//
+static struct block *get_bk_if(const char *b)
+{
+    if (strcmp(b, "hello") == 0)
+    {
+        return new struct bk_hello;
+    }
+    if (strcmp(b, "client_us_nb") == 0)
+    {
+        return new struct bk_client_us_nb;
+    }
+    if (strcmp(b, "server_us_nb") == 0)
+    {
+        return new struct bk_server_us_nb;
+    }
+    if (strcmp(b, "zmq_pair") == 0)
+    {
+        return new struct bk_zmq_pair;
+    }
+    if (strcmp(b, "project_euler") == 0)
+    {
+        return new struct bk_project_euler;
+    }
+    if (strcmp(b, "trans_pb") == 0)
+    {
+        return new struct bk_trans_pb;
+    }
+    return nullptr;
+}
+
+//
 // @brief Constructor and destructor
 //
-bk_info::bk_info() : bk(nullptr), ctx(nullptr), id(0), state(STATE_STOP)
-{
-    // Nothing else to do
-}
 manager_bk::manager_bk()
 {
     // Nothing to do
@@ -48,8 +76,7 @@ manager_bk::~manager_bk()
 //
 bool manager_bk::block_add(int id, const char *type)
 {
-    class bk_info *block;
-    int ret;
+    struct block *bk;
 
     // Retrieve block identifier
     if (id == 0)
@@ -58,36 +85,23 @@ bool manager_bk::block_add(int id, const char *type)
         return false;
     }
 
-    block = new class bk_info;
-    block->id = id;
-
-    // Retrieve block type
-    ret = snprintf(block->type, sizeof(block->type), "%s_if", type);
-    if ((ret < 0) || (static_cast<size_t>(ret) >= sizeof(block->type)))
+    bk = get_bk_if(type);
+    if (bk == nullptr)
     {
-        // snprintf failed or not enough room to append "_if"
-        LOGGER_ERR("Failed to call snprintf [ret=%d ; max_len=%u]", ret, MAX_NAME - 4u);
-        goto error;
+        LOGGER_ERR("Failed to find block interface [name=%s]", type);
+        return false;
     }
 
-    block->bk = get_bk_if(block->type);
-    if (block->bk == nullptr)
-    {
-        LOGGER_ERR("Failed to find block interface [name=%s]", block->type);
-        goto error;
-    }
-    block->state = STATE_STOP;
+    bk->id_ = id;
+    bk->type_ = type;
+    bk->state_ = STATE_STOP;
 
-    LOGGER_INFO("Add block [bk_id=%d ; bk_type=%s]", block->id, block->type);
+    LOGGER_INFO("Add block [bk_id=%d ; bk_type=%s]", bk->id_, bk->type_.c_str());
 
     block_del(id);
-    bk_map_.insert({id, block});
+    bk_map_.insert({id, bk});
 
     return true;
-
-error:
-    delete block;
-    return false;
 }
 
 //
@@ -104,24 +118,23 @@ bool manager_bk::block_init(int id)
     }
 
     // Verify block state
-    switch (it->second->state)
+    switch (it->second->state_)
     {
     case STATE_STOP:
         // Normal case
         break;
 
     default:
-        LOGGER_WARNING("Cannot initialize block: block not stopped [bk_id=%d ; bk_state=%s]", id, get_bk_state(it->second->state));
+        LOGGER_WARNING("Cannot initialize block: block not stopped [bk_id=%d ; bk_state=%s]", id, bk_state_to_string(it->second->state_));
         return false;
     }
 
-    LOGGER_INFO("Initialize block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second->id, it->second->type, get_bk_state(STATE_INIT));
+    LOGGER_INFO("Initialize block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second->id_, it->second->type_.c_str(), bk_state_to_string(STATE_INIT));
 
-    if (it->second->bk->init != nullptr)
-    {
-        it->second->ctx = it->second->bk->init(it->second->id);
-    }
-    it->second->state = STATE_INIT;
+    it->second->id_ = id;
+    it->second->state_ = STATE_INIT;
+
+    it->second->init_();
 
     return true;
 }
@@ -139,18 +152,16 @@ bool manager_bk::block_conf(int id, char *conf)
         return false;
     }
 
-    if (it->second->state == STATE_STOP)
+    if (it->second->state_ == STATE_STOP)
     {
         LOGGER_WARNING("Cannot configure block: block stopped [bk_id=%d]", id);
         return false;
     }
 
-    LOGGER_INFO("Configure block [bk_id=%d ; bk_type=%s ; conf=%s]", id, it->second->type, conf);
+    LOGGER_INFO("Configure block [bk_id=%d ; bk_type=%s ; conf=%s]", id, it->second->type_.c_str(), conf);
 
-    if (it->second->bk->conf != nullptr)
-    {
-        it->second->bk->conf(it->second->ctx, conf);
-    }
+
+    it->second->conf_(conf);
 
     return true;
 }
@@ -171,7 +182,7 @@ bool manager_bk::block_bind(int id, int port, int bk_id)
         return false;
     }
 
-    if (source->second->state == STATE_STOP)
+    if (source->second->state_ == STATE_STOP)
     {
         LOGGER_WARNING("Cannot bind block: block stopped [bk_id=%d]", id);
         return false;
@@ -179,21 +190,18 @@ bool manager_bk::block_bind(int id, int port, int bk_id)
 
     LOGGER_INFO("Bind block [bk_id=%d ; port=%d ; bk_id_dest=%d]", source->first, port, bk_id);
 
-    if (source->second->bk->bind != nullptr)
-    {
-        source->second->bk->bind(source->second->ctx, port, bk_id);
-    }
+    source->second->bind_(port, bk_id);
 
     // Add a binding in the engine with a weak reference to the block
     // If the block does not exist, we just let it undefined
     const auto &dest = bk_map_.find(bk_id);
     if (dest != end)
     {
-        bind.block = dest->second;
+        bind.bk = dest->second;
     }
     bind.port = port;
     bind.bk_id = bk_id;
-    source->second->bind.push_back(bind);
+    source->second->binds_.push_back(bind);
 
     return true;
 }
@@ -212,24 +220,22 @@ bool manager_bk::block_start(int id)
     }
 
     // Verify block state
-    switch (it->second->state)
+    switch (it->second->state_)
     {
     case STATE_INIT:
         // Normal case
         break;
 
     default:
-        LOGGER_WARNING("Cannot start block: block not initialized [bk_id=%d ; bk_state=%s]", id, get_bk_state(it->second->state));
+        LOGGER_WARNING("Cannot start block: block not initialized [bk_id=%d ; bk_state=%s]", id, bk_state_to_string(it->second->state_));
         return false;
     }
 
-    LOGGER_INFO("Start block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second->id, it->second->type, get_bk_state(STATE_START));
+    LOGGER_INFO("Start block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second->id_, it->second->type_.c_str(), bk_state_to_string(STATE_START));
 
-    if (it->second->bk->start != nullptr)
-    {
-        it->second->bk->start(it->second->ctx);
-    }
-    it->second->state = STATE_START;
+    it->second->state_ = STATE_START;
+
+    it->second->start_();
 
     return true;
 }
@@ -248,24 +254,22 @@ bool manager_bk::block_stop(int id)
     }
 
     // Verify block state
-    switch (it->second->state)
+    switch (it->second->state_)
     {
     case STATE_START:
         // Normal case
         break;
 
     default:
-        LOGGER_WARNING("Cannot stop block: block not started [bk_id=%d ; bk_state=%s]", id, get_bk_state(it->second->state));
+        LOGGER_WARNING("Cannot stop block: block not started [bk_id=%d ; bk_state=%s]", id, bk_state_to_string(it->second->state_));
         return false;
     }
 
-    LOGGER_INFO("Stop block [bk_id=%d ; bk_type=%s ; bk_state=%s]", id, it->second->type, get_bk_state(STATE_STOP));
+    LOGGER_INFO("Stop block [bk_id=%d ; bk_type=%s ; bk_state=%s]", id, it->second->type_.c_str(), bk_state_to_string(STATE_STOP));
 
-    if (it->second->bk->stop != nullptr)
-    {
-        it->second->bk->stop(it->second->ctx);
-    }
-    it->second->state = STATE_STOP;
+    it->second->state_ = STATE_STOP;
+
+    it->second->stop_();
 
     return true;
 }
@@ -287,21 +291,21 @@ void manager_bk::block_flow(int bk_id, int port, void *data, enum flow_type type
         LOGGER_WARNING("Cannot start data flow: unknown block ID [bk_id=%d]", bk_id);
         return;
     }
-    else if (source->second->state != STATE_START)
+    else if (source->second->state_ != STATE_START)
     {
-        LOGGER_WARNING("Cannot start data flow: block is not started [bk_id=%d ; bk_state=%s]", bk_id, get_bk_state(source->second->state));
+        LOGGER_WARNING("Cannot start data flow: block is not started [bk_id=%d ; bk_state=%s]", bk_id, bk_state_to_string(source->second->state_));
         return;
     }
 
     // Get a copy of the source that will serve to iterate over the blocks
-    class bk_info *src = source->second;
+    struct block *src = source->second;
 
     // Process the data from one block to the other
     while (true)
     {
         // Find the source port in bindings
         const struct bind_info *bind = nullptr;
-        for (const auto &it : src->bind)
+        for (const auto &it : src->binds_)
         {
             if (it.port == port)
             {
@@ -312,41 +316,41 @@ void manager_bk::block_flow(int bk_id, int port, void *data, enum flow_type type
         }
         if (bind == nullptr)
         {
-            LOGGER_ERR("Failed to find route for data flow: source port not found [bk_id=%d ; port=%d]", src->id, port);
+            LOGGER_ERR("Failed to find route for data flow: source port not found [bk_id=%d ; port=%d]", src->id_, port);
             return;
         }
 
-        LOGGER_DEBUG("Routed data flow [bk_id_src=%d ; port=%d ; bk_id_dest=%d]", src->id, port, bind->bk_id);
+        LOGGER_DEBUG("Routed data flow [bk_id_src=%d ; port=%d ; bk_id_dest=%d]", src->id_, port, bind->bk_id);
 
         // Destination bk_id=0 is the regular way out of this flow
         if (bind->bk_id == 0)
         {
-            LOGGER_DEBUG("End data flow [bk_id=%d ; data=%p ; flow_type=%s]", src->id, data, get_flow_type(type));
+            LOGGER_DEBUG("End data flow [bk_id=%d ; data=%p ; flow_type=%s]", src->id_, data, flow_type_to_string(type));
             break;
         }
 
         // The destination block is the new source of the data flow
-        src = bind->block;
+        src = bind->bk;
 
         switch (type)
         {
         case FLOW_NOTIF:
-            LOGGER_DEBUG("Notify block [bk_id=%d ; notif=%p]", src->id, data);
-            port = src->bk->ctrl(src->ctx, data);
+            LOGGER_DEBUG("Notify block [bk_id=%d ; notif=%p]", src->id_, data);
+            port = src->ctrl_(data);
             break;
 
         case FLOW_RX:
-            LOGGER_DEBUG("Process RX data [bk_id=%d ; data=%p]", src->id, data);
-            port = src->bk->rx(src->ctx, data);
+            LOGGER_DEBUG("Process RX data [bk_id=%d ; data=%p]", src->id_, data);
+            port = src->rx_(data);
             break;
 
         case FLOW_TX:
-            LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", src->id, data);
-            port = src->bk->tx(src->ctx, data);
+            LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", src->id_, data);
+            port = src->tx_(data);
             break;
 
         default:
-            LOGGER_WARNING("Could not continue data flow: unknown flow type value [bk_id=%d ; data=%p ; flow_type=%d]", src->id, data, type);
+            LOGGER_WARNING("Could not continue data flow: unknown flow type value [bk_id=%d ; data=%p ; flow_type=%d]", src->id_, data, type);
             return;
         }
     }
@@ -388,7 +392,7 @@ void manager_bk::process_notif(int bk_id, int port, void *notif)
 //
 // @brief Get block information
 //
-const class bk_info *manager_bk::block_get(int id)
+struct block *manager_bk::block_get(int id)
 {
     const auto &it = bk_map_.find(id);
     if (it == bk_map_.end())
@@ -417,7 +421,7 @@ void manager_bk::block_del(int id)
     block_stop(it->first);
     delete it->second;
 
-    LOGGER_INFO("Delete block [bk_id=%d ; bk_type=%s]", it->second->id, it->second->type);
+    LOGGER_INFO("Delete block [bk_id=%d ; bk_type=%s]", it->second->id_, it->second->type_.c_str());
 
     bk_map_.erase(it);
 }
@@ -444,7 +448,7 @@ void manager_bk::block_clear()
 //
 bool manager_bk::exec_cmd(enum bk_cmd cmd, int id, char *arg)
 {
-    LOGGER_DEBUG("Execute block command [bk_cmd=%s ; bk_id=%d ; bk_arg=%s]", get_bk_cmd(cmd), id, arg);
+    LOGGER_DEBUG("Execute block command [bk_cmd=%s ; bk_id=%d ; bk_arg=%s]", bk_cmd_to_string(cmd), id, arg);
 
     switch (cmd)
     {
@@ -658,7 +662,7 @@ size_t manager_bk::conf_get(char *buf, size_t len)
     {
         int ret;
 
-        ret = snprintf(buf + w, len - w, "%u %s %d;", i->first, i->second->type, i->second->state);
+        ret = snprintf(buf + w, len - w, "%u %s %d;", i->first, i->second->type_.c_str(), i->second->state_);
         if (ret < 0)
         {
             LOGGER_ERR("snprintf failed");

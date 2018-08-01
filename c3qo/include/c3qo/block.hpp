@@ -5,8 +5,6 @@
 #include "utils/logger.hpp"
 #include "utils/socket.hpp"
 
-struct bk_if *get_bk_if(const char *b);
-
 //
 // @enum bk_cmd
 //
@@ -24,7 +22,7 @@ enum bk_cmd
     CMD_STOP,  // Stop a block
     CMD_STATS, // Retrieve block's statistics
 };
-const char *get_bk_cmd(enum bk_cmd t);
+const char *bk_cmd_to_string(enum bk_cmd t);
 
 //
 // @enum bk_state
@@ -37,29 +35,46 @@ enum bk_state
     STATE_INIT,  // Block is initialized
     STATE_START, // Block is started
 };
-const char *get_bk_state(enum bk_state t);
+const char *bk_state_to_string(enum bk_state t);
 
 //
-// @struct bk_if
+// @struct bind_info
 //
-// @brief Declare the interface to manage blocks
+// @brief Information to bind to blocks together
 //
-struct bk_if
+struct bind_info
 {
-    // State commands
-    void *(*init)(int bk_id);
-    void (*conf)(void *vctx, char *conf);
-    void (*bind)(void *vctx, int port, int bk_id);
-    void (*start)(void *vctx);
-    void (*stop)(void *vctx);
+    int port;        // Port from source block
+    int bk_id;       // Identifier of the destination block
+    struct block *bk; // Destination block
+};
 
-    // Get Statistics
-    size_t (*get_stats)(void *vctx, char *buf, size_t len);
+//
+// @struct block
+//
+// @brief Block information
+//
+struct block
+{
+    std::vector<struct bind_info> binds_; // Block bindings
+    void *ctx_;                           // Block context
+    int id_;                              // Block ID
+    std::string type_;                    // Block type
+    enum bk_state state_;                 // Block state
 
-    // Data and control
-    int (*rx)(void *vctx, void *vdata);
-    int (*tx)(void *vctx, void *vdata);
-    int (*ctrl)(void *vctx, void *vnotif);
+    block();
+    virtual ~block();
+
+    // Block management interface default implementation
+    virtual void init_();
+    virtual void conf_(char *conf);
+    virtual void bind_(int port, int bk_id);
+    virtual void start_();
+    virtual void stop_();
+    virtual size_t get_stats_(char *buf, size_t len);
+    virtual int rx_(void *vdata);
+    virtual int tx_(void *vdata);
+    virtual int ctrl_(void *vnotif);
 };
 
 #endif // C3QO_BLOCK_HPP

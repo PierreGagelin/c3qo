@@ -5,7 +5,8 @@ c3qo_add_block(trans_pb src/trans_pb.cpp)
 
 if (${C3QO_PROTOBUF})
     # Specify that protobuf is used to the block
-    target_compile_options(trans_pb PRIVATE -DC3QO_PROTOBUF)
+    target_compile_options(trans_pb PUBLIC -DC3QO_PROTOBUF)
+    #add_definitions(-DC3QO_PROTOBUF)
 
     # Generate protobuf library
     c3qo_add_library_protobuf(block_pb src/block.proto)

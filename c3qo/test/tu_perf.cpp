@@ -75,26 +75,26 @@ TEST_F(tu_perf, commutation)
     // Send data from bk_1
     for (size_t i = 0; i < nb_buf; i++)
     {
-        const class bk_info *bi;
+        struct block *bi;
         char buf[] = "yolooooo";
 
         bi = m->bk.block_get(1);
         ASSERT_NE(bi, nullptr);
 
-        bi->bk->ctrl(bi->ctx, buf);
+        bi->ctrl_(buf);
     }
 
     // Verify that buffers crossed bk_2 to the last block
     for (size_t i = 2; i < nb_block + 1; i++)
     {
-        const class bk_info *bi;
+        struct block *bi;
         char buf[16];
         size_t count;
 
         bi = m->bk.block_get(i);
         ASSERT_NE(bi, nullptr);
 
-        bi->bk->get_stats(bi->ctx, buf, sizeof(buf));
+        bi->get_stats_(buf, sizeof(buf));
         count = static_cast<size_t>(std::stoul(buf));
         EXPECT_EQ(count, nb_buf);
     }

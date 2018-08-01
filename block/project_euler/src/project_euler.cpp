@@ -34,13 +34,11 @@ static void solve_problem(int index, char *param)
 //
 // @brief Configure the block to execute a specific problem
 //
-static void project_euler_conf(void *vctx, char *conf)
+void bk_project_euler::conf_(char *conf)
 {
     char *token;
     int index;
     char *arg;
-
-    (void)vctx;
 
     LOGGER_DEBUG("Configuration for Project Euler received [conf=%s]", conf);
 
@@ -64,20 +62,3 @@ static void project_euler_conf(void *vctx, char *conf)
 
     solve_problem(index, arg);
 }
-
-//
-// @brief Exported structure of the block
-//
-struct bk_if project_euler_if = {
-    .init = nullptr,
-    .conf = project_euler_conf,
-    .bind = nullptr,
-    .start = nullptr,
-    .stop = nullptr,
-
-    .get_stats = nullptr,
-
-    .rx = nullptr,
-    .tx = nullptr,
-    .ctrl = nullptr,
-};

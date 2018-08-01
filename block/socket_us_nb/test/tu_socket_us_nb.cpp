@@ -8,10 +8,6 @@
 // Gtest library
 #include "gtest/gtest.h"
 
-// Client and server shall be linked
-extern struct bk_if client_us_nb_if;
-extern struct bk_if server_us_nb_if;
-
 // Managers shall be linked
 extern struct manager *m;
 
@@ -52,27 +48,27 @@ void tu_socket_us_nb::TearDown()
 //
 TEST_F(tu_socket_us_nb, connect)
 {
-    struct server_us_nb_ctx *ctx_s; // server context
-    struct client_us_nb_ctx *ctx_c; // client context
-    char stats[16];                 // buffer to retrieve statistics
-    int fd_count;                   // count of file descriptor handled by the server
+    struct bk_server_us_nb server;
+    struct bk_client_us_nb client;
+    char stats[16]; // buffer to retrieve statistics
+    int fd_count;   // count of file descriptor handled by the server
 
-    ctx_s = (struct server_us_nb_ctx *)server_us_nb_if.init(1);
-    ctx_c = (struct client_us_nb_ctx *)client_us_nb_if.init(2);
+    server.init_();
+    client.init_();
 
-    server_us_nb_if.start(ctx_s);
-    client_us_nb_if.start(ctx_c);
+    server.start_();
+    client.start_();
 
     // Trigger client connection to the server
     m->fd.poll_fd();
 
     // Verify that server has a new client
-    server_us_nb_if.get_stats(ctx_s, stats, sizeof(stats));
+    server.get_stats_(stats, sizeof(stats));
     fd_count = atoi(stats);
     EXPECT_EQ(fd_count, 2);
 
-    client_us_nb_if.stop(ctx_c);
-    server_us_nb_if.stop(ctx_s);
+    client.stop_();
+    server.stop_();
 }
 
 //
@@ -80,19 +76,19 @@ TEST_F(tu_socket_us_nb, connect)
 //
 TEST_F(tu_socket_us_nb, multi_connect)
 {
-    struct server_us_nb_ctx *ctx_s;     // server context
-    struct client_us_nb_ctx *ctx_c[10]; // client context
+    struct bk_server_us_nb server;
+    struct bk_client_us_nb client[10];
 
-    ctx_s = (struct server_us_nb_ctx *)server_us_nb_if.init(1);
+    server.init_();
     for (int i = 0; i < 10; i++)
     {
-        ctx_c[i] = (struct client_us_nb_ctx *)client_us_nb_if.init(i + 2);
+        client[i].init_();
     }
 
-    server_us_nb_if.start(ctx_s);
+    server.start_();
     for (int i = 0; i < 10; i++)
     {
-        client_us_nb_if.start(ctx_c[i]);
+        client[i].start_();
     }
 
     // Wait for every connection to be acknowledged
@@ -103,17 +99,17 @@ TEST_F(tu_socket_us_nb, multi_connect)
         m->fd.poll_fd();
         m->tm.check_exp();
     }
-    EXPECT_EQ(ctx_s->fd_count, 11);
+    EXPECT_EQ(static_cast<struct server_us_nb_ctx *>(server.ctx_)->fd_count, 11);
 
     for (int i = 0; i < 10; i++)
     {
-        EXPECT_EQ(ctx_c[i]->connected, true);
+        EXPECT_EQ(static_cast<struct client_us_nb_ctx *>(client[i].ctx_)->connected, true);
     }
 
-    server_us_nb_if.stop(ctx_s);
+    server.stop_();
     for (int i = 0; i < 10; i++)
     {
-        client_us_nb_if.stop(ctx_c[i]);
+        client[i].stop_();
     }
 }
 
@@ -127,24 +123,24 @@ TEST_F(tu_socket_us_nb, multi_connect)
 //
 TEST_F(tu_socket_us_nb, connect_retry)
 {
-    struct server_us_nb_ctx *ctx_s; // server context
-    struct client_us_nb_ctx *ctx_c; // client context
+    struct bk_server_us_nb server;
+    struct bk_client_us_nb client;
 
     // Initialize client and server
-    ctx_s = (struct server_us_nb_ctx *)server_us_nb_if.init(1);
-    ctx_c = (struct client_us_nb_ctx *)client_us_nb_if.init(2);
-    ASSERT_NE(ctx_s, nullptr);
-    ASSERT_NE(ctx_c, nullptr);
-    EXPECT_TRUE(ctx_c->connected == false);
-    EXPECT_TRUE(ctx_s->fd_count == 0);
+    server.init_();
+    client.init_();
+    ASSERT_NE(server.ctx_, nullptr);
+    ASSERT_NE(client.ctx_, nullptr);
+    EXPECT_TRUE(static_cast<struct client_us_nb_ctx *>(client.ctx_)->connected == false);
+    EXPECT_TRUE(static_cast<struct server_us_nb_ctx *>(server.ctx_)->fd_count == 0);
 
     // Start client
-    client_us_nb_if.start(ctx_c);
-    EXPECT_TRUE(ctx_c->connected == false);
+    client.start_();
+    EXPECT_TRUE(static_cast<struct client_us_nb_ctx *>(client.ctx_)->connected == false);
 
     // Start server
-    server_us_nb_if.start(ctx_s);
-    EXPECT_TRUE(ctx_s->fd_count == 1);
+    server.start_();
+    EXPECT_TRUE(static_cast<struct server_us_nb_ctx *>(server.ctx_)->fd_count == 1);
 
     // Wait for every connection to be acknowledged
     // A loop takes at least 10ms and reconnection timers are 100ms long
@@ -154,10 +150,10 @@ TEST_F(tu_socket_us_nb, connect_retry)
         m->fd.poll_fd();
         m->tm.check_exp();
     }
-    EXPECT_EQ(ctx_s->fd_count, 2);
+    EXPECT_EQ(static_cast<struct server_us_nb_ctx *>(server.ctx_)->fd_count, 2);
 
-    server_us_nb_if.stop(ctx_s);
-    client_us_nb_if.stop(ctx_c);
+    server.stop_();
+    client.stop_();
 }
 
 //
@@ -165,43 +161,44 @@ TEST_F(tu_socket_us_nb, connect_retry)
 //
 TEST_F(tu_socket_us_nb, data)
 {
-    struct server_us_nb_ctx *ctx_s; // server context
-    struct client_us_nb_ctx *ctx_c; // client context
+    struct bk_server_us_nb server;
+    struct bk_client_us_nb client;
+    void *data = &client;
 
     // Initialize client and server
-    ctx_s = (struct server_us_nb_ctx *)server_us_nb_if.init(1);
-    ctx_c = (struct client_us_nb_ctx *)client_us_nb_if.init(2);
-    ASSERT_NE(ctx_s, nullptr);
-    ASSERT_NE(ctx_c, nullptr);
-    EXPECT_EQ(ctx_c->connected, false);
-    EXPECT_EQ(ctx_s->fd_count, 0);
+    server.init_();
+    client.init_();
+    ASSERT_NE(static_cast<struct server_us_nb_ctx *>(server.ctx_), nullptr);
+    ASSERT_NE(static_cast<struct client_us_nb_ctx *>(client.ctx_), nullptr);
+    EXPECT_EQ(static_cast<struct client_us_nb_ctx *>(client.ctx_)->connected, false);
+    EXPECT_EQ(static_cast<struct server_us_nb_ctx *>(server.ctx_)->fd_count, 0);
 
     // Bind client and server to 0
-    server_us_nb_if.bind(ctx_s, 0, 0);
-    client_us_nb_if.bind(ctx_c, 0, 0);
+    server.bind_(0, 0);
+    client.bind_(0, 0);
 
     // Connect client and server
-    server_us_nb_if.start(ctx_s);
-    client_us_nb_if.start(ctx_c);
-    EXPECT_EQ(ctx_s->fd_count, 1);
-    EXPECT_EQ(ctx_c->connected, true);
+    server.start_();
+    client.start_();
+    EXPECT_EQ(static_cast<struct server_us_nb_ctx *>(server.ctx_)->fd_count, 1);
+    EXPECT_EQ(static_cast<struct client_us_nb_ctx *>(client.ctx_)->connected, true);
     m->fd.poll_fd();
-    EXPECT_EQ(ctx_c->connected, true);
+    EXPECT_EQ(static_cast<struct client_us_nb_ctx *>(client.ctx_)->connected, true);
 
     // Send data from client to server
-    client_us_nb_if.tx(ctx_c, (void *)"hello world");
-    EXPECT_EQ(ctx_s->rx_pkt_count, 0u);
+    client.tx_(data);
+    EXPECT_EQ(static_cast<struct server_us_nb_ctx *>(server.ctx_)->rx_pkt_count, 0u);
     m->fd.poll_fd();
-    EXPECT_EQ(ctx_s->rx_pkt_count, 1u);
+    EXPECT_EQ(static_cast<struct server_us_nb_ctx *>(server.ctx_)->rx_pkt_count, 1u);
 
     // Send data from server to client
-    server_us_nb_if.tx(ctx_s, (void *)"hello world");
-    EXPECT_EQ(ctx_c->rx_pkt_count, 0u);
+    server.tx_(data);
+    EXPECT_EQ(static_cast<struct client_us_nb_ctx *>(client.ctx_)->rx_pkt_count, 0u);
     m->fd.poll_fd();
-    EXPECT_EQ(ctx_c->rx_pkt_count, 1u);
+    EXPECT_EQ(static_cast<struct client_us_nb_ctx *>(client.ctx_)->rx_pkt_count, 1u);
 
-    server_us_nb_if.stop(ctx_s);
-    client_us_nb_if.stop(ctx_c);
+    server.stop_();
+    client.stop_();
 }
 
 //
@@ -209,22 +206,25 @@ TEST_F(tu_socket_us_nb, data)
 //
 TEST_F(tu_socket_us_nb, error)
 {
+    struct bk_server_us_nb server;
+    struct bk_client_us_nb client;
+
     // Ignore error log as it's expected to have some
     logger_set_level(LOGGER_LEVEL_CRIT);
 
     // Bind client and server to 0
-    server_us_nb_if.bind(nullptr, 0, 0);
-    client_us_nb_if.bind(nullptr, 0, 0);
+    server.bind_(0, 0);
+    client.bind_(0, 0);
 
     // Connect client and server
-    server_us_nb_if.start(nullptr);
-    client_us_nb_if.start(nullptr);
+    server.start_();
+    client.start_();
 
     // Connect client and server
-    server_us_nb_if.stop(nullptr);
-    client_us_nb_if.stop(nullptr);
+    server.stop_();
+    client.stop_();
 
     // Connect client and server
-    server_us_nb_if.tx(nullptr, nullptr);
-    client_us_nb_if.tx(nullptr, nullptr);
+    server.tx_(nullptr);
+    client.tx_(nullptr);
 }

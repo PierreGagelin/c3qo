@@ -27,6 +27,13 @@ struct server_us_nb_ctx
     size_t tx_pkt_bytes; // TX: Total size sent
 };
 
-extern struct bk_if server_us_nb_if;
+struct bk_server_us_nb : block
+{
+    virtual void init_() override final;
+    virtual void start_() override final;
+    virtual void stop_() override final;
+    virtual size_t get_stats_(char *buf, size_t len) override final;
+    virtual int tx_(void *vdata) override final;
+};
 
 #endif // BLOCK_SERVER_US_NB_HPP

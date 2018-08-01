@@ -6,7 +6,7 @@
 // Managers shall be linked
 extern struct manager *m;
 
-static void *hello_init(int bk_id)
+void bk_hello::init_()
 {
     struct hello_ctx *ctx;
 
@@ -16,72 +16,68 @@ static void *hello_init(int bk_id)
     //   - register the block ID
     //   - no name
     //   - no packet processed
-    ctx->bk_id = bk_id;
     ctx->name[0] = '\0';
     ctx->count = 0;
 
-    return ctx;
+    ctx_ = ctx;
 }
 
-static void hello_conf(void *vctx, char *conf)
+void bk_hello::conf_(char *conf)
 {
     struct hello_ctx *ctx;
     size_t len;
 
     // Verify input
-    if ((vctx == nullptr) || (conf == nullptr))
+    if ((ctx_ == nullptr) || (conf == nullptr))
     {
         LOGGER_ERR("Failed to configure block: nullptr context or conf");
         return;
     }
-    ctx = static_cast<struct hello_ctx *>(vctx);
+    ctx = static_cast<struct hello_ctx *>(ctx_);
     len = strnlen(conf, sizeof(ctx->name));
     if (len == sizeof(ctx->name))
     {
-        LOGGER_ERR("Failed to configure block: name too long [bk_id=%d ; name=%s]", ctx->bk_id, conf);
+        LOGGER_ERR("Failed to configure block: name too long [bk_id=%d ; name=%s]", id_, conf);
         return;
     }
 
-    LOGGER_INFO("Configure block name [bk_id=%d ; name=%s]", ctx->bk_id, conf);
+    LOGGER_INFO("Configure block name [bk_id=%d ; name=%s]", id_, conf);
 
     // Write name given by configuration
     memcpy(ctx->name, conf, len + 1);
 }
 
-static void hello_start(void *vctx)
+void bk_hello::start_()
 {
-    (void)vctx;
-
     LOGGER_DEBUG("Hello world");
 }
 
-static void hello_stop(void *vctx)
+void bk_hello::stop_()
 {
-    struct hello_ctx *ctx;
-
-    if (vctx == nullptr)
+    if (ctx_ == nullptr)
     {
         LOGGER_ERR("Failed to stop block: nullptr context");
         return;
     }
-    ctx = static_cast<struct hello_ctx *>(vctx);
 
-    delete ctx;
+    delete static_cast<struct hello_ctx *>(ctx_);
+
+    ctx_ = nullptr;
 }
 
-static int hello_rx(void *vctx, void *vdata)
+int bk_hello::rx_(void *vdata)
 {
     struct hello_ctx *ctx;
     int ret;
 
-    if (vctx == nullptr)
+    if (ctx_ == nullptr)
     {
         LOGGER_ERR("Failed to process RX data: nullptr context");
         return 0;
     }
-    ctx = static_cast<struct hello_ctx *>(vctx);
+    ctx = static_cast<struct hello_ctx *>(ctx_);
 
-    LOGGER_DEBUG("Process RX data [bk_id=%d ; data=%p]", ctx->bk_id, vdata);
+    LOGGER_DEBUG("Process RX data [bk_id=%d ; data=%p]", id_, vdata);
 
     // Get and increment index to return
     ret = ctx->count++ % 8;
@@ -89,19 +85,19 @@ static int hello_rx(void *vctx, void *vdata)
     return ret;
 }
 
-static int hello_tx(void *vctx, void *vdata)
+int bk_hello::tx_(void *vdata)
 {
     struct hello_ctx *ctx;
     int ret;
 
-    if (vctx == nullptr)
+    if (ctx_ == nullptr)
     {
         LOGGER_ERR("Failed to process TX data: nullptr context");
         return 0;
     }
-    ctx = static_cast<struct hello_ctx *>(vctx);
+    ctx = static_cast<struct hello_ctx *>(ctx_);
 
-    LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", ctx->bk_id, vdata);
+    LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", id_, vdata);
 
     // Get and increment index to return
     ret = ctx->count++ % 8;
@@ -109,36 +105,36 @@ static int hello_tx(void *vctx, void *vdata)
     return ret;
 }
 
-static int hello_ctrl(void *vctx, void *vnotif)
+int bk_hello::ctrl_(void *vnotif)
 {
     struct hello_ctx *ctx;
 
-    if (vctx == nullptr)
+    if (ctx_ == nullptr)
     {
         LOGGER_ERR("Failed to notify block: nullptr context");
         return 0;
     }
-    ctx = static_cast<struct hello_ctx *>(vctx);
+    ctx = static_cast<struct hello_ctx *>(ctx_);
 
     // Send a message
-    m->bk.process_tx(ctx->bk_id, ctx->count % 8, vnotif);
+    m->bk.process_tx(id_, ctx->count % 8, vnotif);
 
     // No forwarding
     return 0;
 }
 
-static size_t hello_get_stats(void *vctx, char *buf, size_t len)
+size_t bk_hello::get_stats_(char *buf, size_t len)
 {
     int ret;
     size_t written;
     struct hello_ctx *ctx;
 
-    if ((vctx == nullptr) || (buf == nullptr) || (len == 0))
+    if ((ctx_ == nullptr) || (buf == nullptr) || (len == 0))
     {
         LOGGER_ERR("Failed to get block statistics: nullptr context or nullptr buffer");
         return 0;
     }
-    ctx = static_cast<struct hello_ctx *>(vctx);
+    ctx = static_cast<struct hello_ctx *>(ctx_);
 
     LOGGER_DEBUG("Get block statistics [ctx=%p ; buf=%p ; len=%lu]", ctx, buf, len);
 
@@ -160,20 +156,3 @@ static size_t hello_get_stats(void *vctx, char *buf, size_t len)
 
     return written;
 }
-
-//
-// @brief Exported structure of the block
-//
-struct bk_if hello_if = {
-    .init = hello_init,
-    .conf = hello_conf,
-    .bind = nullptr,
-    .start = hello_start,
-    .stop = hello_stop,
-
-    .get_stats = hello_get_stats,
-
-    .rx = hello_rx,
-    .tx = hello_tx,
-    .ctrl = hello_ctrl,
-};

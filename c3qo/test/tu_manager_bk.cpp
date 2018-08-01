@@ -37,6 +37,24 @@ void tu_manager_bk::TearDown()
 }
 
 //
+// @brief Test creation and use of default block
+//
+TEST_F(tu_manager_bk, block)
+{
+    struct block bk;
+
+    bk.init_();
+    bk.conf_(nullptr);
+    bk.bind_(0, 0);
+    bk.start_();
+    bk.stop_();
+    EXPECT_EQ(bk.get_stats_(nullptr, 0u), 0u);
+    EXPECT_EQ(bk.rx_(nullptr), 0);
+    EXPECT_EQ(bk.tx_(nullptr), 0);
+    EXPECT_EQ(bk.ctrl_(nullptr), 0);
+}
+
+//
 // @brief Test the configuration
 //
 TEST_F(tu_manager_bk, manager_bk_conf)
@@ -88,10 +106,10 @@ TEST_F(tu_manager_bk, manager_bk_conf)
 
     // Prepare expected configuration dump for the blocks
     //   - format : "<bk_id> <bk_type> <bk_state>;"
-    ss << "1 hello_if " << STATE_START << ";";
-    ss << "2 hello_if " << STATE_START << ";";
-    ss << "3 client_us_nb_if " << STATE_START << ";";
-    ss << "4 server_us_nb_if " << STATE_START << ";";
+    ss << "1 hello " << STATE_START << ";";
+    ss << "2 hello " << STATE_START << ";";
+    ss << "3 client_us_nb " << STATE_START << ";";
+    ss << "4 server_us_nb " << STATE_START << ";";
     buf_exp = ss.str();
 
     // Verify the configuration dump
@@ -101,28 +119,28 @@ TEST_F(tu_manager_bk, manager_bk_conf)
     // Verify block informations
     for (int i = 1; i < 5; i++)
     {
-        const class bk_info *bi;
+        const struct block *bi;
 
         bi = block_get(i);
         ASSERT_NE(bi, nullptr);
 
-        EXPECT_EQ(bi->id, i);
-        EXPECT_NE(bi->ctx, nullptr);
-        EXPECT_EQ(bi->state, STATE_START);
+        EXPECT_EQ(bi->id_, i);
+        EXPECT_NE(bi->ctx_, nullptr);
+        EXPECT_EQ(bi->state_, STATE_START);
 
         switch (i)
         {
         case 1:
         case 2:
-            EXPECT_EQ(strcmp(bi->type, "hello_if"), 0);
+            EXPECT_EQ(bi->type_, "hello");
             break;
 
         case 3:
-            EXPECT_EQ(strcmp(bi->type, "client_us_nb_if"), 0);
+            EXPECT_EQ(bi->type_, "client_us_nb");
             break;
 
         case 4:
-            EXPECT_EQ(strcmp(bi->type, "server_us_nb_if"), 0);
+            EXPECT_EQ(bi->type_, "server_us_nb");
             break;
 
         default:
@@ -142,8 +160,8 @@ TEST_F(tu_manager_bk, manager_bk_conf)
 //
 TEST_F(tu_manager_bk, manager_bk_flow)
 {
-    const class bk_info *bk_1;
-    const class bk_info *bk_2;
+    struct block *bk_1;
+    struct block *bk_2;
     char stats[] = "useless value";
     int count;
 
@@ -171,21 +189,21 @@ TEST_F(tu_manager_bk, manager_bk_flow)
     ASSERT_NE(bk_2, nullptr);
 
     // No data should have gone through blocks
-    bk_1->bk->get_stats(bk_1->ctx, stats, sizeof(stats));
+    bk_1->get_stats_(stats, sizeof(stats));
     count = atoi(stats);
     EXPECT_TRUE(count == 0);
-    bk_2->bk->get_stats(bk_2->ctx, stats, sizeof(stats));
+    bk_2->get_stats_(stats, sizeof(stats));
     count = atoi(stats);
     EXPECT_TRUE(count == 0);
 
     // Notify the block to generate a TX data flow: it shall return 0
-    EXPECT_TRUE(bk_1->bk->ctrl(bk_1->ctx, stats) == 0);
+    EXPECT_TRUE(bk_1->ctrl_(stats) == 0);
 
     // A buffer should have crossed block 2
-    bk_1->bk->get_stats(bk_1->ctx, stats, sizeof(stats));
+    bk_1->get_stats_(stats, sizeof(stats));
     count = atoi(stats);
     EXPECT_EQ(count, 0);
-    bk_2->bk->get_stats(bk_2->ctx, stats, sizeof(stats));
+    bk_2->get_stats_(stats, sizeof(stats));
     count = atoi(stats);
     EXPECT_EQ(count, 1);
 
@@ -200,8 +218,8 @@ TEST_F(tu_manager_bk, strings)
 {
     for (int i = 0; i < 10; i++)
     {
-        get_bk_cmd((enum bk_cmd)i);
-        get_bk_state((enum bk_state)i);
+        bk_cmd_to_string((enum bk_cmd)i);
+        bk_state_to_string((enum bk_state)i);
     }
 }
 

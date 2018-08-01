@@ -126,9 +126,10 @@ static void server_us_nb_flush_fd(struct server_us_nb_ctx *ctx, int fd)
             ctx->rx_pkt_count += 1;
             ctx->rx_pkt_bytes += static_cast<size_t>(ret);
 
-            // For the moment this is OK because the data flow is synchronous
-            // Need to fix it if asynchronous data flow arrives
-            m->bk.process_rx(ctx->bk_id, ctx->bind, buf);
+            // For the moment this is OK because 
+            //   - the data flow is synchronous (buf is processed as is)
+            //   - only one block is connected
+            m->bk.process_rx(ctx->bk_id, 1, buf);
         }
     } while (ret > 0);
 }
@@ -198,14 +199,14 @@ static void server_us_nb_handler(void *vctx, int fd, void *socket)
 //
 // @brief Initialize the block
 //
-static void *server_us_nb_init(int bk_id)
+void bk_server_us_nb::init_()
 {
     struct server_us_nb_ctx *ctx;
 
     ctx = new struct server_us_nb_ctx;
 
     memset(ctx->fd, -1, sizeof(ctx->fd));
-    ctx->bk_id = bk_id;
+    ctx->bk_id = id_;
     ctx->fd_count = 0;
     ctx->rx_pkt_count = 0;
     ctx->rx_pkt_bytes = 0;
@@ -215,47 +216,26 @@ static void *server_us_nb_init(int bk_id)
     // Remove UNIX socket
     unlink(SOCKET_NAME);
 
-    LOGGER_INFO("Initialize block [bk_id=%d ; ctx=%p]", bk_id, ctx);
+    LOGGER_INFO("Initialize block [bk_id=%d ; ctx=%p]", id_, ctx);
 
-    return ctx;
-}
-
-//
-// @brief Bind a block to a port
-//
-// This block only has one port
-//
-static void server_us_nb_bind(void *vctx, int port, int bk_id)
-{
-    struct server_us_nb_ctx *ctx;
-
-    // Verify input
-    if ((vctx == nullptr) || (port != 0))
-    {
-        LOGGER_ERR("Failed to bind block: nullptr context or port not in range [port=%d ; range=[0,0]]", port);
-        return;
-    }
-    ctx = static_cast<struct server_us_nb_ctx *>(vctx);
-
-    // Bind to a block
-    ctx->bind = bk_id;
+    ctx_ = ctx;
 }
 
 //
 // @brief Start the block
 //
-static void server_us_nb_start(void *vctx)
+void bk_server_us_nb::start_()
 {
     struct server_us_nb_ctx *ctx;
     struct sockaddr_un srv_addr;
     int ret;
 
-    if (vctx == nullptr)
+    if (ctx_ == nullptr)
     {
         LOGGER_ERR("Failed to start block: nullptr context");
         return;
     }
-    ctx = static_cast<struct server_us_nb_ctx *>(vctx);
+    ctx = static_cast<struct server_us_nb_ctx *>(ctx_);
 
     // Creation of the server socket
     ctx->fd[0] = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -306,17 +286,17 @@ static void server_us_nb_start(void *vctx)
 //
 // @brief Stop the block
 //
-static void server_us_nb_stop(void *vctx)
+void bk_server_us_nb::stop_()
 {
     struct server_us_nb_ctx *ctx;
     int i;
 
-    if (vctx == nullptr)
+    if (ctx_ == nullptr)
     {
         LOGGER_ERR("Failed to stop block");
         return;
     }
-    ctx = static_cast<struct server_us_nb_ctx *>(vctx);
+    ctx = static_cast<struct server_us_nb_ctx *>(ctx_);
 
     LOGGER_INFO("Stop block [ctx=%p]", ctx);
 
@@ -346,18 +326,18 @@ static void server_us_nb_stop(void *vctx)
 //
 // @return Actual size written
 //
-static size_t server_us_nb_get_stats(void *vctx, char *buf, size_t len)
+size_t bk_server_us_nb::get_stats_(char *buf, size_t len)
 {
     int ret;
     size_t count;
     struct server_us_nb_ctx *ctx;
 
-    if (vctx == nullptr)
+    if (ctx_ == nullptr)
     {
         LOGGER_ERR("Failed to get block statistics");
         return 0;
     }
-    ctx = static_cast<struct server_us_nb_ctx *>(vctx);
+    ctx = static_cast<struct server_us_nb_ctx *>(ctx_);
 
     LOGGER_DEBUG("Get block statistics [ctx=%p ; buf=%p ; len=%lu]", ctx, buf, len);
 
@@ -382,18 +362,18 @@ static size_t server_us_nb_get_stats(void *vctx, char *buf, size_t len)
     }
 }
 
-static int server_us_nb_tx(void *vctx, void *vdata)
+int bk_server_us_nb::tx_(void *vdata)
 {
     struct server_us_nb_ctx *ctx;
 
-    if (vctx == nullptr)
+    if (ctx_ == nullptr)
     {
         LOGGER_ERR("Failed to process TX data: nullptr context");
         return 0;
     }
-    ctx = static_cast<struct server_us_nb_ctx *>(vctx);
+    ctx = static_cast<struct server_us_nb_ctx *>(ctx_);
 
-    LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", ctx->bk_id, vdata);
+    LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", id_, vdata);
 
     // Update statistics
     ctx->tx_pkt_count++;
@@ -412,18 +392,3 @@ static int server_us_nb_tx(void *vctx, void *vdata)
     // Drop the buffer
     return 0;
 }
-
-// Declare the interface for this block
-struct bk_if server_us_nb_if = {
-    .init = server_us_nb_init,
-    .conf = nullptr,
-    .bind = server_us_nb_bind,
-    .start = server_us_nb_start,
-    .stop = server_us_nb_stop,
-
-    .get_stats = server_us_nb_get_stats,
-
-    .rx = nullptr,
-    .tx = server_us_nb_tx,
-    .ctrl = nullptr,
-};

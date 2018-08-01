@@ -11,9 +11,6 @@
 // Managers shall be linked
 extern struct manager *m;
 
-// Client and server shall be linked
-extern struct bk_if zmq_pair_if;
-
 class tu_zmq_pair : public testing::Test
 {
     void SetUp();
@@ -43,27 +40,27 @@ void tu_zmq_pair::TearDown()
 //
 TEST_F(tu_zmq_pair, data)
 {
-    struct zmq_pair_ctx *ctx_s; // server context
-    struct zmq_pair_ctx *ctx_c; // client context
+    struct bk_zmq_pair client;
+    struct bk_zmq_pair server;
     char conf_s[] = "type=server addr=tcp://127.0.0.1:5555";
     char conf_c[] = "type=client addr=tcp://127.0.0.1:5555";
 
     // Initialize two ZMQ pairs
-    ctx_s = (struct zmq_pair_ctx *)zmq_pair_if.init(1);
-    ctx_c = (struct zmq_pair_ctx *)zmq_pair_if.init(2);
-    ASSERT_NE(ctx_s, nullptr);
-    ASSERT_NE(ctx_c, nullptr);
+    server.init_();
+    client.init_();
+    ASSERT_NE(static_cast<struct zmq_pair_ctx *>(server.ctx_), nullptr);
+    ASSERT_NE(static_cast<struct zmq_pair_ctx *>(client.ctx_), nullptr);
 
     // Configure them
-    zmq_pair_if.conf(ctx_s, conf_s);
-    zmq_pair_if.conf(ctx_c, conf_c);
+    server.conf_(conf_s);
+    client.conf_(conf_c);
 
     // Start them
-    zmq_pair_if.start(ctx_s);
-    zmq_pair_if.start(ctx_c);
+    server.start_();
+    client.start_();
 
-    EXPECT_EQ(ctx_s->rx_pkt_count, 0lu);
-    EXPECT_EQ(ctx_c->rx_pkt_count, 0lu);
+    EXPECT_EQ(static_cast<struct zmq_pair_ctx *>(server.ctx_)->rx_pkt_count, 0lu);
+    EXPECT_EQ(static_cast<struct zmq_pair_ctx *>(client.ctx_)->rx_pkt_count, 0lu);
 
     // Send some data between both pairs
     // Some messages are lost because subscription can take some time
@@ -79,16 +76,16 @@ TEST_F(tu_zmq_pair, data)
         msg.data = data;
         msg.data_len = strlen(msg.data);
 
-        zmq_pair_if.tx(ctx_s, (void *)&msg);
-        zmq_pair_if.tx(ctx_c, (void *)&msg);
+        client.tx_(&msg);
+        server.tx_(&msg);
 
         m->fd.poll_fd();
     }
 
     // At least one message should be received
-    EXPECT_GT(ctx_c->rx_pkt_count, 1lu);
-    EXPECT_GT(ctx_s->rx_pkt_count, 1lu);
+    EXPECT_GT(static_cast<struct zmq_pair_ctx *>(client.ctx_)->rx_pkt_count, 1lu);
+    EXPECT_GT(static_cast<struct zmq_pair_ctx *>(server.ctx_)->rx_pkt_count, 1lu);
 
-    zmq_pair_if.stop(ctx_s);
-    zmq_pair_if.stop(ctx_c);
+    client.stop_();
+    server.stop_();
 }

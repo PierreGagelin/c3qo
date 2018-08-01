@@ -10,8 +10,6 @@
 // Managers shall be linked
 extern struct manager *m;
 
-extern struct bk_if trans_pb_if;
-
 class tu_trans_pb : public testing::Test
 {
     void SetUp();
@@ -41,20 +39,20 @@ void tu_trans_pb::TearDown()
 //
 TEST_F(tu_trans_pb, hello)
 {
+    struct bk_trans_pb block;
     struct trans_pb_notif notif;
     struct hello_ctx hello;
-    void *ctx;
 
-    ctx = trans_pb_if.init(1);
-    ASSERT_NE(ctx, nullptr);
+    block.init_();
+    ASSERT_NE(block.ctx_, nullptr);
 
     hello.bk_id = 42;
     notif.type = BLOCK_HELLO;
     notif.context.hello = &hello;
 
-    EXPECT_EQ(trans_pb_if.ctrl(ctx, &notif), 0);
+    EXPECT_EQ(block.ctrl_(&notif), 0);
 
-    trans_pb_if.stop(ctx);
+    block.stop_();
 }
 
 //
@@ -62,20 +60,20 @@ TEST_F(tu_trans_pb, hello)
 //
 TEST_F(tu_trans_pb, zmq_pair)
 {
+    struct bk_trans_pb block;
     struct trans_pb_notif notif;
     struct zmq_pair_ctx zmq_pair;
-    void *ctx;
 
-    ctx = trans_pb_if.init(1);
-    ASSERT_NE(ctx, nullptr);
+    block.init_();
+    ASSERT_NE(block.ctx_, nullptr);
 
     zmq_pair.bk_id = 42;
     notif.type = BLOCK_ZMQ_PAIR;
     notif.context.zmq_pair = &zmq_pair;
 
-    EXPECT_EQ(trans_pb_if.ctrl(ctx, &notif), 0);
+    EXPECT_EQ(block.ctrl_(&notif), 0);
 
-    trans_pb_if.stop(ctx);
+    block.stop_();
 }
 
 //
@@ -83,23 +81,23 @@ TEST_F(tu_trans_pb, zmq_pair)
 //
 TEST_F(tu_trans_pb, error)
 {
+    struct bk_trans_pb block;
     struct trans_pb_notif notif;
-    void *ctx;
 
     // Ignore errors as these are nominal
     logger_set_level(LOGGER_LEVEL_EMERG);
 
-    ctx = trans_pb_if.init(1);
-    ASSERT_NE(ctx, nullptr);
+    block.init_();
+    ASSERT_NE(block.ctx_, nullptr);
 
     // Bad arguments
-    EXPECT_EQ(trans_pb_if.ctrl(nullptr, nullptr), 0);
-    EXPECT_EQ(trans_pb_if.ctrl(ctx, nullptr), 0);
-    EXPECT_EQ(trans_pb_if.ctrl(nullptr, &notif), 0);
+    EXPECT_EQ(block.ctrl_(nullptr), 0);
+    EXPECT_EQ(block.ctrl_(nullptr), 0);
+    EXPECT_EQ(block.ctrl_(&notif), 0);
 
     // Bad notif type
     notif.type = static_cast<enum bk_type>(42);
-    EXPECT_EQ(trans_pb_if.ctrl(ctx, &notif), 0);
+    EXPECT_EQ(block.ctrl_(&notif), 0);
 
-    trans_pb_if.stop(ctx);
+    block.stop_();
 }

@@ -10,39 +10,6 @@
 #include "block/trans_pb.hpp"
 #include "c3qo/block.hpp"
 
-#define MAX_NAME 32u
-
-//
-// @struct bind_info
-//
-// @brief Information to bind to blocks together
-//
-struct bind_info
-{
-    int port;             // Port from source block
-    int bk_id;            // Identifier of the destination block
-    class bk_info *block; // Destination block
-};
-
-//
-// @class bk_info
-//
-// @brief Description of a block for the manager
-//
-class bk_info
-{
-  public:
-    std::vector<struct bind_info> bind; // Block bindings
-    struct bk_if *bk;                   // Block interface
-    void *ctx;                          // Block context
-    int id;                             // Block ID
-    char type[MAX_NAME];                // Block type
-    enum bk_state state;                // Block state
-
-  public:
-    bk_info();
-};
-
 //
 // @enum flow_type
 //
@@ -52,7 +19,7 @@ enum flow_type
     FLOW_TX,    // TX flow
     FLOW_NOTIF, // Notification flow
 };
-const char *get_flow_type(enum flow_type type);
+const char *flow_type_to_string(enum flow_type type);
 
 class manager_bk
 {
@@ -62,7 +29,7 @@ class manager_bk
 
   protected:
     // Map of blocks
-    std::unordered_map<int, class bk_info *> bk_map_;
+    std::unordered_map<int, struct block *> bk_map_;
 
   protected:
     void block_flow(int id, int port, void *data, enum flow_type type);
@@ -81,7 +48,7 @@ class manager_bk
     bool block_stop(int id);
 
   public:
-    const class bk_info *block_get(int id);
+    struct block *block_get(int id);
     void block_del(int id);
     void block_clear();
 

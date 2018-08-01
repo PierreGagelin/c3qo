@@ -24,6 +24,12 @@ struct client_us_nb_ctx
     size_t tx_pkt_bytes; // TX: Total size sent
 };
 
-extern struct bk_if client_us_nb_if;
+struct bk_client_us_nb : block
+{
+    virtual void init_() override final;
+    virtual void start_() override final;
+    virtual void stop_() override final;
+    virtual int tx_(void *vdata) override final;
+};
 
 #endif // BLOCK_CLIENT_US_NB_HPP

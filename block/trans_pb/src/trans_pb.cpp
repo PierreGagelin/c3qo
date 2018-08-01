@@ -3,38 +3,13 @@
 // Project headers
 #include "c3qo/manager.hpp"
 
+// Managers shall be linked
+extern struct manager *m;
+
 #ifdef C3QO_PROTOBUF
 
 // Protobuf sources
 #include "block.pb.h"
-
-// Managers shall be linked
-extern struct manager *m;
-
-static void *trans_pb_init(int bk_id)
-{
-    struct trans_pb_ctx *ctx;
-
-    ctx = new struct trans_pb_ctx;
-
-    ctx->bk_id = bk_id;
-
-    return ctx;
-}
-
-static void trans_pb_stop(void *vctx)
-{
-    struct trans_pb_ctx *ctx;
-
-    if (vctx == nullptr)
-    {
-        LOGGER_ERR("Failed to stop block: nullptr context");
-        return;
-    }
-    ctx = static_cast<struct trans_pb_ctx *>(vctx);
-
-    delete ctx;
-}
 
 static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, class pb_msg_block &msg_bk) noexcept
 {
@@ -85,19 +60,44 @@ static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, struct zmq_pair_ctx
     trans_pb_serialize(msg_zmq, msg_bk);
 }
 
-static int trans_pb_ctrl(void *vctx, void *vnotif)
+void bk_trans_pb::init_()
+{
+    struct trans_pb_ctx *ctx;
+
+    ctx = new struct trans_pb_ctx;
+
+    ctx->bk_id = id_;
+
+    ctx_ = ctx;
+}
+
+void bk_trans_pb::stop_()
+{
+    struct trans_pb_ctx *ctx;
+
+    if (ctx_ == nullptr)
+    {
+        LOGGER_ERR("Failed to stop block: nullptr context");
+        return;
+    }
+    ctx = static_cast<struct trans_pb_ctx *>(ctx_);
+
+    delete ctx;
+}
+
+int bk_trans_pb::ctrl_(void *vnotif)
 {
     struct trans_pb_notif *notif;
     struct trans_pb_ctx *ctx;
     struct c3qo_zmq_msg msg_zmq;
 
-    if ((vctx == nullptr) || (vnotif == nullptr))
+    if ((ctx_ == nullptr) || (vnotif == nullptr))
     {
-        LOGGER_ERR("trans_pb control failed: nullptr argument [ctx=%p ; notif=%p]", vctx, vnotif);
+        LOGGER_ERR("trans_pb control failed: nullptr argument [ctx=%p ; notif=%p]", ctx_, vnotif);
         return 0;
     }
     notif = static_cast<struct trans_pb_notif *>(vnotif);
-    ctx = static_cast<struct trans_pb_ctx *>(vctx);
+    ctx = static_cast<struct trans_pb_ctx *>(ctx_);
 
     switch (notif->type)
     {
@@ -117,38 +117,5 @@ static int trans_pb_ctrl(void *vctx, void *vnotif)
 
     return 0;
 }
-
-//
-// @brief Exported structure of the block
-//
-struct bk_if trans_pb_if = {
-    .init = trans_pb_init,
-    .conf = nullptr,
-    .bind = nullptr,
-    .start = nullptr,
-    .stop = trans_pb_stop,
-
-    .get_stats = nullptr,
-
-    .rx = nullptr,
-    .tx = nullptr,
-    .ctrl = trans_pb_ctrl,
-};
-
-#else
-
-struct bk_if trans_pb_if = {
-    .init = nullptr,
-    .conf = nullptr,
-    .bind = nullptr,
-    .start = nullptr,
-    .stop = nullptr,
-
-    .get_stats = nullptr,
-
-    .rx = nullptr,
-    .tx = nullptr,
-    .ctrl = nullptr,
-};
 
 #endif // C3QO_PROTOBUF

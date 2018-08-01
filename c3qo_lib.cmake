@@ -20,6 +20,7 @@ set(UTILS_INCLUDE_DIR ${UTILS_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/utils/socket/incl
 # Compilation flags
 set(COMPILE_FLAGS_COMMON -std=c++11 -Wall -Wextra)
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_COMMON})
+set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -fno-rtti)
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Werror)
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Woverloaded-virtual)
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Wswitch)
@@ -120,6 +121,7 @@ function (c3qo_add_library_protobuf target_name target_sources)
     add_library(${target_name} STATIC ${PROTO_SRCS} ${PROTO_HDRS})
 
     target_compile_options(${target_name} PRIVATE ${COMPILE_FLAGS_COMMON})
+    target_compile_options(${target_name} PUBLIC -DGOOGLE_PROTOBUF_NO_RTTI)
 
     target_include_directories(${target_name} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
     target_include_directories(${target_name} PUBLIC ${PROTOBUF_INCLUDE_DIRS})

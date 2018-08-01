@@ -68,9 +68,10 @@ static void client_us_nb_callback(void *vctx, int fd, void *socket)
             ctx->rx_pkt_count++;
             ctx->rx_pkt_bytes += static_cast<size_t>(ret);
 
-            // For the moment this is OK because the data flow is synchronous
-            // Need to fix it if asynchronous data flow arrives
-            m->bk.process_rx(ctx->bk_id, ctx->bind, buf);
+            // For the moment this is OK because
+            //   - the data flow is synchronous
+            //   - only one block is bound
+            m->bk.process_rx(ctx->bk_id, 1, buf);
         }
     } while (ret > 0);
 }
@@ -200,14 +201,12 @@ static void client_us_nb_connect(struct client_us_nb_ctx *ctx)
 //
 // @brief Initialize the block
 //
-static void *client_us_nb_init(int bk_id)
+void bk_client_us_nb::init_()
 {
     struct client_us_nb_ctx *ctx;
 
     // Reserve memory for the context
     ctx = new struct client_us_nb_ctx;
-
-    ctx->bk_id = bk_id;
 
     ctx->fd = -1;
     ctx->connected = false;
@@ -217,43 +216,22 @@ static void *client_us_nb_init(int bk_id)
     ctx->tx_pkt_count = 0;
     ctx->tx_pkt_bytes = 0;
 
-    return ctx;
-}
-
-//
-// @brief Bind a block to a port
-//
-// This block only has one port
-//
-static void client_us_nb_bind(void *vctx, int port, int bk_id)
-{
-    struct client_us_nb_ctx *ctx;
-
-    // Verify input
-    if ((vctx == nullptr) || (port != 0))
-    {
-        LOGGER_ERR("Failed to bind block: nullptr context or port not in range [port=%d ; range=[0,0]]", port);
-        return;
-    }
-    ctx = static_cast<struct client_us_nb_ctx *>(vctx);
-
-    // Bind to a block
-    ctx->bind = bk_id;
+    ctx_ = ctx;
 }
 
 //
 // @brief Start the block
 //
-static void client_us_nb_start(void *vctx)
+void bk_client_us_nb::start_()
 {
     struct client_us_nb_ctx *ctx;
 
-    if (vctx == nullptr)
+    if (ctx_ == nullptr)
     {
         LOGGER_ERR("Failed to start block: nullptr context");
         return;
     }
-    ctx = static_cast<struct client_us_nb_ctx *>(vctx);
+    ctx = static_cast<struct client_us_nb_ctx *>(ctx_);
 
     // Create the client socket
     // TODO: put the socket options in the configuration
@@ -271,16 +249,16 @@ static void client_us_nb_start(void *vctx)
 //
 // @brief Stop the block
 //
-static void client_us_nb_stop(void *vctx)
+void bk_client_us_nb::stop_()
 {
     struct client_us_nb_ctx *ctx;
 
-    if (vctx == nullptr)
+    if (ctx_ == nullptr)
     {
         LOGGER_ERR("Failed to stop block");
         return;
     }
-    ctx = static_cast<struct client_us_nb_ctx *>(vctx);
+    ctx = static_cast<struct client_us_nb_ctx *>(ctx_);
 
     LOGGER_INFO("Stop block [ctx=%p]", ctx);
 
@@ -292,16 +270,16 @@ static void client_us_nb_stop(void *vctx)
     delete ctx;
 }
 
-static int client_us_nb_tx(void *vctx, void *vdata)
+int bk_client_us_nb::tx_(void *vdata)
 {
     struct client_us_nb_ctx *ctx;
 
-    if (vctx == nullptr)
+    if (ctx_ == nullptr)
     {
         LOGGER_ERR("Failed to process TX data: nullptr context");
         return 0;
     }
-    ctx = static_cast<struct client_us_nb_ctx *>(vctx);
+    ctx = static_cast<struct client_us_nb_ctx *>(ctx_);
 
     LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", ctx->bk_id, vdata);
 
@@ -315,18 +293,3 @@ static int client_us_nb_tx(void *vctx, void *vdata)
     // Drop the buffer
     return 0;
 }
-
-// Declare the interface for this block
-struct bk_if client_us_nb_if = {
-    .init = client_us_nb_init,
-    .conf = nullptr,
-    .bind = client_us_nb_bind,
-    .start = client_us_nb_start,
-    .stop = client_us_nb_stop,
-
-    .get_stats = nullptr,
-
-    .rx = nullptr,
-    .tx = client_us_nb_tx,
-    .ctrl = nullptr,
-};
