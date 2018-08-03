@@ -83,6 +83,7 @@ void bk_trans_pb::stop_()
     ctx = static_cast<struct trans_pb_ctx *>(ctx_);
 
     delete ctx;
+    ctx_ = nullptr;
 }
 
 int bk_trans_pb::ctrl_(void *vnotif)
@@ -114,6 +115,15 @@ int bk_trans_pb::ctrl_(void *vnotif)
 
     // Sending message to the ZMQ socket
     m->bk.process_tx(ctx->bk_id, 1, &msg_zmq);
+
+    if (msg_zmq.topic != nullptr)
+    {
+        delete[] msg_zmq.topic;
+    }
+    if (msg_zmq.data != nullptr)
+    {
+        delete[] msg_zmq.data;
+    }
 
     return 0;
 }

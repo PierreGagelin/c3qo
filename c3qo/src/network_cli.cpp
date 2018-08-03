@@ -94,33 +94,33 @@ int main(int argc, char **argv)
     }
 
     void *ctx = zmq_ctx_new();
-    assert(ctx != nullptr);
+    ASSERT(ctx != nullptr);
 
     // Create a client
     void *client = zmq_socket(ctx, ZMQ_PAIR);
-    assert(client != nullptr);
+    ASSERT(client != nullptr);
 
     // Create a socket to monitor another one
     void *monitor = zmq_socket(ctx, ZMQ_PAIR);
-    assert(monitor != nullptr);
+    ASSERT(monitor != nullptr);
 
     // Monitor the socket
     {
         // Filter to receive only accepted connection event
         rc = zmq_socket_monitor(client, "inproc://monitor-pair", ZMQ_EVENT_CONNECTED);
-        assert(rc != -1);
+        ASSERT(rc != -1);
 
         rc = zmq_connect(monitor, "inproc://monitor-pair");
-        assert(rc != -1);
+        ASSERT(rc != -1);
     }
 
     // Connect the socket
     rc = zmq_connect(client, addr);
-    assert(rc != -1);
+    ASSERT(rc != -1);
 
     // Wait for the client to be connected
     rc = socket_zmq_get_event(monitor);
-    assert(rc != -1);
+    ASSERT(rc != -1);
 
     // Send a two-parts message
     socket_zmq_write(client, topic, strlen(topic), ZMQ_SNDMORE);

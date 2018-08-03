@@ -43,6 +43,7 @@ TEST_F(tu_trans_pb, hello)
     struct trans_pb_notif notif;
     struct hello_ctx hello;
 
+    block.id_ = 1;
     block.init_();
     ASSERT_NE(block.ctx_, nullptr);
 
@@ -64,6 +65,7 @@ TEST_F(tu_trans_pb, zmq_pair)
     struct trans_pb_notif notif;
     struct zmq_pair_ctx zmq_pair;
 
+    block.id_ = 1;
     block.init_();
     ASSERT_NE(block.ctx_, nullptr);
 
@@ -87,13 +89,15 @@ TEST_F(tu_trans_pb, error)
     // Ignore errors as these are nominal
     logger_set_level(LOGGER_LEVEL_EMERG);
 
+    block.id_ = 1;
     block.init_();
     ASSERT_NE(block.ctx_, nullptr);
 
     // Bad arguments
     EXPECT_EQ(block.ctrl_(nullptr), 0);
-    EXPECT_EQ(block.ctrl_(nullptr), 0);
+    block.stop_();
     EXPECT_EQ(block.ctrl_(&notif), 0);
+    block.init_();
 
     // Bad notif type
     notif.type = static_cast<enum bk_type>(42);

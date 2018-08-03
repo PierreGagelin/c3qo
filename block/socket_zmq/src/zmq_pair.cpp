@@ -80,11 +80,11 @@ static void zmq_pair_callback(void *vctx, int fd, void *socket)
 end:
     if (msg.topic != nullptr)
     {
-        free(msg.topic);
+        delete[] msg.topic;
     }
     if (msg.data != nullptr)
     {
-        free(msg.data);
+        delete[] msg.data;
     }
 }
 
@@ -102,11 +102,11 @@ void bk_zmq_pair::init_()
 
     // Create a ZMQ context
     ctx->zmq_ctx = zmq_ctx_new();
-    assert(ctx->zmq_ctx != nullptr);
+    ASSERT(ctx->zmq_ctx != nullptr);
 
     // Create a ZMQ socket
     ctx->zmq_sock = zmq_socket(ctx->zmq_ctx, ZMQ_PAIR);
-    assert(ctx->zmq_sock != nullptr);
+    ASSERT(ctx->zmq_sock != nullptr);
 
     // Default value for the connection
     ctx->client = false;

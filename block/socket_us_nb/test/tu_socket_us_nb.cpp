@@ -38,6 +38,18 @@ void tu_socket_us_nb::TearDown()
     logger_set_level(LOGGER_LEVEL_NONE);
 }
 
+char *prepare_buf()
+{
+    char *buf;
+
+    buf = new char[256];
+
+    memset(buf, 0, 256u);
+    strcpy(buf, "hello world");
+
+    return buf;
+}
+
 //
 // @brief Establish a regular connection between server and client
 //          - start server
@@ -163,10 +175,12 @@ TEST_F(tu_socket_us_nb, data)
 {
     struct bk_server_us_nb server;
     struct bk_client_us_nb client;
-    void *data = &client;
+    char *data = prepare_buf();
 
     // Initialize client and server
+    server.id_ = 1;
     server.init_();
+    client.id_ = 2;
     client.init_();
     ASSERT_NE(static_cast<struct server_us_nb_ctx *>(server.ctx_), nullptr);
     ASSERT_NE(static_cast<struct client_us_nb_ctx *>(client.ctx_), nullptr);
@@ -199,6 +213,8 @@ TEST_F(tu_socket_us_nb, data)
 
     server.stop_();
     client.stop_();
+
+    delete[] data;
 }
 
 //

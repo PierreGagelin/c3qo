@@ -46,7 +46,9 @@ TEST_F(tu_zmq_pair, data)
     char conf_c[] = "type=client addr=tcp://127.0.0.1:5555";
 
     // Initialize two ZMQ pairs
+    server.id_ = 1;
     server.init_();
+    client.id_ = 2;
     client.init_();
     ASSERT_NE(static_cast<struct zmq_pair_ctx *>(server.ctx_), nullptr);
     ASSERT_NE(static_cast<struct zmq_pair_ctx *>(client.ctx_), nullptr);

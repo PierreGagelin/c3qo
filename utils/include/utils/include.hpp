@@ -13,7 +13,6 @@ extern "C"
 }
 
 // C++ headers
-#include <cassert>
 #include <cerrno>
 #include <cmath>
 #include <cstdint>
@@ -27,3 +26,12 @@ extern "C"
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+
+#define ASSERT(condition)         \
+    do                            \
+    {                             \
+        if ((condition) == false) \
+        {                         \
+            exit(1);              \
+        }                         \
+    } while (false);

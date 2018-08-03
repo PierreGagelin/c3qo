@@ -208,6 +208,8 @@ void bk_client_us_nb::init_()
     // Reserve memory for the context
     ctx = new struct client_us_nb_ctx;
 
+    ctx->bk_id = id_;
+
     ctx->fd = -1;
     ctx->connected = false;
 
