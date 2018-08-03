@@ -8,18 +8,6 @@
 #include "block/zmq_pair.hpp"
 #include "block/project_euler.hpp"
 #include "block/trans_pb.hpp"
-#include "c3qo/block.hpp"
-
-//
-// @enum flow_type
-//
-enum flow_type
-{
-    FLOW_RX,    // RX flow
-    FLOW_TX,    // TX flow
-    FLOW_NOTIF, // Notification flow
-};
-const char *flow_type_to_string(enum flow_type type);
 
 class manager_bk
 {
@@ -30,14 +18,6 @@ class manager_bk
   protected:
     // Map of blocks
     std::unordered_map<int, struct block *> bk_map_;
-
-  protected:
-    void block_flow(int id, int port, void *data, enum flow_type type);
-
-  public:
-    void process_rx(int bk_id, int port, void *data);
-    void process_tx(int bk_id, int port, void *data);
-    void process_notif(int bk_id, int port, void *notif);
 
   public:
     bool block_add(int id, const char *type);

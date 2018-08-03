@@ -275,129 +275,13 @@ bool manager_bk::block_stop(int id)
 }
 
 //
-// @brief Start a data flow between blocks
-//
-// @param bk_id : Block ID where the flow starts
-// @param port  : Source port to find a peer block
-// @param data  : Data to process
-// @param type  : Flow type (RX, TX, NOTIF)
-//
-void manager_bk::block_flow(int bk_id, int port, void *data, enum flow_type type)
-{
-    // Find source block
-    auto source = bk_map_.find(bk_id);
-    if (source == bk_map_.end())
-    {
-        LOGGER_WARNING("Cannot start data flow: unknown block ID [bk_id=%d]", bk_id);
-        return;
-    }
-    else if (source->second->state_ != STATE_START)
-    {
-        LOGGER_WARNING("Cannot start data flow: block is not started [bk_id=%d ; bk_state=%s]", bk_id, bk_state_to_string(source->second->state_));
-        return;
-    }
-
-    // Get a copy of the source that will serve to iterate over the blocks
-    struct block *src = source->second;
-
-    // Process the data from one block to the other
-    while (true)
-    {
-        // Find the source port in bindings
-        const struct bind_info *bind = nullptr;
-        for (const auto &it : src->binds_)
-        {
-            if (it.port == port)
-            {
-                // We found the requested port
-                bind = &it;
-                break;
-            }
-        }
-        if (bind == nullptr)
-        {
-            LOGGER_ERR("Failed to find route for data flow: source port not found [bk_id=%d ; port=%d]", src->id_, port);
-            return;
-        }
-
-        LOGGER_DEBUG("Routed data flow [bk_id_src=%d ; port=%d ; bk_id_dest=%d]", src->id_, port, bind->bk_id);
-
-        // Destination bk_id=0 is the regular way out of this flow
-        if (bind->bk_id == 0)
-        {
-            LOGGER_DEBUG("End data flow [bk_id=%d ; data=%p ; flow_type=%s]", src->id_, data, flow_type_to_string(type));
-            break;
-        }
-
-        // The destination block is the new source of the data flow
-        src = bind->bk;
-
-        switch (type)
-        {
-        case FLOW_NOTIF:
-            LOGGER_DEBUG("Notify block [bk_id=%d ; notif=%p]", src->id_, data);
-            port = src->ctrl_(data);
-            break;
-
-        case FLOW_RX:
-            LOGGER_DEBUG("Process RX data [bk_id=%d ; data=%p]", src->id_, data);
-            port = src->rx_(data);
-            break;
-
-        case FLOW_TX:
-            LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", src->id_, data);
-            port = src->tx_(data);
-            break;
-
-        default:
-            LOGGER_WARNING("Could not continue data flow: unknown flow type value [bk_id=%d ; data=%p ; flow_type=%d]", src->id_, data, type);
-            return;
-        }
-    }
-}
-
-//
-// @brief Send RX data to a block
-//
-// @param bk_id : Block ID
-// @param data  : Data to process
-//
-void manager_bk::process_rx(int bk_id, int port, void *data)
-{
-    block_flow(bk_id, port, data, FLOW_RX);
-}
-
-//
-// @brief Send TX data to a block
-//
-// @param bk_id : Block ID
-// @param data  : Data to process
-//
-void manager_bk::process_tx(int bk_id, int port, void *data)
-{
-    block_flow(bk_id, port, data, FLOW_TX);
-}
-
-//
-// @brief Send RX data to a block
-//
-// @param bk_id : Block ID
-// @param notif : Notification to process
-//
-void manager_bk::process_notif(int bk_id, int port, void *notif)
-{
-    block_flow(bk_id, port, notif, FLOW_NOTIF);
-}
-
-//
 // @brief Get block information
 //
 struct block *manager_bk::block_get(int id)
 {
     const auto &it = bk_map_.find(id);
-    if (it == bk_map_.end())
+    if (it == bk_map_.cend())
     {
-        LOGGER_WARNING("Cannot get block: unknown block ID [bk_id=%d]", id);
         return nullptr;
     }
 

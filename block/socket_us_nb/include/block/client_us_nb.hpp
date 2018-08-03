@@ -30,6 +30,8 @@ struct bk_client_us_nb : block
     virtual void start_() override final;
     virtual void stop_() override final;
     virtual int tx_(void *vdata) override final;
+
+    void connect_();
 };
 
 #endif // BLOCK_CLIENT_US_NB_HPP

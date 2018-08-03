@@ -14,6 +14,7 @@ bk_zmq_pair::~bk_zmq_pair() {}
 //
 static void zmq_pair_callback(void *vctx, int fd, void *socket)
 {
+    struct block *bk;
     struct zmq_pair_ctx *ctx;
     struct c3qo_zmq_msg msg;
     bool more;
@@ -26,7 +27,8 @@ static void zmq_pair_callback(void *vctx, int fd, void *socket)
         LOGGER_ERR("Failed to execute callback: nullptr context [socket=%p]", socket);
         return;
     }
-    ctx = static_cast<struct zmq_pair_ctx *>(vctx);
+    bk = static_cast<struct block *>(vctx);
+    ctx = static_cast<struct zmq_pair_ctx *>(bk->ctx_);
     if (socket != ctx->zmq_sock)
     {
         LOGGER_ERR("Failed to execute ZMQ callback: unknown socket [socket=%p ; expected=%p]", socket, ctx->zmq_sock);
@@ -73,7 +75,7 @@ static void zmq_pair_callback(void *vctx, int fd, void *socket)
             notif.type = BLOCK_HELLO;
             notif.context.hello = &ctx_hello;
 
-            m->bk.process_notif(ctx->bk_id, 1, &notif);
+            bk->process_notif_(1, &notif);
         }
     }
 
@@ -241,7 +243,7 @@ void bk_zmq_pair::start_()
     }
 
     // Register the subscriber's callback
-    m->fd.add(ctx, zmq_pair_callback, -1, ctx->zmq_sock, true);
+    m->fd.add(this, zmq_pair_callback, -1, ctx->zmq_sock, true);
 }
 
 //

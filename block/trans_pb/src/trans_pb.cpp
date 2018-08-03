@@ -89,7 +89,6 @@ void bk_trans_pb::stop_()
 int bk_trans_pb::ctrl_(void *vnotif)
 {
     struct trans_pb_notif *notif;
-    struct trans_pb_ctx *ctx;
     struct c3qo_zmq_msg msg_zmq;
 
     if ((ctx_ == nullptr) || (vnotif == nullptr))
@@ -98,7 +97,6 @@ int bk_trans_pb::ctrl_(void *vnotif)
         return 0;
     }
     notif = static_cast<struct trans_pb_notif *>(vnotif);
-    ctx = static_cast<struct trans_pb_ctx *>(ctx_);
 
     switch (notif->type)
     {
@@ -114,7 +112,7 @@ int bk_trans_pb::ctrl_(void *vnotif)
     }
 
     // Sending message to the ZMQ socket
-    m->bk.process_tx(ctx->bk_id, 1, &msg_zmq);
+    process_tx_(1, &msg_zmq);
 
     if (msg_zmq.topic != nullptr)
     {

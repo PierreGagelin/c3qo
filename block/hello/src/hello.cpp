@@ -117,7 +117,7 @@ int bk_hello::ctrl_(void *vnotif)
     ctx = static_cast<struct hello_ctx *>(ctx_);
 
     // Send a message
-    m->bk.process_tx(id_, ctx->count % 8, vnotif);
+    process_tx_(ctx->count % 8, vnotif);
 
     // No forwarding
     return 0;

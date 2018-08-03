@@ -38,6 +38,17 @@ enum bk_state
 const char *bk_state_to_string(enum bk_state t);
 
 //
+// @enum flow_type
+//
+enum flow_type
+{
+    FLOW_RX,    // RX flow
+    FLOW_TX,    // TX flow
+    FLOW_NOTIF, // Notification flow
+};
+const char *flow_type_to_string(enum flow_type type);
+
+//
 // @struct bind_info
 //
 // @brief Information to bind to blocks together
@@ -75,6 +86,12 @@ struct block
     virtual int rx_(void *vdata);
     virtual int tx_(void *vdata);
     virtual int ctrl_(void *vnotif);
+
+    // Data flow methods
+    void process_rx_(int port, void *data);
+    void process_tx_(int port, void *data);
+    void process_notif_(int port, void *notif);
+    void process_flow_(int port, void *data, enum flow_type type);
 };
 
 #endif // C3QO_BLOCK_HPP

@@ -9,10 +9,6 @@
 // Project headers
 #include "c3qo/manager.hpp"
 
-// One function uses the other: need definition
-static void client_us_nb_connect(struct client_us_nb_ctx *ctx);
-static void client_us_nb_connect_retry(void *vctx);
-
 // Managers shall be linked
 extern struct manager *m;
 
@@ -37,6 +33,7 @@ static void client_us_nb_clean(struct client_us_nb_ctx *ctx)
 //
 static void client_us_nb_callback(void *vctx, int fd, void *socket)
 {
+    struct block *bk;
     struct client_us_nb_ctx *ctx;
     char buf[SOCKET_READ_SIZE];
     ssize_t ret;
@@ -49,7 +46,8 @@ static void client_us_nb_callback(void *vctx, int fd, void *socket)
         LOGGER_ERR("Failed to handle file descriptor callback: nullptr context [fd=%d]", fd);
         return;
     }
-    ctx = static_cast<struct client_us_nb_ctx *>(vctx);
+    bk = static_cast<struct block *>(vctx);
+    ctx = static_cast<struct client_us_nb_ctx *>(bk->ctx_);
     if (fd != ctx->fd)
     {
         LOGGER_ERR("Failed to handle file descriptor callback: unknown file descriptor [bk_id=%d ; fd_exp=%d ; fd_recv=%d]", ctx->bk_id, ctx->fd, fd);
@@ -71,7 +69,7 @@ static void client_us_nb_callback(void *vctx, int fd, void *socket)
             // For the moment this is OK because
             //   - the data flow is synchronous
             //   - only one block is bound
-            m->bk.process_rx(ctx->bk_id, 1, buf);
+            bk->process_rx_(1, buf);
         }
     } while (ret > 0);
 }
@@ -81,6 +79,7 @@ static void client_us_nb_callback(void *vctx, int fd, void *socket)
 //
 static void client_us_nb_connect_check(void *vctx, int fd, void *socket)
 {
+    struct block *bk;
     struct client_us_nb_ctx *ctx;
 
     (void) socket;
@@ -91,7 +90,8 @@ static void client_us_nb_connect_check(void *vctx, int fd, void *socket)
         LOGGER_ERR("Failed to check socket connection status: nullptr context [fd=%d]", fd);
         return;
     }
-    ctx = static_cast<struct client_us_nb_ctx *>(vctx);
+    bk = static_cast<struct block *>(vctx);
+    ctx = static_cast<struct client_us_nb_ctx *>(bk->ctx_);
     if (fd != ctx->fd)
     {
         LOGGER_ERR("Failed to check socket connection status: unknown file descriptor [bk_id=%d ; fd_exp=%d ; fd_recv=%d]", ctx->bk_id, ctx->fd, fd);
@@ -102,7 +102,7 @@ static void client_us_nb_connect_check(void *vctx, int fd, void *socket)
         // Socket is connected, no need to look for write occasion anymore
         ctx->connected = true;
         m->fd.remove(ctx->fd, nullptr, false);
-        m->fd.add(ctx, &client_us_nb_callback, ctx->fd, nullptr, true);
+        m->fd.add(bk, &client_us_nb_callback, ctx->fd, nullptr, true);
     }
 }
 
@@ -111,6 +111,7 @@ static void client_us_nb_connect_check(void *vctx, int fd, void *socket)
 //
 static void client_us_nb_connect_retry(void *vctx)
 {
+    struct bk_client_us_nb *bk;
     struct client_us_nb_ctx *ctx;
 
     // Verify input
@@ -119,7 +120,8 @@ static void client_us_nb_connect_retry(void *vctx)
         LOGGER_ERR("Failed to retry connection on socket: nullptr context");
         return;
     }
-    ctx = static_cast<struct client_us_nb_ctx *>(vctx);
+    bk = static_cast<struct bk_client_us_nb *>(vctx);
+    ctx = static_cast<struct client_us_nb_ctx *>(bk->ctx_);
 
     if (close(ctx->fd) == -1)
     {
@@ -132,16 +134,19 @@ static void client_us_nb_connect_retry(void *vctx)
         LOGGER_ERR("Failed to retry connection on socket: could not create non-blocking socket [bk_id=%d ; fd=%d]", ctx->bk_id, ctx->fd);
     }
 
-    client_us_nb_connect(ctx);
+    bk->connect_();
 }
 
 //
 // @brief Connect to a server
 //
-static void client_us_nb_connect(struct client_us_nb_ctx *ctx)
+void bk_client_us_nb::connect_()
 {
+    struct client_us_nb_ctx *ctx;
     struct sockaddr_un clt_addr;
     int ret;
+
+    ctx = static_cast<struct client_us_nb_ctx *>(ctx_);
 
     // Prepare socket structure
     memset(&clt_addr, 0, sizeof(clt_addr));
@@ -164,7 +169,7 @@ static void client_us_nb_connect(struct client_us_nb_ctx *ctx)
     {
     case 1:
         // Connection in progress, register file descriptor for writing to check the connection when it's ready
-        m->fd.add(ctx, &client_us_nb_connect_check, ctx->fd, nullptr, false);
+        m->fd.add(this, &client_us_nb_connect_check, ctx->fd, nullptr, false);
         break;
 
     case -1:
@@ -176,7 +181,7 @@ static void client_us_nb_connect(struct client_us_nb_ctx *ctx)
         // Prepare a 100ms timer for connection retry
         tm.tid = ctx->fd;
         tm.callback = &client_us_nb_connect_retry;
-        tm.arg = ctx;
+        tm.arg = this;
         tm.time.tv_sec = 0;
         tm.time.tv_nsec = 100 * 1000 * 1000;
         m->tm.add(tm);
@@ -184,7 +189,7 @@ static void client_us_nb_connect(struct client_us_nb_ctx *ctx)
 
     case 0:
         // Success: register the file descriptor with a callback for data reception
-        if (m->fd.add(ctx, &client_us_nb_callback, ctx->fd, nullptr, true) == false)
+        if (m->fd.add(this, &client_us_nb_callback, ctx->fd, nullptr, true) == false)
         {
             LOGGER_ERR("Failed to register callback on client socket [fd=%d ; callback=%p]", ctx->fd, &client_us_nb_callback);
             client_us_nb_clean(ctx);
@@ -245,7 +250,7 @@ void bk_client_us_nb::start_()
     }
 
     // Connect the socket to the server
-    client_us_nb_connect(ctx);
+    connect_();
 }
 
 //

@@ -110,10 +110,13 @@ static inline void server_us_nb_remove_fd(struct server_us_nb_ctx *ctx, int fd)
 //
 // @brief Flush a file descriptor
 //
-static void server_us_nb_flush_fd(struct server_us_nb_ctx *ctx, int fd)
+static void server_us_nb_flush_fd(struct block *bk, int fd)
 {
+    struct server_us_nb_ctx *ctx;
     ssize_t ret;
     char buf[SOCKET_READ_SIZE];
+
+    ctx = static_cast<struct server_us_nb_ctx *>(bk->ctx_);
 
     do
     {
@@ -129,7 +132,7 @@ static void server_us_nb_flush_fd(struct server_us_nb_ctx *ctx, int fd)
             // For the moment this is OK because 
             //   - the data flow is synchronous (buf is processed as is)
             //   - only one block is connected
-            m->bk.process_rx(ctx->bk_id, 1, buf);
+            bk->process_rx_(1, buf);
         }
     } while (ret > 0);
 }
@@ -141,6 +144,7 @@ static void server_us_nb_flush_fd(struct server_us_nb_ctx *ctx, int fd)
 //
 static void server_us_nb_handler(void *vctx, int fd, void *socket)
 {
+    struct bk_server_us_nb *bk;
     struct server_us_nb_ctx *ctx;
 
     (void) socket;
@@ -150,7 +154,8 @@ static void server_us_nb_handler(void *vctx, int fd, void *socket)
         LOGGER_ERR("Failed to handle file descriptor callback [fd=%d]", fd);
         return;
     }
-    ctx = static_cast<struct server_us_nb_ctx *>(vctx);
+    bk = static_cast<struct bk_server_us_nb *>(vctx);
+    ctx = static_cast<struct server_us_nb_ctx *>(bk->ctx_);
 
     LOGGER_DEBUG("Handle file descriptor callback [ctx=%p ; fd=%d]", ctx, fd);
 
@@ -178,21 +183,19 @@ static void server_us_nb_handler(void *vctx, int fd, void *socket)
         }
 
         // Register the fd for event
-        if (m->fd.add(ctx, &server_us_nb_handler, fd_client, nullptr, true) == false)
+        if (m->fd.add(bk, &server_us_nb_handler, fd_client, nullptr, true) == false)
         {
             LOGGER_ERR("Failed to register callback on new client socket [fd=%d ; callback=%p]", fd_client, &server_us_nb_handler);
             server_us_nb_remove_fd(ctx, fd_client);
             return;
         }
-        else
-        {
-            LOGGER_DEBUG("Registered callback on new client socket [fd=%d ; callback=%p]", fd_client, &server_us_nb_handler);
-        }
+
+        LOGGER_INFO("New client connected [fd=%d ; fd_client=%d]", fd, fd_client);
     }
     else
     {
         // Data available from the client
-        server_us_nb_flush_fd(ctx, fd);
+        server_us_nb_flush_fd(bk, fd);
     }
 }
 
@@ -247,7 +250,7 @@ void bk_server_us_nb::start_()
     }
 
     // Register the file descriptor for reading
-    if (m->fd.add(ctx, &server_us_nb_handler, ctx->fd[0], nullptr, true) == false)
+    if (m->fd.add(this, &server_us_nb_handler, ctx->fd[0], nullptr, true) == false)
     {
         LOGGER_ERR("Failed to register callback on server socket [fd=%d ; callback=%p]", ctx->fd[0], &server_us_nb_handler);
         server_us_nb_remove_fd(ctx, ctx->fd[0]);
