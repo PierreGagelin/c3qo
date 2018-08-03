@@ -23,6 +23,7 @@ extern "C"
 #include <forward_list>
 #include <fstream>
 #include <sstream>
+#include <string>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
