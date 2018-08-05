@@ -57,9 +57,30 @@ const char *bk_state_to_string(enum bk_state t)
 }
 
 //
+// @brief Convert flow type into a string
+//
+const char *flow_type_to_string(enum flow_type type)
+{
+    switch (type)
+    {
+    case FLOW_NOTIF:
+        return "FLOW_TYPE_NOTIF";
+
+    case FLOW_RX:
+        return "FLOW_TYPE_RX";
+
+    case FLOW_TX:
+        return "FLOW_TYPE_TX";
+
+    default:
+        return "FLOW_TYPE_UNKNOWN";
+    }
+}
+
+//
 // @brief Block constructor and destructor
 //
-block::block() : ctx_(nullptr), id_(0), state_(STATE_STOP) {}
+block::block(struct manager *mgr) : ctx_(nullptr), id_(0), state_(STATE_STOP), mgr_(mgr) {}
 block::~block() {}
 
 // Management interface default implementation

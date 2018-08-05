@@ -8,29 +8,23 @@
 // Gtest library
 #include "gtest/gtest.h"
 
-// Managers shall be linked
-extern struct manager *m;
-
 class tu_hello : public testing::Test
 {
     void SetUp();
     void TearDown();
+
+  public:
+    struct manager mgr_;
 };
 
 void tu_hello::SetUp()
 {
     LOGGER_OPEN("tu_hello");
     logger_set_level(LOGGER_LEVEL_DEBUG);
-
-    // Populate the managers
-    m = new struct manager;
 }
 
 void tu_hello::TearDown()
 {
-    // Clear the managers
-    delete m;
-
     logger_set_level(LOGGER_LEVEL_NONE);
     LOGGER_CLOSE();
 }
@@ -40,7 +34,7 @@ void tu_hello::TearDown()
 //
 TEST_F(tu_hello, hello)
 {
-    struct bk_hello block;
+    struct bk_hello block(&mgr_);
     char conf[] = "hello from TU";
     char stats[] = "useless value";
     int count;
@@ -78,7 +72,7 @@ TEST_F(tu_hello, hello)
 //
 TEST_F(tu_hello, error)
 {
-    struct bk_hello block;
+    struct bk_hello block(&mgr_);
     char conf[] = "hello";
     char stats[] = "lol";
 

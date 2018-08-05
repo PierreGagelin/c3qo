@@ -15,22 +15,19 @@ class tu_zmq_pair : public testing::Test
 {
     void SetUp();
     void TearDown();
+
+  public:
+    struct manager mgr_;
 };
 
 void tu_zmq_pair::SetUp()
 {
     LOGGER_OPEN("tu_zmq_pair");
     logger_set_level(LOGGER_LEVEL_DEBUG);
-
-    // Populate the managers
-    m = new struct manager;
 }
 
 void tu_zmq_pair::TearDown()
 {
-    // Clear the managers
-    delete m;
-
     logger_set_level(LOGGER_LEVEL_NONE);
     LOGGER_CLOSE();
 }
@@ -40,8 +37,8 @@ void tu_zmq_pair::TearDown()
 //
 TEST_F(tu_zmq_pair, data)
 {
-    struct bk_zmq_pair client;
-    struct bk_zmq_pair server;
+    struct bk_zmq_pair client(&mgr_);
+    struct bk_zmq_pair server(&mgr_);
     char conf_s[] = "type=server addr=tcp://127.0.0.1:5555";
     char conf_c[] = "type=client addr=tcp://127.0.0.1:5555";
 
@@ -81,7 +78,7 @@ TEST_F(tu_zmq_pair, data)
         client.tx_(&msg);
         server.tx_(&msg);
 
-        m->fd.poll_fd();
+        mgr_.fd_poll();
     }
 
     // At least one message should be received

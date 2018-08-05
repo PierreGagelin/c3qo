@@ -1,69 +1,16 @@
 
 
 // Project headers
-#include "c3qo/manager_bk.hpp"
-
-//
-// @brief Convert flow type into a string
-//
-const char *flow_type_to_string(enum flow_type type)
-{
-    switch (type)
-    {
-    case FLOW_NOTIF:
-        return "FLOW_TYPE_NOTIF";
-
-    case FLOW_RX:
-        return "FLOW_TYPE_RX";
-
-    case FLOW_TX:
-        return "FLOW_TYPE_TX";
-
-    default:
-        return "FLOW_TYPE_UNKNOWN";
-    }
-}
-
-//
-// @brief Retrieve a block interface pointer
-//
-static struct block *get_bk_if(const char *b)
-{
-    if (strcmp(b, "hello") == 0)
-    {
-        return new struct bk_hello;
-    }
-    if (strcmp(b, "client_us_nb") == 0)
-    {
-        return new struct bk_client_us_nb;
-    }
-    if (strcmp(b, "server_us_nb") == 0)
-    {
-        return new struct bk_server_us_nb;
-    }
-    if (strcmp(b, "zmq_pair") == 0)
-    {
-        return new struct bk_zmq_pair;
-    }
-    if (strcmp(b, "project_euler") == 0)
-    {
-        return new struct bk_project_euler;
-    }
-    if (strcmp(b, "trans_pb") == 0)
-    {
-        return new struct bk_trans_pb;
-    }
-    return nullptr;
-}
+#include "c3qo/manager.hpp"
 
 //
 // @brief Constructor and destructor
 //
-manager_bk::manager_bk()
+manager::manager()
 {
     // Nothing to do
 }
-manager_bk::~manager_bk()
+manager::~manager()
 {
     block_clear();
 }
@@ -74,7 +21,7 @@ manager_bk::~manager_bk()
 // @param id   : Block ID
 // @param type : Block type
 //
-bool manager_bk::block_add(int id, const char *type)
+bool manager::block_add(int id, const char *type)
 {
     struct block *bk;
 
@@ -85,7 +32,31 @@ bool manager_bk::block_add(int id, const char *type)
         return false;
     }
 
-    bk = get_bk_if(type);
+    bk = nullptr;
+    if (strcmp(type, "hello") == 0)
+    {
+        bk = new struct bk_hello(this);
+    }
+    if (strcmp(type, "client_us_nb") == 0)
+    {
+        bk = new struct bk_client_us_nb(this);
+    }
+    if (strcmp(type, "server_us_nb") == 0)
+    {
+        bk = new struct bk_server_us_nb(this);
+    }
+    if (strcmp(type, "zmq_pair") == 0)
+    {
+        bk = new struct bk_zmq_pair(this);
+    }
+    if (strcmp(type, "project_euler") == 0)
+    {
+        bk = new struct bk_project_euler(this);
+    }
+    if (strcmp(type, "trans_pb") == 0)
+    {
+        bk = new struct bk_trans_pb(this);
+    }
     if (bk == nullptr)
     {
         LOGGER_ERR("Failed to find block interface [name=%s]", type);
@@ -107,7 +78,7 @@ bool manager_bk::block_add(int id, const char *type)
 //
 // @brief Initialize a block
 //
-bool manager_bk::block_init(int id)
+bool manager::block_init(int id)
 {
     // Find the block concerned by the command
     const auto &it = bk_map_.find(id);
@@ -142,7 +113,7 @@ bool manager_bk::block_init(int id)
 //
 // @brief Configure a block
 //
-bool manager_bk::block_conf(int id, char *conf)
+bool manager::block_conf(int id, char *conf)
 {
     // Find the block concerned by the command
     const auto &it = bk_map_.find(id);
@@ -169,7 +140,7 @@ bool manager_bk::block_conf(int id, char *conf)
 //
 // @brief Bind a block
 //
-bool manager_bk::block_bind(int id, int port, int bk_id)
+bool manager::block_bind(int id, int port, int bk_id)
 {
     struct bind_info bind;
 
@@ -209,7 +180,7 @@ bool manager_bk::block_bind(int id, int port, int bk_id)
 //
 // @brief Stop a block
 //
-bool manager_bk::block_start(int id)
+bool manager::block_start(int id)
 {
     // Find the block concerned by the command
     const auto &it = bk_map_.find(id);
@@ -243,7 +214,7 @@ bool manager_bk::block_start(int id)
 //
 // @brief Stop a block
 //
-bool manager_bk::block_stop(int id)
+bool manager::block_stop(int id)
 {
     // Find the block concerned by the command
     const auto &it = bk_map_.find(id);
@@ -277,7 +248,7 @@ bool manager_bk::block_stop(int id)
 //
 // @brief Get block information
 //
-struct block *manager_bk::block_get(int id)
+struct block *manager::block_get(int id)
 {
     const auto &it = bk_map_.find(id);
     if (it == bk_map_.cend())
@@ -293,7 +264,7 @@ struct block *manager_bk::block_get(int id)
 //
 // @param id : Block ID
 //
-void manager_bk::block_del(int id)
+void manager::block_del(int id)
 {
     const auto &it = bk_map_.find(id);
     if (it == bk_map_.end())
@@ -313,7 +284,7 @@ void manager_bk::block_del(int id)
 //
 // @brief Clear all blocks
 //
-void manager_bk::block_clear()
+void manager::block_clear()
 {
     // Stop every blocks
     for (const auto &it : bk_map_)
@@ -330,7 +301,7 @@ void manager_bk::block_clear()
 //
 // @return True on success
 //
-bool manager_bk::exec_cmd(enum bk_cmd cmd, int id, char *arg)
+bool manager::conf_exec_cmd(enum bk_cmd cmd, int id, char *arg)
 {
     LOGGER_DEBUG("Execute block command [bk_cmd=%s ; bk_id=%d ; bk_arg=%s]", bk_cmd_to_string(cmd), id, arg);
 
@@ -404,7 +375,7 @@ bool manager_bk::exec_cmd(enum bk_cmd cmd, int id, char *arg)
 //
 // @return True on success
 //
-bool manager_bk::conf_parse_line(char *line)
+bool manager::conf_parse_line(char *line)
 {
     char *token;
     int id;
@@ -446,7 +417,7 @@ bool manager_bk::conf_parse_line(char *line)
     // Retrieve argument (optional)
     arg = strtok(nullptr, "\0");
 
-    return exec_cmd(cmd, id, arg);
+    return conf_exec_cmd(cmd, id, arg);
 }
 
 //
@@ -454,7 +425,7 @@ bool manager_bk::conf_parse_line(char *line)
 //
 // @param filename : Name of the configuration file
 //
-bool manager_bk::conf_parse(const char *filename)
+bool manager::conf_parse(const char *filename)
 {
     FILE *file;
     bool conf_success;
@@ -533,7 +504,7 @@ bool manager_bk::conf_parse(const char *filename)
 //
 // @return actual length written
 //
-size_t manager_bk::conf_get(char *buf, size_t len)
+size_t manager::conf_get(char *buf, size_t len)
 {
     size_t w;
 

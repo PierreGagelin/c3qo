@@ -8,31 +8,25 @@
 // Gtest library
 #include "gtest/gtest.h"
 
-// Managers shall be linked
-extern struct manager *m;
-
 class tu_socket_us_nb : public testing::Test
 {
     void SetUp();
     void TearDown();
+
+  public:
+    struct manager mgr_;
 };
 
 void tu_socket_us_nb::SetUp()
 {
     LOGGER_OPEN("tu_socket_us_nb");
     logger_set_level(LOGGER_LEVEL_DEBUG);
-
-    // Populate the managers
-    m = new struct manager;
 }
 
 void tu_socket_us_nb::TearDown()
 {
     // Remove every timer
-    m->tm.clear();
-
-    // Clear the managers
-    delete m;
+    mgr_.timer_clear();
 
     LOGGER_CLOSE();
     logger_set_level(LOGGER_LEVEL_NONE);
@@ -60,8 +54,8 @@ char *prepare_buf()
 //
 TEST_F(tu_socket_us_nb, connect)
 {
-    struct bk_server_us_nb server;
-    struct bk_client_us_nb client;
+    struct bk_server_us_nb server(&mgr_);
+    struct bk_client_us_nb client(&mgr_);
     char stats[16]; // buffer to retrieve statistics
     int fd_count;   // count of file descriptor handled by the server
 
@@ -72,12 +66,12 @@ TEST_F(tu_socket_us_nb, connect)
     client.start_();
 
     // Trigger client connection to the server
-    m->fd.poll_fd();
+    mgr_.fd_poll();
 
     // Verify that server has a new client
     server.get_stats_(stats, sizeof(stats));
     fd_count = atoi(stats);
-    EXPECT_EQ(fd_count, 2);
+    EXPECT_EQ(fd_count, 1);
 
     client.stop_();
     server.stop_();
@@ -88,8 +82,18 @@ TEST_F(tu_socket_us_nb, connect)
 //
 TEST_F(tu_socket_us_nb, multi_connect)
 {
-    struct bk_server_us_nb server;
-    struct bk_client_us_nb client[10];
+    struct bk_server_us_nb server(&mgr_);
+    struct bk_client_us_nb client[10] = {
+        bk_client_us_nb(&mgr_),
+        bk_client_us_nb(&mgr_),
+        bk_client_us_nb(&mgr_),
+        bk_client_us_nb(&mgr_),
+        bk_client_us_nb(&mgr_),
+        bk_client_us_nb(&mgr_),
+        bk_client_us_nb(&mgr_),
+        bk_client_us_nb(&mgr_),
+        bk_client_us_nb(&mgr_),
+        bk_client_us_nb(&mgr_)};
 
     server.init_();
     for (int i = 0; i < 10; i++)
@@ -108,10 +112,10 @@ TEST_F(tu_socket_us_nb, multi_connect)
     for (int i = 0; i < 20; i++)
     {
         // Lookup for something on the socket and make timer expire
-        m->fd.poll_fd();
-        m->tm.check_exp();
+        mgr_.fd_poll();
+        mgr_.timer_check_exp();
     }
-    EXPECT_EQ(static_cast<struct server_us_nb_ctx *>(server.ctx_)->fd_count, 11);
+    EXPECT_EQ(server.clients_.size(), 10u);
 
     for (int i = 0; i < 10; i++)
     {
@@ -135,8 +139,8 @@ TEST_F(tu_socket_us_nb, multi_connect)
 //
 TEST_F(tu_socket_us_nb, connect_retry)
 {
-    struct bk_server_us_nb server;
-    struct bk_client_us_nb client;
+    struct bk_server_us_nb server(&mgr_);
+    struct bk_client_us_nb client(&mgr_);
 
     // Initialize client and server
     server.init_();
@@ -144,7 +148,7 @@ TEST_F(tu_socket_us_nb, connect_retry)
     ASSERT_NE(server.ctx_, nullptr);
     ASSERT_NE(client.ctx_, nullptr);
     EXPECT_TRUE(static_cast<struct client_us_nb_ctx *>(client.ctx_)->connected == false);
-    EXPECT_TRUE(static_cast<struct server_us_nb_ctx *>(server.ctx_)->fd_count == 0);
+    EXPECT_EQ(server.clients_.size(), 0u);
 
     // Start client
     client.start_();
@@ -152,17 +156,17 @@ TEST_F(tu_socket_us_nb, connect_retry)
 
     // Start server
     server.start_();
-    EXPECT_TRUE(static_cast<struct server_us_nb_ctx *>(server.ctx_)->fd_count == 1);
+    EXPECT_EQ(server.clients_.size(), 0u);
 
     // Wait for every connection to be acknowledged
     // A loop takes at least 10ms and reconnection timers are 100ms long
     for (int i = 0; i < 11; i++)
     {
         // Lookup for something on the socket and make timer expire
-        m->fd.poll_fd();
-        m->tm.check_exp();
+        mgr_.fd_poll();
+        mgr_.timer_check_exp();
     }
-    EXPECT_EQ(static_cast<struct server_us_nb_ctx *>(server.ctx_)->fd_count, 2);
+    EXPECT_EQ(server.clients_.size(), 1u);
 
     server.stop_();
     client.stop_();
@@ -173,8 +177,8 @@ TEST_F(tu_socket_us_nb, connect_retry)
 //
 TEST_F(tu_socket_us_nb, data)
 {
-    struct bk_server_us_nb server;
-    struct bk_client_us_nb client;
+    struct bk_server_us_nb server(&mgr_);
+    struct bk_client_us_nb client(&mgr_);
     char *data = prepare_buf();
 
     // Initialize client and server
@@ -185,7 +189,7 @@ TEST_F(tu_socket_us_nb, data)
     ASSERT_NE(static_cast<struct server_us_nb_ctx *>(server.ctx_), nullptr);
     ASSERT_NE(static_cast<struct client_us_nb_ctx *>(client.ctx_), nullptr);
     EXPECT_EQ(static_cast<struct client_us_nb_ctx *>(client.ctx_)->connected, false);
-    EXPECT_EQ(static_cast<struct server_us_nb_ctx *>(server.ctx_)->fd_count, 0);
+    EXPECT_EQ(server.clients_.size(), 0u);
 
     // Bind client and server to 0
     server.bind_(0, 0);
@@ -194,21 +198,18 @@ TEST_F(tu_socket_us_nb, data)
     // Connect client and server
     server.start_();
     client.start_();
-    EXPECT_EQ(static_cast<struct server_us_nb_ctx *>(server.ctx_)->fd_count, 1);
-    EXPECT_EQ(static_cast<struct client_us_nb_ctx *>(client.ctx_)->connected, true);
-    m->fd.poll_fd();
-    EXPECT_EQ(static_cast<struct client_us_nb_ctx *>(client.ctx_)->connected, true);
+    mgr_.fd_poll();
 
     // Send data from client to server
     client.tx_(data);
     EXPECT_EQ(static_cast<struct server_us_nb_ctx *>(server.ctx_)->rx_pkt_count, 0u);
-    m->fd.poll_fd();
+    mgr_.fd_poll();
     EXPECT_EQ(static_cast<struct server_us_nb_ctx *>(server.ctx_)->rx_pkt_count, 1u);
 
     // Send data from server to client
     server.tx_(data);
     EXPECT_EQ(static_cast<struct client_us_nb_ctx *>(client.ctx_)->rx_pkt_count, 0u);
-    m->fd.poll_fd();
+    mgr_.fd_poll();
     EXPECT_EQ(static_cast<struct client_us_nb_ctx *>(client.ctx_)->rx_pkt_count, 1u);
 
     server.stop_();
@@ -222,8 +223,8 @@ TEST_F(tu_socket_us_nb, data)
 //
 TEST_F(tu_socket_us_nb, error)
 {
-    struct bk_server_us_nb server;
-    struct bk_client_us_nb client;
+    struct bk_server_us_nb server(&mgr_);
+    struct bk_client_us_nb client(&mgr_);
 
     // Ignore error log as it's expected to have some
     logger_set_level(LOGGER_LEVEL_CRIT);

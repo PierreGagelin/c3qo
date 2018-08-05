@@ -15,11 +15,6 @@ struct server_us_nb_ctx
     int bk_id; // Block ID
     int bind;  // Binding ID
 
-    // Context
-    // TODO: replace this shit with a real container
-    int fd[SOCKET_FD_MAX]; // File descriptors of the socket
-    int fd_count;          // Number of fd in use
-
     // Statistics
     size_t rx_pkt_count; // RX: Number of packets read
     size_t rx_pkt_bytes; // RX: Total size read
@@ -29,6 +24,15 @@ struct server_us_nb_ctx
 
 struct bk_server_us_nb : block
 {
+    // File descriptors in use
+    std::unordered_set<int> clients_;
+    int server_;
+
+    bk_server_us_nb(struct manager *mgr);
+
+    int server_us_nb_fd_find(int fd);
+    void server_us_nb_remove(int i);
+
     virtual void init_() override final;
     virtual void start_() override final;
     virtual void stop_() override final;

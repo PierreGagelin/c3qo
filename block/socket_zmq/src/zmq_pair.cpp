@@ -6,8 +6,7 @@
 // Managers shall be linked
 extern struct manager *m;
 
-bk_zmq_pair::bk_zmq_pair() {}
-bk_zmq_pair::~bk_zmq_pair() {}
+bk_zmq_pair::bk_zmq_pair(struct manager *mgr) : block(mgr) {}
 
 //
 // @brief Callback to handle data available on the socket
@@ -60,7 +59,7 @@ static void zmq_pair_callback(void *vctx, int fd, void *socket)
     if (strcmp(msg.topic, "CONF.LINE") == 0)
     {
         // Process the configuration line
-        m->bk.conf_parse_line(msg.data);
+        bk->mgr_->conf_parse_line(msg.data);
     }
     else if (strcmp(msg.topic, "STATS") == 0)
     {
@@ -243,7 +242,7 @@ void bk_zmq_pair::start_()
     }
 
     // Register the subscriber's callback
-    m->fd.add(this, zmq_pair_callback, -1, ctx->zmq_sock, true);
+    mgr_->fd_add(this, zmq_pair_callback, -1, ctx->zmq_sock, true);
 }
 
 //
@@ -262,7 +261,7 @@ void bk_zmq_pair::stop_()
     ctx = static_cast<struct zmq_pair_ctx *>(ctx_);
 
     // Remove the socket's callback
-    m->fd.remove(-1, ctx->zmq_sock, true);
+    mgr_->fd_remove(-1, ctx->zmq_sock, true);
 
     zmq_close(ctx->zmq_sock);
     zmq_ctx_term(ctx->zmq_ctx);

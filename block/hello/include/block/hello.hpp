@@ -18,6 +18,8 @@ struct hello_ctx
 
 struct bk_hello : block
 {
+    bk_hello(struct manager *mgr);
+
     virtual void init_() override final;
     virtual void conf_(char *conf) override final;
     virtual void start_() override final;

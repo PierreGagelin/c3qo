@@ -3,8 +3,7 @@
 // Project headers
 #include "c3qo/manager.hpp"
 
-// Managers shall be linked
-extern struct manager *m;
+bk_hello::bk_hello(struct manager *mgr) : block(mgr) {}
 
 void bk_hello::init_()
 {

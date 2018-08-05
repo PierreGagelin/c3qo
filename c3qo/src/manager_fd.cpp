@@ -10,14 +10,14 @@
 //
 
 // Project headers
-#include "c3qo/manager_fd.hpp"
+#include "c3qo/manager.hpp"
 
 //
 // @brief Find index of an entry
 //
 // @return Index of the file descriptor on success, -1 on failure
 //
-int manager_fd::find(int fd, void *socket)
+int manager::fd_find(int fd, void *socket)
 {
     size_t end;
     size_t i;
@@ -53,7 +53,7 @@ int manager_fd::find(int fd, void *socket)
 //
 // If both a file descriptor and a socket are set, the socket will prevale when polling
 //
-bool manager_fd::add(void *ctx, void (*callback)(void *, int, void *), int fd, void *socket, bool read)
+bool manager::fd_add(void *ctx, void (*callback)(void *, int, void *), int fd, void *socket, bool read)
 {
     struct fd_call new_callback;
     struct fd_call *new_callback_p;
@@ -74,7 +74,7 @@ bool manager_fd::add(void *ctx, void (*callback)(void *, int, void *), int fd, v
     }
 
     // Update or create a new entry
-    index = find(fd, socket);
+    index = fd_find(fd, socket);
     if (index == -1)
     {
         new_callback_p = &new_callback;
@@ -114,14 +114,14 @@ bool manager_fd::add(void *ctx, void (*callback)(void *, int, void *), int fd, v
 //
 // @brief Remove a flag from the entry. If there are no more flag, the entry is removed
 //
-void manager_fd::remove(int fd, void *socket, bool read)
+void manager::fd_remove(int fd, void *socket, bool read)
 {
     zmq_pollitem_t *entry;
     int index;
     short flag;
 
     // Look for the entry
-    index = find(fd, socket);
+    index = fd_find(fd, socket);
     if (index == -1)
     {
         // Nothing to do
@@ -153,7 +153,7 @@ void manager_fd::remove(int fd, void *socket, bool read)
 //
 // @return Return code of select
 //
-int manager_fd::poll_fd()
+int manager::fd_poll()
 {
     int ret;
     long timeout;

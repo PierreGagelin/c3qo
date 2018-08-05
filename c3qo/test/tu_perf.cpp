@@ -8,30 +8,23 @@
 // Gtest library
 #include "gtest/gtest.h"
 
-// Managers shall be linked
-extern struct manager *m;
-
 class tu_perf : public testing::Test
 {
-  public:
     void SetUp();
     void TearDown();
+
+  public:
+    struct manager mgr_;
 };
 
 void tu_perf::SetUp()
 {
     LOGGER_OPEN("tu_perf");
     logger_set_level(LOGGER_LEVEL_DEBUG);
-
-    // Populate the managers
-    m = new struct manager;
 }
 
 void tu_perf::TearDown()
 {
-    // Clear the managers
-    delete m;
-
     logger_set_level(LOGGER_LEVEL_NONE);
     LOGGER_CLOSE();
 }
@@ -50,9 +43,9 @@ TEST_F(tu_perf, commutation)
     // Add, init and start some blocks
     for (size_t i = 1; i < nb_block + 1; i++)
     {
-        EXPECT_EQ(m->bk.block_add(i, "hello"), true);
-        EXPECT_EQ(m->bk.block_init(i), true);
-        EXPECT_EQ(m->bk.block_start(i), true);
+        EXPECT_EQ(mgr_.block_add(i, "hello"), true);
+        EXPECT_EQ(mgr_.block_init(i), true);
+        EXPECT_EQ(mgr_.block_start(i), true);
     }
 
     // Configure a chain of N blocks:
@@ -62,14 +55,14 @@ TEST_F(tu_perf, commutation)
         for (int j = 0; j < 8; j++)
         {
             // Bind port j of bk_i to bk_i+1
-            EXPECT_EQ(m->bk.block_bind(i, j, i + 1), true);
+            EXPECT_EQ(mgr_.block_bind(i, j, i + 1), true);
         }
     }
 
     // Bind the last block to 0 (trash)
     for (int j = 0; j < 8; j++)
     {
-        EXPECT_EQ(m->bk.block_bind(nb_block, j, 0), true);
+        EXPECT_EQ(mgr_.block_bind(nb_block, j, 0), true);
     }
 
     // Send data from bk_1
@@ -78,7 +71,7 @@ TEST_F(tu_perf, commutation)
         struct block *bi;
         char buf[] = "yolooooo";
 
-        bi = m->bk.block_get(1);
+        bi = mgr_.block_get(1);
         ASSERT_NE(bi, nullptr);
 
         bi->ctrl_(buf);
@@ -91,7 +84,7 @@ TEST_F(tu_perf, commutation)
         char buf[16];
         size_t count;
 
-        bi = m->bk.block_get(i);
+        bi = mgr_.block_get(i);
         ASSERT_NE(bi, nullptr);
 
         bi->get_stats_(buf, sizeof(buf));
@@ -100,5 +93,5 @@ TEST_F(tu_perf, commutation)
     }
 
     // Clean blocks
-    m->bk.block_clear();
+    mgr_.block_clear();
 }

@@ -8,10 +8,7 @@
 // Gtest library
 #include "gtest/gtest.h"
 
-// Managers shall be linked
-extern struct manager *m;
-
-class tu_manager_bk : public testing::Test, public manager_bk
+class tu_manager_bk : public testing::Test, public manager
 {
   public:
     void SetUp();
@@ -22,16 +19,10 @@ void tu_manager_bk::SetUp()
 {
     LOGGER_OPEN("tu_manager_bk");
     logger_set_level(LOGGER_LEVEL_DEBUG);
-
-    // Populate the managers
-    m = new struct manager;
 }
 
 void tu_manager_bk::TearDown()
 {
-    // Clear the managers
-    delete m;
-
     logger_set_level(LOGGER_LEVEL_NONE);
     LOGGER_CLOSE();
 }
@@ -41,7 +32,7 @@ void tu_manager_bk::TearDown()
 //
 TEST_F(tu_manager_bk, block)
 {
-    struct block bk;
+    struct block bk(this);
 
     bk.init_();
     bk.conf_(nullptr);
@@ -168,9 +159,9 @@ TEST_F(tu_manager_bk, manager_bk_flow)
     // Add, initialize and start 2 blocks
     for (int i = 1; i < 3; i++)
     {
-        EXPECT_EQ(m->bk.block_add(i, "hello"), true);
-        EXPECT_EQ(m->bk.block_init(i), true);
-        EXPECT_EQ(m->bk.block_start(i), true);
+        EXPECT_EQ(block_add(i, "hello"), true);
+        EXPECT_EQ(block_init(i), true);
+        EXPECT_EQ(block_start(i), true);
     }
 
     // Bind:
@@ -178,13 +169,13 @@ TEST_F(tu_manager_bk, manager_bk_flow)
     //   - block 2 to block 0 (trash)
     for (int i = 0; i < 8; i++)
     {
-        EXPECT_EQ(m->bk.block_bind(1, i, 2), true);
-        EXPECT_EQ(m->bk.block_bind(2, i, 0), true);
+        EXPECT_EQ(block_bind(1, i, 2), true);
+        EXPECT_EQ(block_bind(2, i, 0), true);
     }
 
     // Retrieve block 1 and block 2
-    bk_1 = m->bk.block_get(1);
-    bk_2 = m->bk.block_get(2);
+    bk_1 = block_get(1);
+    bk_2 = block_get(2);
     ASSERT_NE(bk_1, nullptr);
     ASSERT_NE(bk_2, nullptr);
 
@@ -208,7 +199,7 @@ TEST_F(tu_manager_bk, manager_bk_flow)
     EXPECT_EQ(count, 1);
 
     // Clear blocks
-    m->bk.block_clear();
+    block_clear();
 }
 
 //

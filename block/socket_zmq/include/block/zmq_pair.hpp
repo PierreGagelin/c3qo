@@ -39,8 +39,7 @@ struct zmq_pair_ctx
 
 struct bk_zmq_pair : block
 {
-    bk_zmq_pair();
-    ~bk_zmq_pair();
+    bk_zmq_pair(struct manager *mgr);
 
     virtual void init_() override final;
     virtual void conf_(char *conf) override final;

@@ -7,29 +7,23 @@
 
 #include "gtest/gtest.h"
 
-// Managers shall be linked
-extern struct manager *m;
-
 class tu_trans_pb : public testing::Test
 {
     void SetUp();
     void TearDown();
+
+  public:
+    struct manager mgr_;
 };
 
 void tu_trans_pb::SetUp()
 {
     LOGGER_OPEN("tu_trans_pb");
     logger_set_level(LOGGER_LEVEL_DEBUG);
-
-    // Populate the managers
-    m = new struct manager;
 }
 
 void tu_trans_pb::TearDown()
 {
-    // Clear the managers
-    delete m;
-
     logger_set_level(LOGGER_LEVEL_NONE);
     LOGGER_CLOSE();
 }
@@ -39,7 +33,7 @@ void tu_trans_pb::TearDown()
 //
 TEST_F(tu_trans_pb, hello)
 {
-    struct bk_trans_pb block;
+    struct bk_trans_pb block(&mgr_);
     struct trans_pb_notif notif;
     struct hello_ctx hello;
 
@@ -61,7 +55,7 @@ TEST_F(tu_trans_pb, hello)
 //
 TEST_F(tu_trans_pb, zmq_pair)
 {
-    struct bk_trans_pb block;
+    struct bk_trans_pb block(&mgr_);
     struct trans_pb_notif notif;
     struct zmq_pair_ctx zmq_pair;
 
@@ -83,7 +77,7 @@ TEST_F(tu_trans_pb, zmq_pair)
 //
 TEST_F(tu_trans_pb, error)
 {
-    struct bk_trans_pb block;
+    struct bk_trans_pb block(&mgr_);
     struct trans_pb_notif notif;
 
     // Ignore errors as these are nominal

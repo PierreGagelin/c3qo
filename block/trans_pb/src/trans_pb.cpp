@@ -3,8 +3,7 @@
 // Project headers
 #include "c3qo/manager.hpp"
 
-// Managers shall be linked
-extern struct manager *m;
+bk_trans_pb::bk_trans_pb(struct manager *mgr) : block(mgr) {}
 
 #ifdef C3QO_PROTOBUF
 
@@ -21,7 +20,7 @@ static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, class pb_msg_block 
     memcpy(msg_zmq.topic, topic, msg_zmq.topic_len);
 
     // Fill the data
-    msg_zmq.data_len = msg_bk.ByteSizeLong();
+    msg_zmq.data_len = static_cast<size_t>(msg_bk.ByteSize());
     msg_zmq.data = new char[msg_zmq.data_len];
 
     // Serialize the message
@@ -125,5 +124,11 @@ int bk_trans_pb::ctrl_(void *vnotif)
 
     return 0;
 }
+
+#else
+
+void bk_trans_pb::init_() {}
+void bk_trans_pb::stop_() {}
+int bk_trans_pb::ctrl_(void *) { return 0; }
 
 #endif // C3QO_PROTOBUF

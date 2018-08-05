@@ -26,12 +26,15 @@ struct client_us_nb_ctx
 
 struct bk_client_us_nb : block
 {
+    bk_client_us_nb(struct manager *mgr);
+
     virtual void init_() override final;
     virtual void start_() override final;
     virtual void stop_() override final;
     virtual int tx_(void *vdata) override final;
 
     void connect_();
+    void clean_();
 };
 
 #endif // BLOCK_CLIENT_US_NB_HPP

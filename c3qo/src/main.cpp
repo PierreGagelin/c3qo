@@ -7,6 +7,7 @@ extern char *optarg; // Comes with getopt
 
 int main(int argc, char **argv)
 {
+    struct manager mgr;
     int opt;
     char *filename;
 
@@ -54,15 +55,12 @@ int main(int argc, char **argv)
         }
     }
 
-    // Export the manager
-    m = new struct manager;
-
     // Parse configuration file
     if (filename != nullptr)
     {
         bool conf;
 
-        conf = m->bk.conf_parse(filename);
+        conf = mgr.conf_parse(filename);
         if (conf == false)
         {
             // We don't care, it will be configured from socket
@@ -72,13 +70,11 @@ int main(int argc, char **argv)
     // Main loop
     while (true)
     {
-        m->fd.poll_fd();
-        m->tm.check_exp();
+        mgr.fd_poll();
+        mgr.timer_check_exp();
     }
 
     LOGGER_CLOSE();
-
-    delete m;
 
     return 0;
 }

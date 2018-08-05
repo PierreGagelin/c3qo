@@ -25,24 +25,13 @@ struct trans_pb_ctx
     int bk_id;
 };
 
-#ifdef C3QO_PROTOBUF
-
 struct bk_trans_pb : block
 {
+    bk_trans_pb(struct manager *mgr);
+
     virtual void init_() override final;
     virtual void stop_() override final;
     virtual int ctrl_(void *vnotif) override final;
 };
-
-#else
-
-struct bk_trans_pb : block
-{
-    virtual void init_() override final {}
-    virtual void stop_() override final {}
-    virtual int ctrl_(void *) override final { return 0; }
-};
-
-#endif // C3QO_PROTOBUF
 
 #endif // BLOCK_TRANS_PB_HPP

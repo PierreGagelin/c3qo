@@ -8,9 +8,6 @@
 // Gtest library
 #include "gtest/gtest.h"
 
-// Managers shall be linked
-extern struct manager *m;
-
 bool fd_called;
 void fd_callback(void *ctx, int fd, void *socket)
 {
@@ -21,7 +18,7 @@ void fd_callback(void *ctx, int fd, void *socket)
 }
 
 // Derive from the manager_fd class
-class tu_manager_fd : public testing::Test, public manager_fd
+class tu_manager_fd : public testing::Test, public manager
 {
   public:
     void SetUp();
@@ -33,17 +30,11 @@ void tu_manager_fd::SetUp()
     LOGGER_OPEN("tu_manager_fd");
     logger_set_level(LOGGER_LEVEL_DEBUG);
 
-    // Populate the managers
-    m = new struct manager;
-
     fd_called = false;
 }
 
 void tu_manager_fd::TearDown()
 {
-    // Clear the managers
-    delete m;
-    
     logger_set_level(LOGGER_LEVEL_NONE);
     LOGGER_CLOSE();
 }
@@ -64,18 +55,18 @@ TEST_F(tu_manager_fd, manager_fd)
     ASSERT_NE(fd, -1);
 
     // Add a file descriptor to be managed for reading
-    EXPECT_EQ(add(nullptr, &fd_callback, fd, nullptr, true), true);
+    EXPECT_EQ(fd_add(nullptr, &fd_callback, fd, nullptr, true), true);
 
     // Write into the managed
     fprintf(file, "hello world!");
 
     // Verify something is ready to be read
-    EXPECT_GT(poll_fd(), 0);
+    EXPECT_GT(fd_poll(), 0);
 
     // Verify that the callback was executed
     EXPECT_EQ(fd_called, true);
 
     // Clean the file descriptor manager
-    remove(fd, nullptr, true);
+    fd_remove(fd, nullptr, true);
     fclose(file);
 }

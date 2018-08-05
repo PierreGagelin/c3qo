@@ -6,12 +6,12 @@
 //
 
 // Project headers
-#include "c3qo/manager_tm.hpp"
+#include "c3qo/manager.hpp"
 
 //
 // @brief Add or replace an entry in the timer list
 //
-bool manager_tm::add(struct timer &tm)
+bool manager::timer_add(struct timer &tm)
 {
     struct timespec t;
 
@@ -50,7 +50,7 @@ bool manager_tm::add(struct timer &tm)
 //
 // @brief Delete a timer
 //
-void manager_tm::del(struct timer &tm)
+void manager::timer_del(struct timer &tm)
 {
     tm_list_.remove(tm);
 }
@@ -58,7 +58,7 @@ void manager_tm::del(struct timer &tm)
 //
 // @brief Check timers expiration and execute callbacks
 //
-void manager_tm::check_exp()
+void manager::timer_check_exp()
 {
     struct timer timer;
     struct timespec time;
@@ -95,7 +95,7 @@ void manager_tm::check_exp()
 //
 // @brief Clear every timer
 //
-void manager_tm::clear()
+void manager::timer_clear()
 {
     tm_list_.clear();
 }

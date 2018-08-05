@@ -73,7 +73,9 @@ struct block
     std::string type_;                    // Block type
     enum bk_state state_;                 // Block state
 
-    block();
+    struct manager *mgr_; // Manager of this block
+
+    block(struct manager *mgr);
     virtual ~block();
 
     // Block management interface default implementation

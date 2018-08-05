@@ -9,6 +9,8 @@
 
 #include "problem.hpp"
 
+bk_project_euler::bk_project_euler(struct manager *mgr) : block(mgr) {}
+
 static void solve_problem(int index, char *param)
 {
     switch (index)

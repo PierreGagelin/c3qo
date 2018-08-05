@@ -2,7 +2,6 @@
 
 # Build manager library
 set(SOURCES_MANAGER)
-set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager.cpp)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/block.cpp)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_bk.cpp)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_fd.cpp)
