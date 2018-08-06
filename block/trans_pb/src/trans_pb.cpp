@@ -59,40 +59,14 @@ static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, struct zmq_pair_ctx
     trans_pb_serialize(msg_zmq, msg_bk);
 }
 
-void bk_trans_pb::init_()
-{
-    struct trans_pb_ctx *ctx;
-
-    ctx = new struct trans_pb_ctx;
-
-    ctx->bk_id = id_;
-
-    ctx_ = ctx;
-}
-
-void bk_trans_pb::stop_()
-{
-    struct trans_pb_ctx *ctx;
-
-    if (ctx_ == nullptr)
-    {
-        LOGGER_ERR("Failed to stop block: nullptr context");
-        return;
-    }
-    ctx = static_cast<struct trans_pb_ctx *>(ctx_);
-
-    delete ctx;
-    ctx_ = nullptr;
-}
-
 int bk_trans_pb::ctrl_(void *vnotif)
 {
     struct trans_pb_notif *notif;
     struct c3qo_zmq_msg msg_zmq;
 
-    if ((ctx_ == nullptr) || (vnotif == nullptr))
+    if (vnotif == nullptr)
     {
-        LOGGER_ERR("trans_pb control failed: nullptr argument [ctx=%p ; notif=%p]", ctx_, vnotif);
+        LOGGER_ERR("trans_pb control failed: nullptr notif");
         return 0;
     }
     notif = static_cast<struct trans_pb_notif *>(vnotif);
@@ -127,8 +101,6 @@ int bk_trans_pb::ctrl_(void *vnotif)
 
 #else
 
-void bk_trans_pb::init_() {}
-void bk_trans_pb::stop_() {}
 int bk_trans_pb::ctrl_(void *) { return 0; }
 
 #endif // C3QO_PROTOBUF

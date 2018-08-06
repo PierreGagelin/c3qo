@@ -44,11 +44,7 @@ TEST_F(tu_zmq_pair, data)
 
     // Initialize two ZMQ pairs
     server.id_ = 1;
-    server.init_();
     client.id_ = 2;
-    client.init_();
-    ASSERT_NE(static_cast<struct zmq_pair_ctx *>(server.ctx_), nullptr);
-    ASSERT_NE(static_cast<struct zmq_pair_ctx *>(client.ctx_), nullptr);
 
     // Configure them
     server.conf_(conf_s);
@@ -58,8 +54,8 @@ TEST_F(tu_zmq_pair, data)
     server.start_();
     client.start_();
 
-    EXPECT_EQ(static_cast<struct zmq_pair_ctx *>(server.ctx_)->rx_pkt_count, 0lu);
-    EXPECT_EQ(static_cast<struct zmq_pair_ctx *>(client.ctx_)->rx_pkt_count, 0lu);
+    EXPECT_EQ(server.rx_pkt_, 0lu);
+    EXPECT_EQ(client.rx_pkt_, 0lu);
 
     // Send some data between both pairs
     // Some messages are lost because subscription can take some time
@@ -82,8 +78,8 @@ TEST_F(tu_zmq_pair, data)
     }
 
     // At least one message should be received
-    EXPECT_GT(static_cast<struct zmq_pair_ctx *>(client.ctx_)->rx_pkt_count, 1lu);
-    EXPECT_GT(static_cast<struct zmq_pair_ctx *>(server.ctx_)->rx_pkt_count, 1lu);
+    EXPECT_GT(client.rx_pkt_, 1lu);
+    EXPECT_GT(server.rx_pkt_, 1lu);
 
     client.stop_();
     server.stop_();

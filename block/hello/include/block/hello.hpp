@@ -4,23 +4,20 @@
 // Project headers
 #include "c3qo/block.hpp"
 
-//
-// @struct hello_ctx
-//
-// @brief Context of the block
-//
+// TODO: only used for protobuf stats POC, need to be updated
+//       look for hello, zmq_pair and trans_pb blocks
 struct hello_ctx
 {
-    char name[64]; // Block name
-    int bk_id;     // Block identifier
-    int count;     // Number of packets processed
+    int bk_id;
 };
 
 struct bk_hello : block
 {
+    std::string name_;
+    int count_;
+
     bk_hello(struct manager *mgr);
 
-    virtual void init_() override final;
     virtual void conf_(char *conf) override final;
     virtual void start_() override final;
     virtual void stop_() override final;

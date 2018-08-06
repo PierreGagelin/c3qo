@@ -3,18 +3,32 @@
 // Project headers
 #include "c3qo/manager.hpp"
 
-// Managers shall be linked
-extern struct manager *m;
+bk_zmq_pair::bk_zmq_pair(struct manager *mgr) : block(mgr), client_(false), addr_("tcp://127.0.0.1:6666"), rx_pkt_(0u), tx_pkt_(0u)
+{
+    // Create a ZMQ context
+    zmq_ctx_ = zmq_ctx_new();
+    ASSERT(zmq_ctx_ != nullptr);
 
-bk_zmq_pair::bk_zmq_pair(struct manager *mgr) : block(mgr) {}
+    // Create a ZMQ socket
+    zmq_sock_ = zmq_socket(zmq_ctx_, ZMQ_PAIR);
+    ASSERT(zmq_sock_ != nullptr);
+}
+
+bk_zmq_pair::~bk_zmq_pair()
+{
+    // Close a ZMQ socket
+    zmq_close(zmq_sock_);
+
+    // Delete a ZMQ context
+    zmq_ctx_term(zmq_ctx_);
+}
 
 //
 // @brief Callback to handle data available on the socket
 //
 static void zmq_pair_callback(void *vctx, int fd, void *socket)
 {
-    struct block *bk;
-    struct zmq_pair_ctx *ctx;
+    struct bk_zmq_pair *bk;
     struct c3qo_zmq_msg msg;
     bool more;
 
@@ -26,11 +40,10 @@ static void zmq_pair_callback(void *vctx, int fd, void *socket)
         LOGGER_ERR("Failed to execute callback: nullptr context [socket=%p]", socket);
         return;
     }
-    bk = static_cast<struct block *>(vctx);
-    ctx = static_cast<struct zmq_pair_ctx *>(bk->ctx_);
-    if (socket != ctx->zmq_sock)
+    bk = static_cast<struct bk_zmq_pair *>(vctx);
+    if (socket != bk->zmq_sock_)
     {
-        LOGGER_ERR("Failed to execute ZMQ callback: unknown socket [socket=%p ; expected=%p]", socket, ctx->zmq_sock);
+        LOGGER_ERR("Failed to execute ZMQ callback: unknown socket [socket=%p ; expected=%p]", socket, bk->zmq_sock_);
         return;
     }
 
@@ -38,22 +51,22 @@ static void zmq_pair_callback(void *vctx, int fd, void *socket)
     msg.data = nullptr;
 
     // Get a topic and payload
-    more = socket_zmq_read(ctx->zmq_sock, &msg.topic, &msg.topic_len);
+    more = socket_zmq_read(bk->zmq_sock_, &msg.topic, &msg.topic_len);
     if (more == false)
     {
-        LOGGER_ERR("Failed to receive ZMQ message: expected 2 parts and got 1 [bk_id=%d]", ctx->bk_id);
+        LOGGER_ERR("Failed to receive ZMQ message: expected 2 parts and got 1 [bk_id=%d]", bk->id_);
         goto end;
     }
-    more = socket_zmq_read(ctx->zmq_sock, &msg.data, &msg.data_len);
+    more = socket_zmq_read(bk->zmq_sock_, &msg.data, &msg.data_len);
     if (more == true)
     {
-        LOGGER_ERR("Failed to receive ZMQ message: expected 2 parts and got more [bk_id=%d]", ctx->bk_id);
-        socket_zmq_flush(ctx->zmq_sock);
+        LOGGER_ERR("Failed to receive ZMQ message: expected 2 parts and got more [bk_id=%d]", bk->id_);
+        socket_zmq_flush(bk->zmq_sock_);
         goto end;
     }
-    ctx->rx_pkt_count++;
+    bk->rx_pkt_++;
 
-    LOGGER_DEBUG("Message received on ZMQ socket [bk_id=%d ; topic=%s ; payload=%s]", ctx->bk_id, msg.topic, msg.data);
+    LOGGER_DEBUG("Message received on ZMQ socket [bk_id=%d ; topic=%s ; payload=%s]", bk->id_, msg.topic, msg.data);
 
     // Action to take upon topic value
     if (strcmp(msg.topic, "CONF.LINE") == 0)
@@ -89,53 +102,19 @@ end:
     }
 }
 
-//
-// @brief Initialize the block context
-//
-void bk_zmq_pair::init_()
-{
-    struct zmq_pair_ctx *ctx;
-
-    // Create a block context
-    ctx = new struct zmq_pair_ctx;
-
-    ctx->bk_id = id_;
-
-    // Create a ZMQ context
-    ctx->zmq_ctx = zmq_ctx_new();
-    ASSERT(ctx->zmq_ctx != nullptr);
-
-    // Create a ZMQ socket
-    ctx->zmq_sock = zmq_socket(ctx->zmq_ctx, ZMQ_PAIR);
-    ASSERT(ctx->zmq_sock != nullptr);
-
-    // Default value for the connection
-    ctx->client = false;
-    strcpy(ctx->addr, "tcp://127.0.0.1:6666");
-
-    // Initialize statistics
-    ctx->rx_pkt_count = 0;
-    ctx->tx_pkt_count = 0;
-
-    LOGGER_INFO("Initialize block ZMQ Pair [bk_id=%d]", id_);
-
-    ctx_ = ctx;
-}
-
 void bk_zmq_pair::conf_(char *conf)
 {
-    struct zmq_pair_ctx *ctx;
     char *pos;
+    char addr[ADDR_SIZE];
     char type[32];
     int ret;
 
     // Verify input
-    if ((ctx_ == nullptr) || (conf == nullptr))
+    if (conf == nullptr)
     {
-        LOGGER_ERR("Failed to configure block: nullptr context or conf");
+        LOGGER_ERR("Failed to configure block: nullptr conf");
         return;
     }
-    ctx = static_cast<struct zmq_pair_ctx *>(ctx_);
 
     LOGGER_INFO("Configure block [bk_id=%d ; conf=%s]", id_, conf);
 
@@ -151,24 +130,25 @@ void bk_zmq_pair::conf_(char *conf)
         ret = sscanf(pos, NEEDLE_TYPE "%32s", type);
         if (ret == EOF)
         {
-            LOGGER_ERR("Failed to call sscanf: %s [str=%s ; addr=%s ; errno=%d]", strerror(errno), pos, ctx->addr, errno);
+            LOGGER_ERR("Failed to call sscanf: %s [str=%s ; type=%s ; errno=%d]", strerror(errno), pos, type, errno);
             return;
         }
         else if (ret != 1)
         {
-            LOGGER_ERR("Failed to call sscanf: wrong number of matched element [expected=1 ; actual=%d ; addr=%s]", ret, ctx->addr);
+            LOGGER_ERR("Failed to call sscanf: wrong number of matched element [expected=1 ; actual=%d ; type=%s]", ret, type);
             return;
         }
 
         // Configure the socket to be either a client or a server
-        LOGGER_DEBUG("Configure socket type [bk_id=%d ; type=%s]", id_, type);
+        LOGGER_INFO("Configure socket type [bk_id=%d ; type=%s]", id_, type);
+
         if (strcmp(type, "client") == 0)
         {
-            ctx->client = true;
+            client_ = true;
         }
         else if (strcmp(type, "server") == 0)
         {
-            ctx->client = false;
+            client_ = false;
         }
         else
         {
@@ -186,19 +166,21 @@ void bk_zmq_pair::conf_(char *conf)
             return;
         }
 
-        ret = sscanf(pos, NEEDLE_ADDR ADDR_FORMAT, ctx->addr);
+        ret = sscanf(pos, NEEDLE_ADDR ADDR_FORMAT, addr);
         if (ret == EOF)
         {
-            LOGGER_ERR("Failed to call sscanf: %s [str=%s ; addr=%s ; errno=%d]", strerror(errno), pos, ctx->addr, errno);
+            LOGGER_ERR("Failed to call sscanf: %s [str=%s ; addr=%s ; errno=%d]", strerror(errno), pos, addr, errno);
             return;
         }
         else if (ret != 1)
         {
-            LOGGER_ERR("Failed to call sscanf: wrong number of matched element [expected=1 ; actual=%d ; addr=%s]", ret, ctx->addr);
+            LOGGER_ERR("Failed to call sscanf: wrong number of matched element [expected=1 ; actual=%d ; addr=%s]", ret, addr);
             return;
         }
 
-        LOGGER_INFO("Configure socket address [addr=%s]", ctx->addr);
+        addr_ = std::string(addr);
+
+        LOGGER_INFO("Configure socket address [addr=%s]", addr_.c_str());
     }
 }
 
@@ -207,42 +189,34 @@ void bk_zmq_pair::conf_(char *conf)
 //
 void bk_zmq_pair::start_()
 {
-    struct zmq_pair_ctx *ctx;
     int ret;
-
-    if (ctx_ == nullptr)
-    {
-        LOGGER_ERR("Failed to start block: nullptr context");
-        return;
-    }
-    ctx = static_cast<struct zmq_pair_ctx *>(ctx_);
 
     LOGGER_INFO("Start block ZMQ Pair [bk_id=%d]", id_);
 
     // Bind or connect the socket
-    if (ctx->client == true)
+    if (client_ == true)
     {
-        ret = zmq_connect(ctx->zmq_sock, ctx->addr);
+        ret = zmq_connect(zmq_sock_, addr_.c_str());
         if (ret == -1)
         {
-            LOGGER_ERR("Failed to connect ZMQ socket: %s [bk_id=%d ; addr=%s ; errno=%d]", strerror(errno), id_, ctx->addr, errno);
+            LOGGER_ERR("Failed to connect ZMQ socket: %s [bk_id=%d ; addr=%s ; errno=%d]", strerror(errno), id_, addr_.c_str(), errno);
             return;
         }
-        LOGGER_DEBUG("Connected client socket [bk_id=%d ; addr=%s]", id_, ctx->addr);
+        LOGGER_DEBUG("Connected client socket [bk_id=%d ; addr=%s]", id_, addr_.c_str());
     }
     else
     {
-        ret = zmq_bind(ctx->zmq_sock, ctx->addr);
+        ret = zmq_bind(zmq_sock_, addr_.c_str());
         if (ret == -1)
         {
-            LOGGER_ERR("Failed to bind ZMQ socket: %s [bk_id=%d ; addr=%s ; errno=%d]", strerror(errno), id_, ctx->addr, errno);
+            LOGGER_ERR("Failed to bind ZMQ socket: %s [bk_id=%d ; addr=%s ; errno=%d]", strerror(errno), id_, addr_.c_str(), errno);
             return;
         }
-        LOGGER_DEBUG("Bound server socket [bk_id=%d ; addr=%s]", id_, ctx->addr);
+        LOGGER_DEBUG("Bound server socket [bk_id=%d ; addr=%s]", id_, addr_.c_str());
     }
 
     // Register the subscriber's callback
-    mgr_->fd_add(this, zmq_pair_callback, -1, ctx->zmq_sock, true);
+    mgr_->fd_add(this, zmq_pair_callback, -1, zmq_sock_, true);
 }
 
 //
@@ -250,25 +224,10 @@ void bk_zmq_pair::start_()
 //
 void bk_zmq_pair::stop_()
 {
-    struct zmq_pair_ctx *ctx;
-
-    // Verify input
-    if (ctx_ == nullptr)
-    {
-        LOGGER_ERR("Failed to stop block: nullptr context");
-        return;
-    }
-    ctx = static_cast<struct zmq_pair_ctx *>(ctx_);
-
     // Remove the socket's callback
-    mgr_->fd_remove(-1, ctx->zmq_sock, true);
-
-    zmq_close(ctx->zmq_sock);
-    zmq_ctx_term(ctx->zmq_ctx);
+    mgr_->fd_remove(-1, zmq_sock_, true);
 
     LOGGER_INFO("Stop block ZMQ Pair [bk_id=%d]", id_);
-
-    delete ctx;
 }
 
 //
@@ -276,26 +235,24 @@ void bk_zmq_pair::stop_()
 //
 int bk_zmq_pair::tx_(void *vdata)
 {
-    struct zmq_pair_ctx *ctx;
     struct c3qo_zmq_msg *data;
     bool ok;
 
-    if ((ctx_ == nullptr) || (vdata == nullptr))
+    if (vdata == nullptr)
     {
         LOGGER_ERR("Failed to process buffer: nullptr context or data");
         return 0;
     }
-    ctx = static_cast<struct zmq_pair_ctx *>(ctx_);
     data = static_cast<struct c3qo_zmq_msg *>(vdata);
 
     // Send topic and data
-    ok = socket_zmq_write(ctx->zmq_sock, data->topic, data->topic_len, ZMQ_DONTWAIT | ZMQ_SNDMORE);
-    ok = (ok == true) && socket_zmq_write(ctx->zmq_sock, data->data, data->data_len, ZMQ_DONTWAIT);
+    ok = socket_zmq_write(zmq_sock_, data->topic, data->topic_len, ZMQ_DONTWAIT | ZMQ_SNDMORE);
+    ok = (ok == true) && socket_zmq_write(zmq_sock_, data->data, data->data_len, ZMQ_DONTWAIT);
 
     if (ok == true)
     {
         LOGGER_DEBUG("Message sent on ZMQ socket [bk_id=%d ; topic=%s ; payload=%s]", id_, data->topic, data->data);
-        ctx->tx_pkt_count++;
+        tx_pkt_++;
     }
 
     return 0;

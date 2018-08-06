@@ -12,7 +12,7 @@
 #define SOCKET_NAME "/tmp/server_us_nb"
 #define SOCKET_READ_SIZE 256
 
-bk_server_us_nb::bk_server_us_nb(struct manager *mgr) : block(mgr), server_(-1) {}
+bk_server_us_nb::bk_server_us_nb(struct manager *mgr) : block(mgr), server_(-1), port_(0), rx_pkt_(0u), tx_pkt_(0u) {}
 
 //
 // @brief Callback when a socket is ready for reading
@@ -22,7 +22,6 @@ bk_server_us_nb::bk_server_us_nb(struct manager *mgr) : block(mgr), server_(-1) 
 static void server_us_nb_handler(void *vctx, int fd, void *socket)
 {
     struct bk_server_us_nb *bk;
-    struct server_us_nb_ctx *ctx;
 
     (void) socket;
 
@@ -32,9 +31,8 @@ static void server_us_nb_handler(void *vctx, int fd, void *socket)
         return;
     }
     bk = static_cast<struct bk_server_us_nb *>(vctx);
-    ctx = static_cast<struct server_us_nb_ctx *>(bk->ctx_);
 
-    LOGGER_DEBUG("Handle file descriptor callback [ctx=%p ; fd=%d]", ctx, fd);
+    LOGGER_DEBUG("Handle file descriptor callback [bk_id=%d ; fd=%d]", bk->id_, fd);
 
     if (fd == bk->server_)
     {
@@ -80,41 +78,17 @@ static void server_us_nb_handler(void *vctx, int fd, void *socket)
             ret = socket_nb_read(fd, buf, sizeof(buf));
             if (ret > 0)
             {
-                LOGGER_DEBUG("Received data on socket [bk_id=%d ; fd=%d ; buf=%p ; size=%zd]", ctx->bk_id, fd, buf, ret);
+                LOGGER_DEBUG("Received data on socket [bk_id=%d ; fd=%d ; buf=%p ; size=%zd]", bk->id_, fd, buf, ret);
 
-                ctx->rx_pkt_count += 1;
-                ctx->rx_pkt_bytes += static_cast<size_t>(ret);
+                bk->rx_pkt_++;
 
                 // For the moment this is OK because 
                 //   - the data flow is synchronous (buf is processed as is)
                 //   - only one block is connected
-                bk->process_rx_(1, buf);
+                bk->process_rx_(bk->port_, buf);
             }
         } while (ret > 0);
     }
-}
-
-//
-// @brief Initialize the block
-//
-void bk_server_us_nb::init_()
-{
-    struct server_us_nb_ctx *ctx;
-
-    ctx = new struct server_us_nb_ctx;
-
-    ctx->bk_id = id_;
-    ctx->rx_pkt_count = 0;
-    ctx->rx_pkt_bytes = 0;
-    ctx->tx_pkt_count = 0;
-    ctx->tx_pkt_bytes = 0;
-
-    // Remove UNIX socket
-    unlink(SOCKET_NAME);
-
-    LOGGER_INFO("Initialize block [bk_id=%d ; ctx=%p]", id_, ctx);
-
-    ctx_ = ctx;
 }
 
 //
@@ -177,16 +151,7 @@ err:
 //
 void bk_server_us_nb::stop_()
 {
-    struct server_us_nb_ctx *ctx;
-
     LOGGER_INFO("Stop block [bk_id=%d]", id_);
-
-    if (ctx_ == nullptr)
-    {
-        LOGGER_ERR("Failed to stop block: nullptr context [bk_id=%d]", id_);
-        return;
-    }
-    ctx = static_cast<struct server_us_nb_ctx *>(ctx_);
 
     // Close every file descriptors
     for (const auto &fd : clients_)
@@ -196,15 +161,11 @@ void bk_server_us_nb::stop_()
     clients_.clear();
 
     // Initialize stats
-    ctx->rx_pkt_count = 0;
-    ctx->rx_pkt_bytes = 0;
-    ctx->tx_pkt_count = 0;
-    ctx->tx_pkt_bytes = 0;
+    rx_pkt_ = 0;
+    tx_pkt_ = 0;
 
     // Remove UNIX socket
     unlink(SOCKET_NAME);
-
-    delete ctx;
 }
 
 //
@@ -219,21 +180,13 @@ size_t bk_server_us_nb::get_stats_(char *buf, size_t len)
 {
     int ret;
     size_t count;
-    struct server_us_nb_ctx *ctx;
 
-    if (ctx_ == nullptr)
-    {
-        LOGGER_ERR("Failed to get block statistics");
-        return 0;
-    }
-    ctx = static_cast<struct server_us_nb_ctx *>(ctx_);
-
-    LOGGER_DEBUG("Get block statistics [ctx=%p ; buf=%p ; len=%lu]", ctx, buf, len);
+    LOGGER_DEBUG("Get block statistics [bk_id=%d ; buf=%p ; len=%lu]", id_, buf, len);
 
     ret = snprintf(buf, len, "%zu", clients_.size());
     if (ret < 0)
     {
-        LOGGER_ERR("Failed snprintf [ctx=%p ; buf=%p ; len=%lu]", ctx, buf, len);
+        LOGGER_ERR("Failed snprintf [bk_id=%d ; buf=%p ; len=%lu]", id_, buf, len);
         return 0;
     }
     else
@@ -253,20 +206,10 @@ size_t bk_server_us_nb::get_stats_(char *buf, size_t len)
 
 int bk_server_us_nb::tx_(void *vdata)
 {
-    struct server_us_nb_ctx *ctx;
-
-    if (ctx_ == nullptr)
-    {
-        LOGGER_ERR("Failed to process TX data: nullptr context");
-        return 0;
-    }
-    ctx = static_cast<struct server_us_nb_ctx *>(ctx_);
-
     LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", id_, vdata);
 
     // Update statistics
-    ctx->tx_pkt_count++;
-    //ctx->tx_pkt_bytes += ?
+    tx_pkt_++;
 
     // Broadcast to every client
     for (const auto &fd : clients_)

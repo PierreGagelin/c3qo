@@ -119,7 +119,7 @@ TEST_F(tu_socket_us_nb, multi_connect)
 
     for (int i = 0; i < 10; i++)
     {
-        EXPECT_EQ(static_cast<struct client_us_nb_ctx *>(client[i].ctx_)->connected, true);
+        EXPECT_EQ(client[i].connected_, true);
     }
 
     server.stop_();
@@ -143,16 +143,12 @@ TEST_F(tu_socket_us_nb, connect_retry)
     struct bk_client_us_nb client(&mgr_);
 
     // Initialize client and server
-    server.init_();
-    client.init_();
-    ASSERT_NE(server.ctx_, nullptr);
-    ASSERT_NE(client.ctx_, nullptr);
-    EXPECT_TRUE(static_cast<struct client_us_nb_ctx *>(client.ctx_)->connected == false);
+    EXPECT_EQ(client.connected_, false);
     EXPECT_EQ(server.clients_.size(), 0u);
 
     // Start client
     client.start_();
-    EXPECT_TRUE(static_cast<struct client_us_nb_ctx *>(client.ctx_)->connected == false);
+    EXPECT_EQ(client.connected_, false);
 
     // Start server
     server.start_();
@@ -183,12 +179,8 @@ TEST_F(tu_socket_us_nb, data)
 
     // Initialize client and server
     server.id_ = 1;
-    server.init_();
     client.id_ = 2;
-    client.init_();
-    ASSERT_NE(static_cast<struct server_us_nb_ctx *>(server.ctx_), nullptr);
-    ASSERT_NE(static_cast<struct client_us_nb_ctx *>(client.ctx_), nullptr);
-    EXPECT_EQ(static_cast<struct client_us_nb_ctx *>(client.ctx_)->connected, false);
+    EXPECT_EQ(client.connected_, false);
     EXPECT_EQ(server.clients_.size(), 0u);
 
     // Bind client and server to 0
@@ -202,15 +194,15 @@ TEST_F(tu_socket_us_nb, data)
 
     // Send data from client to server
     client.tx_(data);
-    EXPECT_EQ(static_cast<struct server_us_nb_ctx *>(server.ctx_)->rx_pkt_count, 0u);
+    EXPECT_EQ(server.rx_pkt_, 0u);
     mgr_.fd_poll();
-    EXPECT_EQ(static_cast<struct server_us_nb_ctx *>(server.ctx_)->rx_pkt_count, 1u);
+    EXPECT_EQ(server.rx_pkt_, 1u);
 
     // Send data from server to client
     server.tx_(data);
-    EXPECT_EQ(static_cast<struct client_us_nb_ctx *>(client.ctx_)->rx_pkt_count, 0u);
+    EXPECT_EQ(client.rx_pkt_, 0u);
     mgr_.fd_poll();
-    EXPECT_EQ(static_cast<struct client_us_nb_ctx *>(client.ctx_)->rx_pkt_count, 1u);
+    EXPECT_EQ(client.rx_pkt_, 1u);
 
     server.stop_();
     client.stop_();

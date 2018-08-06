@@ -80,7 +80,7 @@ const char *flow_type_to_string(enum flow_type type)
 //
 // @brief Block constructor and destructor
 //
-block::block(struct manager *mgr) : ctx_(nullptr), id_(0), state_(STATE_STOP), mgr_(mgr) {}
+block::block(struct manager *mgr) : id_(0), state_(STATE_STOP), mgr_(mgr) {}
 block::~block() {}
 
 // Management interface default implementation

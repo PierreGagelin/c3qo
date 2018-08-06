@@ -39,9 +39,7 @@ TEST_F(tu_hello, hello)
     char stats[] = "useless value";
     int count;
 
-    // Initialize, configure and start the block
-    block.init_();
-    ASSERT_NE(block.ctx_, nullptr);
+    // configure and start the block
     block.conf_(conf);
     block.start_();
 
@@ -73,34 +71,18 @@ TEST_F(tu_hello, hello)
 TEST_F(tu_hello, error)
 {
     struct bk_hello block(&mgr_);
-    char conf[] = "hello";
     char stats[] = "lol";
 
     // We do not want to see ERROR level as it's expected
     logger_set_level(LOGGER_LEVEL_CRIT);
 
-    block.init_();
-    ASSERT_NE(block.ctx_, nullptr);
-
-    block.conf_(conf);
+    // Configure without a configuration
     block.conf_(nullptr);
 
-    block.start_();
-
-    // Flow without context should return 0 to drop
-    block.stop_();
-    EXPECT_EQ(block.rx_(nullptr), 0);
-    EXPECT_EQ(block.tx_(nullptr), 0);
-    EXPECT_EQ(block.ctrl_(nullptr), 0);
-
-    // Get statistics without buffer or context
-    EXPECT_EQ(block.get_stats_(stats, 12), 0u);
-    block.init_();
-    EXPECT_EQ(block.get_stats_(nullptr, 12), 0u);
-    EXPECT_EQ(block.get_stats_(stats, 0), 0u);
+    // Get statistics without buffer
+    EXPECT_EQ(block.get_stats_(nullptr, 4u), 0u);
+    EXPECT_EQ(block.get_stats_(stats, 0u), 0u);
 
     // Get statistics with a short buffer
-    EXPECT_EQ(block.get_stats_(stats, 1), 0u);
-
-    block.stop_();
+    EXPECT_EQ(block.get_stats_(stats, 1u), 0u);
 }

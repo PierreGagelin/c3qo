@@ -68,7 +68,6 @@ struct bind_info
 struct block
 {
     std::vector<struct bind_info> binds_; // Block bindings
-    void *ctx_;                           // Block context
     int id_;                              // Block ID
     std::string type_;                    // Block type
     enum bk_state state_;                 // Block state

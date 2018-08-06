@@ -116,7 +116,6 @@ TEST_F(tu_manager_bk, manager_bk_conf)
         ASSERT_NE(bi, nullptr);
 
         EXPECT_EQ(bi->id_, i);
-        EXPECT_NE(bi->ctx_, nullptr);
         EXPECT_EQ(bi->state_, STATE_START);
 
         switch (i)

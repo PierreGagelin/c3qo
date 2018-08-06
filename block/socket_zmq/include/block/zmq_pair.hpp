@@ -16,32 +16,30 @@
 #define NEEDLE_TYPE "type=" // either "server" or "client"
 #define NEEDLE_ADDR "addr=" // fully specified address
 
-//
-// @struct zmq_pair_ctx
-//
-// @brief Internal structure to store the context
-//
+// TODO: only used for protobuf stats POC, need to be updated
+//       look for hello, zmq_pair and trans_pb blocks
 struct zmq_pair_ctx
 {
-    // Context
     int bk_id;
-    void *zmq_ctx;
-    void *zmq_sock;
-
-    // Configuration
-    bool client;          // either client or server
-    char addr[ADDR_SIZE]; // address to connect or bind
-
-    // Statistics
-    unsigned long rx_pkt_count;
-    unsigned long tx_pkt_count;
 };
 
 struct bk_zmq_pair : block
 {
-    bk_zmq_pair(struct manager *mgr);
+    // Context
+    void *zmq_ctx_;
+    void *zmq_sock_;
 
-    virtual void init_() override final;
+    // Configuration
+    bool client_;      // either client or server
+    std::string addr_; // address to connect or bind
+
+    // Statistics
+    unsigned long rx_pkt_;
+    unsigned long tx_pkt_;
+
+    bk_zmq_pair(struct manager *mgr);
+    ~bk_zmq_pair();
+
     virtual void conf_(char *conf) override final;
     virtual void start_() override final;
     virtual void stop_() override final;
