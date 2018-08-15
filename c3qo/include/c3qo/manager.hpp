@@ -15,10 +15,10 @@
 //
 struct timer
 {
-    int tid;                     // Timer ID
-    struct timespec time;        // Expiration time for the timer
-    void (*callback)(void *arg); // Function to call when timer expires
-    void *arg;                   // Argument to give to the callback
+    struct timespec time; // Expiration date (user specify a delay and it's converted to a date)
+    struct block *bk;     // Block to be notified on expiration
+    void *arg;            // Generic argument to forward on expiration
+    int tid;              // Timer identifier
 };
 
 bool operator==(const struct timer &a, const struct timer &b);

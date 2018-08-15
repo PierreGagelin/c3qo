@@ -4,6 +4,7 @@
 #include "c3qo/manager.hpp"
 
 bk_trans_pb::bk_trans_pb(struct manager *mgr) : block(mgr) {}
+bk_trans_pb::~bk_trans_pb() {}
 
 #ifdef C3QO_PROTOBUF
 

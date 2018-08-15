@@ -93,6 +93,7 @@ size_t block::get_stats_(char *, size_t) { return 0u; }
 int block::rx_(void *) { return 0; }
 int block::tx_(void *) { return 0; }
 int block::ctrl_(void *) { return 0; }
+void block::on_timer_(struct timer &) {}
 
 //
 // @brief Send RX data to a block

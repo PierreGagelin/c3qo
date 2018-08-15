@@ -17,6 +17,7 @@ struct bk_hello : block
     int count_;
 
     bk_hello(struct manager *mgr);
+    virtual ~bk_hello() override final;
 
     virtual void conf_(char *conf) override final;
     virtual void start_() override final;

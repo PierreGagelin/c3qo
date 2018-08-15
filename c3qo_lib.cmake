@@ -17,27 +17,39 @@ set(UTILS_INCLUDE_DIR ${UTILS_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/utils/include)
 set(UTILS_INCLUDE_DIR ${UTILS_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/utils/logger/include)
 set(UTILS_INCLUDE_DIR ${UTILS_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/utils/socket/include)
 
+# Include directories for test units
+set(TU_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/c3qo/test/include)
+
 # Compilation flags
-set(COMPILE_FLAGS_COMMON -std=c++11 -Wall -Wextra)
+set(CMAKE_CXX_STANDARD 11)
+
+set(COMPILE_FLAGS_COMMON)
+set(COMPILE_FLAGS_COMMON ${COMPILE_FLAGS_COMMON} -Wall)
+set(COMPILE_FLAGS_COMMON ${COMPILE_FLAGS_COMMON} -Wextra)
+set(COMPILE_FLAGS_COMMON ${COMPILE_FLAGS_COMMON} -fno-rtti)
+set(COMPILE_FLAGS_COMMON ${COMPILE_FLAGS_COMMON} -flto)
+
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_COMMON})
-set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -fno-rtti)
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Werror)
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Woverloaded-virtual)
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Wswitch)
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Wsign-conversion)
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Wshadow)
+
 set(COMPILE_FLAGS_TEST ${COMPILE_FLAGS_COMMON})
 
-
+#
 # Add include directories
+#
 function (c3qo_target_include t_name)
-    target_include_directories(${t_name} PUBLIC ${BLOCK_INCLUDE_DIR})
-    target_include_directories(${t_name} PUBLIC ${C3QO_INCLUDE_DIR})
-    target_include_directories(${t_name} PUBLIC ${UTILS_INCLUDE_DIR})
+    target_include_directories(${t_name} PRIVATE ${BLOCK_INCLUDE_DIR})
+    target_include_directories(${t_name} PRIVATE ${C3QO_INCLUDE_DIR})
+    target_include_directories(${t_name} PRIVATE ${UTILS_INCLUDE_DIR})
 endfunction (c3qo_target_include)
 
-
+#
 # Add compilation flags
+#
 function (c3qo_target_compile_flags t_name)
     target_compile_options(${t_name} PRIVATE ${COMPILE_FLAGS_BLOCK})
 
@@ -46,19 +58,24 @@ function (c3qo_target_compile_flags t_name)
     endif ()
 endfunction (c3qo_target_compile_flags)
 
-
+#
 # Add link flags
+#
 function (c3qo_target_link_flags t_name)
     # Required for ZeroMQ runtime
     target_link_libraries(${t_name} zmq)
 
+    set_property(TARGET ${t_name} APPEND_STRING PROPERTY LINK_FLAGS " -flto")
+
     # Add coverage link flag
     if (${C3QO_COVERAGE})
-        set_property(TARGET ${t_name} APPEND PROPERTY LINK_FLAGS --coverage)
+        set_property(TARGET ${t_name} APPEND_STRING PROPERTY LINK_FLAGS " --coverage")
     endif ()
 endfunction (c3qo_target_link_flags)
 
+#
 # Add a library
+#
 function (c3qo_add_library target_name target_sources)
     add_library(${target_name} STATIC ${target_sources})
 
@@ -67,7 +84,9 @@ function (c3qo_add_library target_name target_sources)
     c3qo_target_link_flags(${target_name})
 endfunction (c3qo_add_library)
 
+#
 # Add a block
+#
 function (c3qo_add_block target_name target_sources)
     c3qo_add_library(${target_name} "${target_sources}")
 
@@ -86,9 +105,13 @@ function (c3qo_add_executable target_name target_sources)
     install(TARGETS ${target_name} DESTINATION bin)
 endfunction (c3qo_add_executable)
 
+#
 # Add a test unit
+#
 function (c3qo_add_test target_name target_sources)
     c3qo_add_executable(${target_name} "${target_sources}")
+
+    target_include_directories(${target_name} PRIVATE ${TU_INCLUDE_DIR})
 
     target_link_libraries(${target_name} gtest)
     target_link_libraries(${target_name} gtest_main)
@@ -97,14 +120,18 @@ function (c3qo_add_test target_name target_sources)
 endfunction (c3qo_add_test)
 
 
+#
 # Protobuf libraries
+#
 if (${C3QO_PROTOBUF})
     include(FindProtobuf)
     find_package(Protobuf REQUIRED)
     set(PROTOBUF_USE_STATIC_LIBS on)
 endif (${C3QO_PROTOBUF})
 
+#
 # Add a protobuf library
+#
 function (c3qo_add_library_protobuf target_name target_sources)
     if (NOT ${C3QO_PROTOBUF})
         return()

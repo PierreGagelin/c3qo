@@ -13,6 +13,7 @@
 #define SOCKET_READ_SIZE 256
 
 bk_server_us_nb::bk_server_us_nb(struct manager *mgr) : block(mgr), server_(-1), port_(0), rx_pkt_(0u), tx_pkt_(0u) {}
+bk_server_us_nb::~bk_server_us_nb() {}
 
 //
 // @brief Callback when a socket is ready for reading

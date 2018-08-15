@@ -8,9 +8,6 @@
 // Gtest library
 #include "gtest/gtest.h"
 
-// Managers shall be linked
-extern struct manager *m;
-
 class tu_zmq_pair : public testing::Test
 {
     void SetUp();

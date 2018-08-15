@@ -18,6 +18,7 @@ struct bk_server_us_nb : block
     size_t tx_pkt_; // TX: Number of packets sent
 
     bk_server_us_nb(struct manager *mgr);
+    virtual ~bk_server_us_nb() override final;
 
     int server_us_nb_fd_find(int fd);
     void server_us_nb_remove(int i);

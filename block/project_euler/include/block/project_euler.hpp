@@ -7,6 +7,7 @@
 struct bk_project_euler : block
 {
     bk_project_euler(struct manager *mgr);
+    virtual ~bk_project_euler() override final;
 
     virtual void conf_(char *conf) override final;
 };

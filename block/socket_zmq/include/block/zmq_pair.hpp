@@ -38,7 +38,7 @@ struct bk_zmq_pair : block
     unsigned long tx_pkt_;
 
     bk_zmq_pair(struct manager *mgr);
-    ~bk_zmq_pair();
+    virtual ~bk_zmq_pair() override final;
 
     virtual void conf_(char *conf) override final;
     virtual void start_() override final;

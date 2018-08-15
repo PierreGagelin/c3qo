@@ -2,17 +2,16 @@
 // @brief Test file for the block manager
 //
 
-// Project headers
-#include "c3qo/manager.hpp"
+// c3qo test unit library
+#include "c3qo/tu.hpp"
 
-// Gtest library
-#include "gtest/gtest.h"
-
-class tu_manager_bk : public testing::Test, public manager
+class tu_manager_bk : public testing::Test
 {
-  public:
     void SetUp();
     void TearDown();
+
+public:
+    struct manager mgr_;
 };
 
 void tu_manager_bk::SetUp()
@@ -32,7 +31,7 @@ void tu_manager_bk::TearDown()
 //
 TEST_F(tu_manager_bk, block)
 {
-    struct block bk(this);
+    struct block_derived bk(&mgr_);
 
     bk.init_();
     bk.conf_(nullptr);
@@ -48,7 +47,7 @@ TEST_F(tu_manager_bk, block)
 //
 // @brief Test the configuration
 //
-TEST_F(tu_manager_bk, manager_bk_conf)
+TEST_F(tu_manager_bk, conf)
 {
     char fname[] = "/tmp/tu_manager_bk.txt";
     std::fstream file;
@@ -93,7 +92,7 @@ TEST_F(tu_manager_bk, manager_bk_conf)
     file.close();
 
     // Parsing configuration
-    EXPECT_EQ(conf_parse(fname), true);
+    EXPECT_EQ(mgr_.conf_parse(fname), true);
 
     // Prepare expected configuration dump for the blocks
     //   - format : "<bk_id> <bk_type> <bk_state>;"
@@ -104,7 +103,7 @@ TEST_F(tu_manager_bk, manager_bk_conf)
     buf_exp = ss.str();
 
     // Verify the configuration dump
-    len = conf_get(buf, sizeof(buf));
+    len = mgr_.conf_get(buf, sizeof(buf));
     EXPECT_EQ(len, buf_exp.length());
 
     // Verify block informations
@@ -112,7 +111,7 @@ TEST_F(tu_manager_bk, manager_bk_conf)
     {
         const struct block *bi;
 
-        bi = block_get(i);
+        bi = mgr_.block_get(i);
         ASSERT_NE(bi, nullptr);
 
         EXPECT_EQ(bi->id_, i);
@@ -140,7 +139,7 @@ TEST_F(tu_manager_bk, manager_bk_conf)
     }
 
     // Clean blocks
-    block_clear();
+    mgr_.block_clear();
 }
 
 //
@@ -148,7 +147,7 @@ TEST_F(tu_manager_bk, manager_bk_conf)
 //
 // For this test, we need to use the statically defined manager of block
 //
-TEST_F(tu_manager_bk, manager_bk_flow)
+TEST_F(tu_manager_bk, flow)
 {
     struct block *bk_1;
     struct block *bk_2;
@@ -158,9 +157,9 @@ TEST_F(tu_manager_bk, manager_bk_flow)
     // Add, initialize and start 2 blocks
     for (int i = 1; i < 3; i++)
     {
-        EXPECT_EQ(block_add(i, "hello"), true);
-        EXPECT_EQ(block_init(i), true);
-        EXPECT_EQ(block_start(i), true);
+        EXPECT_EQ(mgr_.block_add(i, "hello"), true);
+        EXPECT_EQ(mgr_.block_init(i), true);
+        EXPECT_EQ(mgr_.block_start(i), true);
     }
 
     // Bind:
@@ -168,13 +167,13 @@ TEST_F(tu_manager_bk, manager_bk_flow)
     //   - block 2 to block 0 (trash)
     for (int i = 0; i < 8; i++)
     {
-        EXPECT_EQ(block_bind(1, i, 2), true);
-        EXPECT_EQ(block_bind(2, i, 0), true);
+        EXPECT_EQ(mgr_.block_bind(1, i, 2), true);
+        EXPECT_EQ(mgr_.block_bind(2, i, 0), true);
     }
 
     // Retrieve block 1 and block 2
-    bk_1 = block_get(1);
-    bk_2 = block_get(2);
+    bk_1 = mgr_.block_get(1);
+    bk_2 = mgr_.block_get(2);
     ASSERT_NE(bk_1, nullptr);
     ASSERT_NE(bk_2, nullptr);
 
@@ -198,7 +197,7 @@ TEST_F(tu_manager_bk, manager_bk_flow)
     EXPECT_EQ(count, 1);
 
     // Clear blocks
-    block_clear();
+    mgr_.block_clear();
 }
 
 //
@@ -278,6 +277,6 @@ TEST_F(tu_manager_bk, errors)
         }
 
         file.close();
-        EXPECT_EQ(conf_parse(fname), false);
+        EXPECT_EQ(mgr_.conf_parse(fname), false);
     }
 }

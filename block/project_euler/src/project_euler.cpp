@@ -10,6 +10,7 @@
 #include "problem.hpp"
 
 bk_project_euler::bk_project_euler(struct manager *mgr) : block(mgr) {}
+bk_project_euler::~bk_project_euler() {}
 
 static void solve_problem(int index, char *param)
 {

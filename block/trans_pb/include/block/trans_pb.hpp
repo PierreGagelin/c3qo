@@ -23,6 +23,7 @@ struct trans_pb_notif
 struct bk_trans_pb : block
 {
     bk_trans_pb(struct manager *mgr);
+    virtual ~bk_trans_pb() override final;
 
     virtual int ctrl_(void *vnotif) override final;
 };

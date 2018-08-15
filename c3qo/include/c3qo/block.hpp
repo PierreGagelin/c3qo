@@ -75,7 +75,7 @@ struct block
     struct manager *mgr_; // Manager of this block
 
     block(struct manager *mgr);
-    virtual ~block();
+    virtual ~block() = 0;
 
     // Block management interface default implementation
     virtual void init_();
@@ -87,6 +87,9 @@ struct block
     virtual int rx_(void *vdata);
     virtual int tx_(void *vdata);
     virtual int ctrl_(void *vnotif);
+
+    // Timer callback
+    virtual void on_timer_(struct timer &tm);
 
     // Data flow methods
     void process_rx_(int port, void *data);

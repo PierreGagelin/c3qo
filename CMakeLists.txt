@@ -14,6 +14,7 @@ else ()
     set(CMAKE_BUILD_TYPE Debug)
 endif ()
 
+set(CMAKE_CXX_FLAGS_RELEASE -O2)
 
 # Using GCOV on the code
 if (${C3QO_COVERAGE})

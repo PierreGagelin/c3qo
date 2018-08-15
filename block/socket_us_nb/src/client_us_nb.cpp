@@ -13,6 +13,7 @@
 #define SOCKET_READ_SIZE 256
 
 bk_client_us_nb::bk_client_us_nb(struct manager *mgr) : block(mgr), port_(0), fd_(-1), connected_(false), rx_pkt_(0u), tx_pkt_(0u) {}
+bk_client_us_nb::~bk_client_us_nb() {}
 
 //
 // @brief Remove the managed file descriptor and close it
@@ -103,30 +104,21 @@ static void client_us_nb_connect_check(void *vctx, int fd, void *socket)
 //
 // @brief Try to connect the socket again. It is more portable to create a new one
 //
-static void client_us_nb_connect_retry(void *vctx)
+void bk_client_us_nb::on_timer_(struct timer &)
 {
-    struct bk_client_us_nb *bk;
-
-    // Verify input
-    if (vctx == nullptr)
+    if (close(fd_) == -1)
     {
-        LOGGER_ERR("Failed to retry connection on socket: nullptr context");
-        return;
+        LOGGER_WARNING("Could not close file descriptor properly: I/O might be pending and lost [bk_id=%d ; fd=%d]", id_, fd_);
     }
-    bk = static_cast<struct bk_client_us_nb *>(vctx);
 
-    if (close(bk->fd_) == -1)
-    {
-        LOGGER_WARNING("Could not close file descriptor properly: I/O might be pending and lost [bk_id=%d ; fd=%d]", bk->id_, bk->fd_);
-    }
     // TODO: put the socket options in the configuration
-    bk->fd_ = socket_nb(AF_UNIX, SOCK_STREAM, 0);
-    if (bk->fd_ == -1)
+    fd_ = socket_nb(AF_UNIX, SOCK_STREAM, 0);
+    if (fd_ == -1)
     {
-        LOGGER_ERR("Failed to retry connection on socket: could not create non-blocking socket [bk_id=%d ; fd=%d]", bk->id_, bk->fd_);
+        LOGGER_ERR("Failed to retry connection on socket: could not create non-blocking socket [bk_id=%d ; fd=%d]", id_, fd_);
     }
 
-    bk->connect_();
+    connect_();
 }
 
 //
@@ -169,8 +161,8 @@ void bk_client_us_nb::connect_()
 
         // Prepare a 100ms timer for connection retry
         tm.tid = fd_;
-        tm.callback = &client_us_nb_connect_retry;
-        tm.arg = this;
+        tm.bk = this;
+        tm.arg = nullptr;
         tm.time.tv_sec = 0;
         tm.time.tv_nsec = 100 * 1000 * 1000;
         mgr_->timer_add(tm);

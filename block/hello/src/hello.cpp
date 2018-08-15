@@ -4,6 +4,7 @@
 #include "c3qo/manager.hpp"
 
 bk_hello::bk_hello(struct manager *mgr) : block(mgr), name_("unknown"), count_(0) {}
+bk_hello::~bk_hello() {}
 
 void bk_hello::conf_(char *conf)
 {
