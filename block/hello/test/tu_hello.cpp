@@ -65,7 +65,7 @@ TEST_F(tu_hello, hello)
     block.stop_();
 }
 
-///
+//
 // @brief Edge cases
 //
 TEST_F(tu_hello, error)

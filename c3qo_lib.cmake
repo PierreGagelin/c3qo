@@ -27,7 +27,9 @@ set(COMPILE_FLAGS_COMMON)
 set(COMPILE_FLAGS_COMMON ${COMPILE_FLAGS_COMMON} -Wall)
 set(COMPILE_FLAGS_COMMON ${COMPILE_FLAGS_COMMON} -Wextra)
 set(COMPILE_FLAGS_COMMON ${COMPILE_FLAGS_COMMON} -fno-rtti)
-set(COMPILE_FLAGS_COMMON ${COMPILE_FLAGS_COMMON} -flto)
+
+# XXX: apparently causes .gcno to be corrupted under ubuntu 14.04.5 toolchain
+#set(COMPILE_FLAGS_COMMON ${COMPILE_FLAGS_COMMON} -flto)
 
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_COMMON})
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Werror)
@@ -35,8 +37,6 @@ set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Woverloaded-virtual)
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Wswitch)
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Wsign-conversion)
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Wshadow)
-
-set(COMPILE_FLAGS_TEST ${COMPILE_FLAGS_COMMON})
 
 #
 # Add include directories
@@ -65,7 +65,8 @@ function (c3qo_target_link_flags t_name)
     # Required for ZeroMQ runtime
     target_link_libraries(${t_name} zmq)
 
-    set_property(TARGET ${t_name} APPEND_STRING PROPERTY LINK_FLAGS " -flto")
+    # XXX: apparently causes .gcno to be corrupted under ubuntu 14.04.5 toolchain
+    #set_property(TARGET ${t_name} APPEND_STRING PROPERTY LINK_FLAGS " -flto")
 
     # Add coverage link flag
     if (${C3QO_COVERAGE})
@@ -93,11 +94,14 @@ function (c3qo_add_block target_name target_sources)
     target_link_libraries(${target_name} manager)
 endfunction (c3qo_add_block)
 
+#
+# Add an executable
+#
 function (c3qo_add_executable target_name target_sources)
     add_executable(${target_name} ${target_sources})
 
     c3qo_target_include(${target_name})
-    target_compile_options(${target_name} PRIVATE ${COMPILE_FLAGS_TEST})
+    c3qo_target_compile_flags(${target_name})
     c3qo_target_link_flags(${target_name})
 
     target_link_libraries(${target_name} logger)
@@ -109,19 +113,23 @@ endfunction (c3qo_add_executable)
 # Add a test unit
 #
 function (c3qo_add_test target_name target_sources)
-    c3qo_add_executable(${target_name} "${target_sources}")
+    add_executable(${target_name} ${target_sources})
 
+    c3qo_target_include(${target_name})
     target_include_directories(${target_name} PRIVATE ${TU_INCLUDE_DIR})
 
+    target_compile_options(${target_name} PRIVATE ${COMPILE_FLAGS_COMMON})
+
+    c3qo_target_link_flags(${target_name})
+    target_link_libraries(${target_name} logger)
     target_link_libraries(${target_name} gtest)
     target_link_libraries(${target_name} gtest_main)
 
     add_test(NAME ${target_name} COMMAND ${target_name})
 endfunction (c3qo_add_test)
 
-
 #
-# Protobuf libraries
+# Enable protobuf
 #
 if (${C3QO_PROTOBUF})
     include(FindProtobuf)
