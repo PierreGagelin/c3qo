@@ -110,8 +110,8 @@ void manager::fd_remove(const struct file_desc &fd)
     }
 
     // Remove file descriptor and callback
-    callback_.erase(callback_.cbegin() + index);
-    fd_.erase(fd_.cbegin() + index);
+    callback_.erase(callback_.begin() + index);
+    fd_.erase(fd_.begin() + index);
 }
 
 //
