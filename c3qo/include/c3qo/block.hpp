@@ -55,10 +55,48 @@ const char *flow_type_to_string(enum flow_type type);
 //
 struct bind_info
 {
-    int port;        // Port from source block
-    int bk_id;       // Identifier of the destination block
+    int port;         // Port from source block
+    int bk_id;        // Identifier of the destination block
     struct block *bk; // Destination block
 };
+
+//
+// @struct timer
+//
+struct timer
+{
+    struct block *bk;     // Block to be notified on expiration
+    struct timespec time; // Expiration date (user specify a delay and it's converted to a date)
+    void *arg;            // Generic argument to forward on expiration
+    int tid;              // Timer identifier
+};
+
+//
+// @struct file_desc
+//
+struct file_desc
+{
+    file_desc();
+
+    struct block *bk; // Block to be notified on event
+    int fd;           // File descriptor to monitor
+    void *socket;     // ZMQ socket to monitor
+    bool read;        // Look for read events
+    bool write;       // Look for write events
+};
+
+
+bool operator==(const struct file_desc &a, const struct file_desc &b);
+
+// custom specialization of std::hash
+namespace std
+{
+template <>
+struct hash<struct file_desc>
+{
+    std::size_t operator()(const struct file_desc &entry) const noexcept;
+};
+}
 
 //
 // @struct block
@@ -90,6 +128,9 @@ struct block
 
     // Timer callback
     virtual void on_timer_(struct timer &tm);
+
+    // File descriptor callback
+    virtual void on_fd_(struct file_desc &fd);
 
     // Data flow methods
     void process_rx_(int port, void *data);

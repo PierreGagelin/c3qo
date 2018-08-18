@@ -10,8 +10,8 @@ struct bk_client_us_nb : block
     int port_;  // Binding port
 
     // Context
-    int fd_;         // Socket file descriptor
-    bool connected_; // True if socket is connected
+    struct file_desc fd_; // Socket file descriptor
+    bool connected_;      // True if socket is connected
 
     // Statistics
     size_t rx_pkt_; // RX: Number of packets read
@@ -26,7 +26,9 @@ struct bk_client_us_nb : block
     virtual void start_() override final;
     virtual void stop_() override final;
     virtual int tx_(void *vdata) override final;
+
     virtual void on_timer_(struct timer &tm) override final;
+    virtual void on_fd_(struct file_desc &fd) override final;
 };
 
 #endif // BLOCK_CLIENT_US_NB_HPP

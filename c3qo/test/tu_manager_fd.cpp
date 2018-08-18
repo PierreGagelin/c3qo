@@ -8,29 +8,36 @@
 // Gtest library
 #include "gtest/gtest.h"
 
-bool fd_called;
-void fd_callback(void *ctx, int fd, void *socket)
+struct block_fd : block
 {
-    (void)ctx;
-    (void)fd;
-    (void)socket;
-    fd_called = true;
-}
+    bool boule_;
+
+    block_fd(struct manager *mgr) : block(mgr), boule_(false) {}
+
+    virtual void on_fd_(struct file_desc &fd) override final
+    {
+        (void)fd;
+        boule_ = true;
+    }
+};
 
 // Derive from the manager_fd class
-class tu_manager_fd : public testing::Test, public manager
+class tu_manager_fd : public testing::Test
 {
-  public:
     void SetUp();
     void TearDown();
+
+  public:
+    struct manager mgr_;
+    struct block_fd bk_;
+
+    tu_manager_fd() : bk_(&mgr_) {}
 };
 
 void tu_manager_fd::SetUp()
 {
     LOGGER_OPEN("tu_manager_fd");
     logger_set_level(LOGGER_LEVEL_DEBUG);
-
-    fd_called = false;
 }
 
 void tu_manager_fd::TearDown()
@@ -42,7 +49,7 @@ void tu_manager_fd::TearDown()
 //
 // @brief Test the file descriptor manager
 //
-TEST_F(tu_manager_fd, manager_fd)
+TEST_F(tu_manager_fd, fd)
 {
     char fname[] = "/tmp/tu_manager_fd.txt";
     FILE *file;
@@ -55,18 +62,24 @@ TEST_F(tu_manager_fd, manager_fd)
     ASSERT_NE(fd, -1);
 
     // Add a file descriptor to be managed for reading
-    EXPECT_EQ(fd_add(nullptr, &fd_callback, fd, nullptr, true), true);
+    struct file_desc file_d;
+    file_d.bk = &bk_;
+    file_d.fd = fd;
+    file_d.socket = nullptr;
+    file_d.read = true;
+    file_d.write = false;
+    EXPECT_EQ(mgr_.fd_add(file_d), true);
 
     // Write into the managed
     fprintf(file, "hello world!");
 
     // Verify something is ready to be read
-    EXPECT_GT(fd_poll(), 0);
+    EXPECT_GT(mgr_.fd_poll(), 0);
 
     // Verify that the callback was executed
-    EXPECT_EQ(fd_called, true);
+    EXPECT_EQ(bk_.boule_, true);
 
     // Clean the file descriptor manager
-    fd_remove(fd, nullptr, true);
+    mgr_.fd_remove(file_d);
     fclose(file);
 }

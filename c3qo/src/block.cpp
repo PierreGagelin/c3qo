@@ -78,6 +78,27 @@ const char *flow_type_to_string(enum flow_type type)
 }
 
 //
+// @brief Block file descriptor constructor
+//
+file_desc::file_desc() : bk(nullptr), fd(-1), socket(nullptr), read(false), write(false) {}
+
+bool operator==(const struct file_desc &a, const struct file_desc &b)
+{
+    return ((a.fd == b.fd) && (a.socket == b.socket));
+}
+
+// custom specialization of std::hash
+namespace std
+{
+std::size_t hash<struct file_desc>::operator()(const struct file_desc &entry) const noexcept
+{
+    const std::size_t h1(std::hash<int>{}(entry.fd));
+    const std::size_t h2(std::hash<void *>{}(entry.socket));
+    return h1 ^ (h2 << 1);
+}
+}
+
+//
 // @brief Block constructor and destructor
 //
 block::block(struct manager *mgr) : id_(0), state_(STATE_STOP), mgr_(mgr) {}
@@ -94,6 +115,7 @@ int block::rx_(void *) { return 0; }
 int block::tx_(void *) { return 0; }
 int block::ctrl_(void *) { return 0; }
 void block::on_timer_(struct timer &) {}
+void block::on_fd_(struct file_desc &) {}
 
 //
 // @brief Send RX data to a block

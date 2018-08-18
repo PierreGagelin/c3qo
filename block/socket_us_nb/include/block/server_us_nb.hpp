@@ -7,8 +7,8 @@
 struct bk_server_us_nb : block
 {
     // File descriptors in use
-    std::unordered_set<int> clients_;
-    int server_;
+    std::unordered_set<struct file_desc> clients_;
+    struct file_desc server_;
 
     // Binding ID
     int port_;
@@ -20,13 +20,12 @@ struct bk_server_us_nb : block
     bk_server_us_nb(struct manager *mgr);
     virtual ~bk_server_us_nb() override final;
 
-    int server_us_nb_fd_find(int fd);
-    void server_us_nb_remove(int i);
-
     virtual void start_() override final;
     virtual void stop_() override final;
     virtual size_t get_stats_(char *buf, size_t len) override final;
     virtual int tx_(void *vdata) override final;
+
+    virtual void on_fd_(struct file_desc &fd) override final;
 };
 
 #endif // BLOCK_SERVER_US_NB_HPP

@@ -10,17 +10,6 @@
 
 #define NSEC_MAX (1000 * 1000 * 1000) // Maximum number of nsec + 1
 
-//
-// @struct timer
-//
-struct timer
-{
-    struct timespec time; // Expiration date (user specify a delay and it's converted to a date)
-    struct block *bk;     // Block to be notified on expiration
-    void *arg;            // Generic argument to forward on expiration
-    int tid;              // Timer identifier
-};
-
 bool operator==(const struct timer &a, const struct timer &b);
 bool operator<(const struct timer &a, const struct timer &b);
 
@@ -96,15 +85,15 @@ struct manager
     // File descriptors management
     //
   protected:
-    std::vector<struct fd_call> callback_; // Callbacks for read and write events
-    std::vector<zmq_pollitem_t> fd_;       // File descriptors or socket registered
+    std::vector<struct file_desc> callback_; // Callbacks for read and write events
+    std::vector<zmq_pollitem_t> fd_;         // File descriptors or socket registered
 
   protected:
-    int fd_find(int fd, void *socket);
+    int fd_find(int fd, void *socket) const;
 
   public:
-    bool fd_add(void *ctx, void (*callback)(void *, int, void *), int fd, void *socket, bool read);
-    void fd_remove(int fd, void *socket, bool read);
+    bool fd_add(const struct file_desc &fd);
+    void fd_remove(const struct file_desc &fd);
 
   public:
     int fd_poll();

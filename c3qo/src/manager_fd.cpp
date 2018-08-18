@@ -17,25 +17,18 @@
 //
 // @return Index of the file descriptor on success, -1 on failure
 //
-int manager::fd_find(int fd, void *socket)
+int manager::fd_find(int fd, void *socket) const
 {
-    size_t end;
-    size_t i;
+    int i;
 
-    // Verify input
-    if ((fd < 0) && (socket == nullptr))
+    i = 0;
+    for (const auto &entry : fd_)
     {
-        return -1;
-    }
-
-    // Look for the file descriptor fd
-    end = fd_.size();
-    for (i = 0; i < end; i++)
-    {
-        if ((fd_[i].fd == fd) && (fd_[i].socket == socket))
+        if ((entry.fd == fd) && (entry.socket == socket))
         {
-            return static_cast<int>(i);
+            return i;
         }
+        ++i;
     }
 
     return -1;
@@ -53,99 +46,72 @@ int manager::fd_find(int fd, void *socket)
 //
 // If both a file descriptor and a socket are set, the socket will prevale when polling
 //
-bool manager::fd_add(void *ctx, void (*callback)(void *, int, void *), int fd, void *socket, bool read)
+bool manager::fd_add(const struct file_desc &fd)
 {
-    struct fd_call new_callback;
-    struct fd_call *new_callback_p;
-    zmq_pollitem_t new_fd;
-    zmq_pollitem_t *new_fd_p;
     int index;
 
     // Verify user input
-    if ((fd < 0) && (socket == nullptr))
+    if (fd.bk == nullptr)
     {
-        LOGGER_WARNING("Cannot add entry: negative file descriptor or nullptr socket [fd=%d ; socket=%p]", fd, socket);
+        LOGGER_WARNING("Cannot add file descriptor: nullptr block");
         return false;
     }
-    if (callback == nullptr)
+    if ((fd.fd < 0) && (fd.socket == nullptr))
     {
-        LOGGER_WARNING("Cannot add entry: nullptr callback [fd=%d ; socket=%p ; callback=%p]", fd, socket, callback);
+        LOGGER_WARNING("Cannot add file descriptor: negative fd and nullptr socket [fd=%d ; socket=%p]", fd.fd, fd.socket);
         return false;
     }
 
-    // Update or create a new entry
-    index = fd_find(fd, socket);
+    // Create a new entry
+    index = fd_find(fd.fd, fd.socket);
     if (index == -1)
     {
-        new_callback_p = &new_callback;
-        new_fd_p = &new_fd;
+        zmq_pollitem_t new_fd;
 
         // Initialize the flag
-        new_fd_p->events = 0;
-    }
-    else
-    {
-        new_callback_p = callback_.data();
-        new_fd_p = fd_.data();
+        new_fd.fd = fd.fd;
+        new_fd.socket = fd.socket;
 
-        new_callback_p += index;
-        new_fd_p += index;
-    }
-
-    new_callback_p->ctx = ctx;
-    new_callback_p->callback = callback;
-
-    new_fd_p->fd = fd;
-    new_fd_p->socket = socket;
-
-    // Add a flag to read or write
-    new_fd_p->events |= (read == true) ? ZMQ_POLLIN : ZMQ_POLLOUT;
-
-    // Store the new entry
-    if (index == -1)
-    {
-        callback_.push_back(new_callback);
+        // Store the entry
+        callback_.push_back(fd);
         fd_.push_back(new_fd);
+
+        index = fd_.size() - 1;
+    }
+
+    // Reset event flags
+    auto &poll_item = fd_[static_cast<std::size_t>(index)];
+    poll_item.events = 0;
+    if (fd.read == true)
+    {
+        poll_item.events |= ZMQ_POLLIN;
+    }
+    if (fd.write == true)
+    {
+        poll_item.events |= ZMQ_POLLOUT;
     }
 
     return true;
 }
 
 //
-// @brief Remove a flag from the entry. If there are no more flag, the entry is removed
+// @brief Remove an entry
 //
-void manager::fd_remove(int fd, void *socket, bool read)
+void manager::fd_remove(const struct file_desc &fd)
 {
-    zmq_pollitem_t *entry;
     int index;
-    short flag;
 
     // Look for the entry
-    index = fd_find(fd, socket);
+    index = fd_find(fd.fd, fd.socket);
     if (index == -1)
     {
         // Nothing to do
         return;
     }
-    entry = fd_.data();
-    entry += index;
 
-    // Remove the desired flag
-    flag = (read == true) ? ZMQ_POLLIN : ZMQ_POLLOUT;
-    entry->events &= ~flag;
-
-    // Verify that the entry still has a flag
-    if (entry->events == 0)
-    {
-        // Remove file descriptor and callback
-        auto it_cb = callback_.begin();
-        it_cb += index;
-        callback_.erase(it_cb);
-
-        auto it_fd = fd_.begin();
-        it_fd += index;
-        fd_.erase(it_fd);
-    }
+    // Remove file descriptor and callback
+    callback_.erase(callback_.cbegin() + index);
+    fd_.erase(fd_.cbegin() + index);
 }
 
 //
@@ -172,24 +138,19 @@ int manager::fd_poll()
     }
     else
     {
-        std::vector<zmq_pollitem_t>::const_iterator it_fd;
-        std::vector<zmq_pollitem_t>::const_iterator end;
-        std::vector<struct fd_call>::const_iterator it_cb;
         int count;
 
         LOGGER_DEBUG("Sockets are ready for I/O [poll_size=%zu ; ready_count=%d]", fd_.size(), ret);
 
         // There are 'ret' file descriptors ready
-        it_fd = fd_.begin();
-        end = fd_.end();
-        it_cb = callback_.begin();
+        auto it_cb = callback_.begin();
         count = 0;
-        while (it_fd != end)
+        for (const auto &it_fd : fd_)
         {
             // Look if the file descriptor is ready
-            if ((it_fd->revents & (ZMQ_POLLIN | ZMQ_POLLOUT)) != 0)
+            if ((it_fd.revents & (ZMQ_POLLIN | ZMQ_POLLOUT)) != 0)
             {
-                it_cb->callback(it_cb->ctx, it_fd->fd, it_fd->socket);
+                it_cb->bk->on_fd_(*it_cb);
                 count++;
             }
 
@@ -199,7 +160,6 @@ int manager::fd_poll()
                 break;
             }
 
-            ++it_fd;
             ++it_cb;
         }
     }
