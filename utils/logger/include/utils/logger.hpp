@@ -43,54 +43,54 @@ void logger_set_level(enum logger_level l);
 // Current level of log. Only log with lower level will be displayed
 extern enum logger_level logger_level;
 
+#ifndef LOGGER_TAG
+#define LOGGER_TAG ""
+#endif
+
+#define LOGGER_TRACE(level, msg, ...)                 \
+    syslog(level, LOGGER_TAG " " msg, ##__VA_ARGS__); \
+    printf("[%s]" LOGGER_TAG " " msg "\n", get_logger_level(static_cast<enum logger_level>(level + 1)), ##__VA_ARGS__);
+
 // Format a log entry with function name, line and level
-#define LOGGER_EMERG(msg, ...)                                                           \
-    if (logger_level >= LOGGER_LEVEL_EMERG)                                              \
-    {                                                                                    \
-        syslog(LOG_EMERG, "[EMERG] " msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
-        printf("[EMERG] " msg " (%s:%d)\n", ##__VA_ARGS__, __func__, __LINE__);          \
+#define LOGGER_EMERG(msg, ...)                                                      \
+    if (logger_level >= LOGGER_LEVEL_EMERG)                                         \
+    {                                                                               \
+        LOGGER_TRACE(LOG_EMERG, msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
     }
-#define LOGGER_ALERT(msg, ...)                                                           \
-    if (logger_level >= LOGGER_LEVEL_ALERT)                                              \
-    {                                                                                    \
-        syslog(LOG_ALERT, "[ALERT] " msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
-        printf("[ALERT] " msg " (%s:%d)\n", ##__VA_ARGS__, __func__, __LINE__);          \
+#define LOGGER_ALERT(msg, ...)                                                      \
+    if (logger_level >= LOGGER_LEVEL_ALERT)                                         \
+    {                                                                               \
+        LOGGER_TRACE(LOG_ALERT, msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
     }
-#define LOGGER_CRIT(msg, ...)                                                          \
-    if (logger_level >= LOGGER_LEVEL_CRIT)                                             \
-    {                                                                                  \
-        syslog(LOG_CRIT, "[CRIT] " msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
-        printf("[CRIT] " msg " (%s:%d)\n", ##__VA_ARGS__, __func__, __LINE__);         \
+#define LOGGER_CRIT(msg, ...)                                                      \
+    if (logger_level >= LOGGER_LEVEL_CRIT)                                         \
+    {                                                                              \
+        LOGGER_TRACE(LOG_CRIT, msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
     }
-#define LOGGER_ERR(msg, ...)                                                         \
-    if (logger_level >= LOGGER_LEVEL_ERR)                                            \
+#define LOGGER_ERR(msg, ...)                                                      \
+    if (logger_level >= LOGGER_LEVEL_ERR)                                         \
+    {                                                                             \
+        LOGGER_TRACE(LOG_ERR, msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
+    }
+#define LOGGER_WARNING(msg, ...)                                                      \
+    if (logger_level >= LOGGER_LEVEL_WARNING)                                         \
+    {                                                                                 \
+        LOGGER_TRACE(LOG_WARNING, msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
+    }
+#define LOGGER_NOTICE(msg, ...)                                                      \
+    if (logger_level >= LOGGER_LEVEL_NOTICE)                                         \
     {                                                                                \
-        syslog(LOG_ERR, "[ERR] " msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
-        printf("[ERR] " msg " (%s:%d)\n", ##__VA_ARGS__, __func__, __LINE__);        \
+        LOGGER_TRACE(LOG_NOTICE, msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
     }
-#define LOGGER_WARNING(msg, ...)                                                             \
-    if (logger_level >= LOGGER_LEVEL_WARNING)                                                \
-    {                                                                                        \
-        syslog(LOG_WARNING, "[WARNING] " msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
-        printf("[WARNING] " msg " (%s:%d)\n", ##__VA_ARGS__, __func__, __LINE__);            \
+#define LOGGER_INFO(msg, ...)                                                      \
+    if (logger_level >= LOGGER_LEVEL_INFO)                                         \
+    {                                                                              \
+        LOGGER_TRACE(LOG_INFO, msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
     }
-#define LOGGER_NOTICE(msg, ...)                                                            \
-    if (logger_level >= LOGGER_LEVEL_NOTICE)                                               \
-    {                                                                                      \
-        syslog(LOG_NOTICE, "[NOTICE] " msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
-        printf("[NOTICE] " msg " (%s:%d)\n", ##__VA_ARGS__, __func__, __LINE__);           \
-    }
-#define LOGGER_INFO(msg, ...)                                                          \
-    if (logger_level >= LOGGER_LEVEL_INFO)                                             \
-    {                                                                                  \
-        syslog(LOG_INFO, "[INFO] " msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
-        printf("[INFO] " msg " (%s:%d)\n", ##__VA_ARGS__, __func__, __LINE__);         \
-    }
-#define LOGGER_DEBUG(msg, ...)                                                           \
-    if (logger_level >= LOGGER_LEVEL_DEBUG)                                              \
-    {                                                                                    \
-        syslog(LOG_DEBUG, "[DEBUG] " msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
-        printf("[DEBUG] " msg " (%s:%d)\n", ##__VA_ARGS__, __func__, __LINE__);          \
+#define LOGGER_DEBUG(msg, ...)                                                      \
+    if (logger_level >= LOGGER_LEVEL_DEBUG)                                         \
+    {                                                                               \
+        LOGGER_TRACE(LOG_DEBUG, msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
     }
 
 #else
@@ -102,27 +102,17 @@ extern enum logger_level logger_level;
 //          - does not trigger compilation -Werror (mainly unused variables)
 //
 
-#define LOGGER_EMERG(msg, ...)                                            \
-    (void)std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value; \
-    (void)msg;
-#define LOGGER_ALERT(msg, ...)                                            \
-    (void)std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value; \
-    (void)msg;
-#define LOGGER_CRIT(msg, ...)                                             \
-    (void)std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value; \
-    (void)msg;
-#define LOGGER_ERR(msg, ...)                                              \
-    (void)std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value; \
-    (void)msg;
-#define LOGGER_WARNING(msg, ...)                                          \
-    (void)std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value; \
-    (void)msg;
-#define LOGGER_INFO(msg, ...)                                             \
-    (void)std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value; \
-    (void)msg;
-#define LOGGER_DEBUG(msg, ...)                                            \
-    (void)std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value; \
-    (void)msg;
+#define LOGGER_TRACE(msg, ...) \
+    (void)msg;                 \
+    (void)std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value;
+
+#define LOGGER_EMERG(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
+#define LOGGER_ALERT(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
+#define LOGGER_CRIT(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
+#define LOGGER_ERR(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
+#define LOGGER_WARNING(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
+#define LOGGER_INFO(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
+#define LOGGER_DEBUG(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
 
 #endif
 

@@ -2,6 +2,8 @@
 // @brief Test file for a block
 //
 
+#define LOGGER_TAG "[TU.trans_pb]"
+
 // Project headers
 #include "c3qo/manager.hpp"
 

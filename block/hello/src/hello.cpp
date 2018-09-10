@@ -1,5 +1,7 @@
 
 
+#define LOGGER_TAG "[block.hello]"
+
 // Project headers
 #include "c3qo/manager.hpp"
 

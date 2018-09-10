@@ -2,6 +2,8 @@
 // @brief Test file for the project_euler block
 //
 
+#define LOGGER_TAG "[TU.project_euler]"
+
 // Project headers
 #include "c3qo/manager.hpp"
 

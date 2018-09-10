@@ -2,6 +2,8 @@
 // @brief Test file for the block manager
 //
 
+#define LOGGER_TAG "[TU.c3qo.perf]"
+
 // Project headers
 #include "c3qo/manager.hpp"
 

@@ -4,6 +4,8 @@
 // https://projecteuler.net/
 //
 
+#define LOGGER_TAG "[block.project_euler]"
+
 // Project headers
 #include "c3qo/manager.hpp"
 

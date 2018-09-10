@@ -2,6 +2,8 @@
 // @brief Test unit for the unix-stream non-blocking sockets
 //
 
+#define LOGGER_TAG "[TU.socket_us_nb]"
+
 // Project libraries
 #include "c3qo/manager.hpp"
 

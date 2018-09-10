@@ -1,5 +1,7 @@
 
 
+#define LOGGER_TAG "[block.zmq_pair]"
+
 // Project headers
 #include "c3qo/manager.hpp"
 

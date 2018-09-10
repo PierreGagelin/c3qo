@@ -1,5 +1,7 @@
 
 
+#define LOGGER_TAG "[block.trans_pb]"
+
 // Project headers
 #include "c3qo/manager.hpp"
 

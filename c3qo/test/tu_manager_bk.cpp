@@ -2,6 +2,8 @@
 // @brief Test file for the block manager
 //
 
+#define LOGGER_TAG "[TU.engine.block]"
+
 // c3qo test unit library
 #include "c3qo/tu.hpp"
 

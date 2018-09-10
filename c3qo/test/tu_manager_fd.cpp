@@ -2,6 +2,8 @@
 // @brief Test file for the block manager
 //
 
+#define LOGGER_TAG "[TU.engine.fd]"
+
 // Project headers
 #include "c3qo/manager.hpp"
 

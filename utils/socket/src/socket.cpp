@@ -2,6 +2,8 @@
 // @brief API to manage socket
 //
 
+#define LOGGER_TAG "[lib.socket]"
+
 // Project headers
 #include "utils/socket.hpp"
 #include "utils/logger.hpp"

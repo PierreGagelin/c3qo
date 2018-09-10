@@ -1,5 +1,7 @@
 
 
+#define LOGGER_TAG "[app.network_cli]"
+
 // Project headers
 #include "c3qo/manager.hpp"
 

@@ -1,5 +1,7 @@
 
 
+#define LOGGER_TAG "[lib.logger]"
+
 // Project headers
 #include "utils/logger.hpp"
 
@@ -50,21 +52,21 @@ const char *get_logger_level(enum logger_level l)
 //
 void logger_set_level(enum logger_level l)
 {
-    syslog(LOG_INFO, "Setting log level [old=%s ; new=%s]", get_logger_level(logger_level), get_logger_level(l));
-
     // Verify input
     if (l < 0)
     {
         logger_level = LOGGER_LEVEL_NONE;
-        syslog(LOG_WARNING, "Cannot set logger level lower than minimum. Level set to minimum [asked=%d ; set=%s]", l, get_logger_level(logger_level));
+        LOGGER_TRACE(LOG_WARNING, "Cannot set logger level lower than minimum. Level set to minimum [asked=%d ; set=%s]", l, get_logger_level(logger_level));
         return;
     }
     if (l > LOGGER_LEVEL_DEBUG)
     {
         logger_level = LOGGER_LEVEL_DEBUG;
-        syslog(LOG_WARNING, "Cannot set logger level higher than maximum. Level set to maximum [asked=%d ; set=%s]", l, get_logger_level(logger_level));
+        LOGGER_TRACE(LOG_WARNING, "Cannot set logger level higher than maximum. Level set to maximum [asked=%d ; set=%s]", l, get_logger_level(logger_level));
         return;
     }
+
+    LOGGER_TRACE(LOG_INFO, "Setting log level [old=%s ; new=%s]", get_logger_level(logger_level), get_logger_level(l));
 
     logger_level = l;
 }

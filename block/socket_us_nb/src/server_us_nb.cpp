@@ -6,6 +6,8 @@
 // @note us_asnb stand for unix stream non-block
 //
 
+#define LOGGER_TAG "[block.server_us_nb]"
+
 // Project headers
 #include "c3qo/manager.hpp"
 

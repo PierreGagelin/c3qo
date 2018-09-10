@@ -1,4 +1,5 @@
 
+#define LOGGER_TAG "[block.lib]"
 
 #include "c3qo/block.hpp"
 

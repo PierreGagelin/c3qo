@@ -2,6 +2,8 @@
 // @brief Test file for a block
 //
 
+#define LOGGER_TAG "[TU.zmq_pair]"
+
 // Project headers
 #include "c3qo/manager.hpp"
 
@@ -75,8 +77,8 @@ TEST_F(tu_zmq_pair, data)
     }
 
     // At least one message should be received
-    EXPECT_GT(client.rx_pkt_, 1lu);
-    EXPECT_GT(server.rx_pkt_, 1lu);
+    EXPECT_GT(client.rx_pkt_, 0lu);
+    EXPECT_GT(server.rx_pkt_, 0lu);
 
     client.stop_();
     server.stop_();

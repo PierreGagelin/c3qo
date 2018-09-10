@@ -1,5 +1,7 @@
 
 
+#define LOGGER_TAG "[block.project_euler]"
+
 // Local header
 #include "problem.hpp"
 
