@@ -5,6 +5,7 @@
 #define LOGGER_TAG "[TU.project_euler]"
 
 // Project headers
+#include "block/project_euler.hpp"
 #include "c3qo/manager.hpp"
 
 // Gtest library
@@ -33,7 +34,7 @@ void tu_project_euler::TearDown()
 
 TEST_F(tu_project_euler, problem_1)
 {
-    struct bk_project_euler block(&mgr_);
+    struct project_euler block(&mgr_);
     char conf10[] = "1 10";
     char conf100[] = "1 100";
     char conf1000[] = "1 1000";
@@ -45,7 +46,7 @@ TEST_F(tu_project_euler, problem_1)
 
 TEST_F(tu_project_euler, problem_2)
 {
-    struct bk_project_euler block(&mgr_);
+    struct project_euler block(&mgr_);
     char conf10[] = "2 10";
     char conf100[] = "2 100";
     char conf1000[] = "2 1000";
@@ -58,7 +59,7 @@ TEST_F(tu_project_euler, problem_2)
 
 TEST_F(tu_project_euler, problem_3)
 {
-    struct bk_project_euler block(&mgr_);
+    struct project_euler block(&mgr_);
     char conf[] = "3 600851475143";
 
     block.conf_(conf);
@@ -67,7 +68,7 @@ TEST_F(tu_project_euler, problem_3)
 
 TEST_F(tu_project_euler, problem_51)
 {
-    struct bk_project_euler block(&mgr_);
+    struct project_euler block(&mgr_);
     char conf[] = "51 useless";
 
     block.conf_(conf);

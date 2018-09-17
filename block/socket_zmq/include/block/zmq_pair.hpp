@@ -23,7 +23,7 @@ struct zmq_pair_ctx
     int bk_id;
 };
 
-struct bk_zmq_pair : block
+struct zmq_pair : block
 {
     // Context
     void *zmq_ctx_;
@@ -37,8 +37,8 @@ struct bk_zmq_pair : block
     unsigned long rx_pkt_;
     unsigned long tx_pkt_;
 
-    bk_zmq_pair(struct manager *mgr);
-    virtual ~bk_zmq_pair() override final;
+    zmq_pair(struct manager *mgr);
+    virtual ~zmq_pair() override final;
 
     virtual void conf_(char *conf) override final;
     virtual void start_() override final;

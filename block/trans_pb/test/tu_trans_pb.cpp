@@ -5,6 +5,9 @@
 #define LOGGER_TAG "[TU.trans_pb]"
 
 // Project headers
+#include "block/hello.hpp"
+#include "block/trans_pb.hpp"
+#include "block/zmq_pair.hpp"
 #include "c3qo/manager.hpp"
 
 #include "gtest/gtest.h"
@@ -37,7 +40,7 @@ void tu_trans_pb::TearDown()
 //
 TEST_F(tu_trans_pb, hello)
 {
-    struct bk_trans_pb block(&mgr_);
+    struct trans_pb block(&mgr_);
     struct trans_pb_notif notif;
     struct hello_ctx hello;
 
@@ -55,7 +58,7 @@ TEST_F(tu_trans_pb, hello)
 //
 TEST_F(tu_trans_pb, zmq_pair)
 {
-    struct bk_trans_pb block(&mgr_);
+    struct trans_pb block(&mgr_);
     struct trans_pb_notif notif;
     struct zmq_pair_ctx zmq_pair;
 
@@ -73,7 +76,7 @@ TEST_F(tu_trans_pb, zmq_pair)
 //
 TEST_F(tu_trans_pb, error)
 {
-    struct bk_trans_pb block(&mgr_);
+    struct trans_pb block(&mgr_);
     struct trans_pb_notif notif;
 
     // Ignore errors as these are nominal
@@ -93,7 +96,7 @@ TEST_F(tu_trans_pb, error)
 
 TEST_F(tu_trans_pb, block)
 {
-    struct bk_trans_pb block(&mgr_);
+    struct trans_pb block(&mgr_);
 
     EXPECT_EQ(block.ctrl_(nullptr), 0);
 }

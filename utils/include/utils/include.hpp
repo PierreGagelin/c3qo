@@ -3,6 +3,7 @@
 // C headers
 extern "C"
 {
+#include <dlfcn.h>
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/types.h>

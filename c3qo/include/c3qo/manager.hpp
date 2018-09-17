@@ -1,12 +1,7 @@
 #ifndef C3QO_MANAGER_HPP
 #define C3QO_MANAGER_HPP
 
-#include "block/hello.hpp"
-#include "block/client_us_nb.hpp"
-#include "block/server_us_nb.hpp"
-#include "block/zmq_pair.hpp"
-#include "block/project_euler.hpp"
-#include "block/trans_pb.hpp"
+#include "c3qo/block.hpp"
 
 #define NSEC_MAX (1000 * 1000 * 1000) // Maximum number of nsec + 1
 

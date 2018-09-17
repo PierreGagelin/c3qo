@@ -4,10 +4,10 @@
 // Project headers
 #include "c3qo/block.hpp"
 
-struct bk_project_euler : block
+struct project_euler : block
 {
-    bk_project_euler(struct manager *mgr);
-    virtual ~bk_project_euler() override final;
+    project_euler(struct manager *mgr);
+    virtual ~project_euler() override final;
 
     virtual void conf_(char *conf) override final;
 };

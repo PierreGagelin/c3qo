@@ -27,7 +27,7 @@ void tu_logger::SetUp()
 }
 
 void tu_logger::TearDown()
-{   
+{
     logger_set_level(LOGGER_LEVEL_NONE);
     LOGGER_CLOSE();
 }
@@ -40,35 +40,46 @@ TEST_F(tu_logger, level)
     // Regular level of logs
     logger_set_level(LOGGER_LEVEL_DEBUG);
     EXPECT_EQ(logger_level, LOGGER_LEVEL_DEBUG);
+    get_logger_level(LOGGER_LEVEL_DEBUG);
 
     logger_set_level(LOGGER_LEVEL_INFO);
     EXPECT_EQ(logger_level, LOGGER_LEVEL_INFO);
+    get_logger_level(LOGGER_LEVEL_INFO);
 
     logger_set_level(LOGGER_LEVEL_NOTICE);
     EXPECT_EQ(logger_level, LOGGER_LEVEL_NOTICE);
+    get_logger_level(LOGGER_LEVEL_NOTICE);
 
     logger_set_level(LOGGER_LEVEL_WARNING);
     EXPECT_EQ(logger_level, LOGGER_LEVEL_WARNING);
+    get_logger_level(LOGGER_LEVEL_WARNING);
 
     logger_set_level(LOGGER_LEVEL_ERR);
     EXPECT_EQ(logger_level, LOGGER_LEVEL_ERR);
+    get_logger_level(LOGGER_LEVEL_ERR);
 
     logger_set_level(LOGGER_LEVEL_CRIT);
     EXPECT_EQ(logger_level, LOGGER_LEVEL_CRIT);
+    get_logger_level(LOGGER_LEVEL_CRIT);
 
     logger_set_level(LOGGER_LEVEL_ALERT);
     EXPECT_EQ(logger_level, LOGGER_LEVEL_ALERT);
+    get_logger_level(LOGGER_LEVEL_ALERT);
 
     logger_set_level(LOGGER_LEVEL_EMERG);
     EXPECT_EQ(logger_level, LOGGER_LEVEL_EMERG);
+    get_logger_level(LOGGER_LEVEL_EMERG);
 
     logger_set_level(LOGGER_LEVEL_NONE);
     EXPECT_EQ(logger_level, LOGGER_LEVEL_NONE);
+    get_logger_level(LOGGER_LEVEL_NONE);
 
     // Corrupted levels
     logger_set_level((enum logger_level)666);
     EXPECT_EQ(logger_level, LOGGER_LEVEL_DEBUG);
+    get_logger_level((enum logger_level)666);
 
     logger_set_level((enum logger_level)-666);
     EXPECT_EQ(logger_level, LOGGER_LEVEL_NONE);
+    get_logger_level((enum logger_level)-666);
 }

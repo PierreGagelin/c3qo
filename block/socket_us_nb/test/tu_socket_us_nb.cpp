@@ -5,6 +5,8 @@
 #define LOGGER_TAG "[TU.socket_us_nb]"
 
 // Project libraries
+#include "block/client_us_nb.hpp"
+#include "block/server_us_nb.hpp"
 #include "c3qo/manager.hpp"
 
 // Gtest library
@@ -56,8 +58,8 @@ char *prepare_buf()
 //
 TEST_F(tu_socket_us_nb, connect)
 {
-    struct bk_server_us_nb server(&mgr_);
-    struct bk_client_us_nb client(&mgr_);
+    struct server_us_nb server(&mgr_);
+    struct client_us_nb client(&mgr_);
     char stats[16]; // buffer to retrieve statistics
     int fd_count;   // count of file descriptor handled by the server
 
@@ -84,18 +86,18 @@ TEST_F(tu_socket_us_nb, connect)
 //
 TEST_F(tu_socket_us_nb, multi_connect)
 {
-    struct bk_server_us_nb server(&mgr_);
-    struct bk_client_us_nb client[10] = {
-        bk_client_us_nb(&mgr_),
-        bk_client_us_nb(&mgr_),
-        bk_client_us_nb(&mgr_),
-        bk_client_us_nb(&mgr_),
-        bk_client_us_nb(&mgr_),
-        bk_client_us_nb(&mgr_),
-        bk_client_us_nb(&mgr_),
-        bk_client_us_nb(&mgr_),
-        bk_client_us_nb(&mgr_),
-        bk_client_us_nb(&mgr_)};
+    struct server_us_nb server(&mgr_);
+    struct client_us_nb client[10] = {
+        client_us_nb(&mgr_),
+        client_us_nb(&mgr_),
+        client_us_nb(&mgr_),
+        client_us_nb(&mgr_),
+        client_us_nb(&mgr_),
+        client_us_nb(&mgr_),
+        client_us_nb(&mgr_),
+        client_us_nb(&mgr_),
+        client_us_nb(&mgr_),
+        client_us_nb(&mgr_)};
 
     server.init_();
     for (int i = 0; i < 10; i++)
@@ -141,8 +143,8 @@ TEST_F(tu_socket_us_nb, multi_connect)
 //
 TEST_F(tu_socket_us_nb, connect_retry)
 {
-    struct bk_server_us_nb server(&mgr_);
-    struct bk_client_us_nb client(&mgr_);
+    struct server_us_nb server(&mgr_);
+    struct client_us_nb client(&mgr_);
 
     // Initialize client and server
     EXPECT_EQ(client.connected_, false);
@@ -175,8 +177,8 @@ TEST_F(tu_socket_us_nb, connect_retry)
 //
 TEST_F(tu_socket_us_nb, data)
 {
-    struct bk_server_us_nb server(&mgr_);
-    struct bk_client_us_nb client(&mgr_);
+    struct server_us_nb server(&mgr_);
+    struct client_us_nb client(&mgr_);
     char *data = prepare_buf();
 
     // Initialize client and server
@@ -217,8 +219,8 @@ TEST_F(tu_socket_us_nb, data)
 //
 TEST_F(tu_socket_us_nb, error)
 {
-    struct bk_server_us_nb server(&mgr_);
-    struct bk_client_us_nb client(&mgr_);
+    struct server_us_nb server(&mgr_);
+    struct client_us_nb client(&mgr_);
 
     // Ignore error log as it's expected to have some
     logger_set_level(LOGGER_LEVEL_CRIT);

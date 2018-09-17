@@ -9,18 +9,19 @@
 #define LOGGER_TAG "[block.client_us_nb]"
 
 // Project headers
+#include "block/client_us_nb.hpp"
 #include "c3qo/manager.hpp"
 
 #define SOCKET_NAME "/tmp/server_us_nb"
 #define SOCKET_READ_SIZE 256
 
-bk_client_us_nb::bk_client_us_nb(struct manager *mgr) : block(mgr), port_(0), connected_(false), rx_pkt_(0u), tx_pkt_(0u) {}
-bk_client_us_nb::~bk_client_us_nb() {}
+client_us_nb::client_us_nb(struct manager *mgr) : block(mgr), port_(0), connected_(false), rx_pkt_(0u), tx_pkt_(0u) {}
+client_us_nb::~client_us_nb() {}
 
 //
 // @brief Remove the managed file descriptor and close it
 //
-void bk_client_us_nb::clean_()
+void client_us_nb::clean_()
 {
     LOGGER_INFO("Remove socket from block context [bk_id=%d ; fd=%d]", id_, fd_.fd);
 
@@ -29,7 +30,7 @@ void bk_client_us_nb::clean_()
     fd_.fd = -1;
 }
 
-void bk_client_us_nb::on_fd_(struct file_desc &fd)
+void client_us_nb::on_fd_(struct file_desc &fd)
 {
     if (connected_ == true)
     {
@@ -80,7 +81,7 @@ void bk_client_us_nb::on_fd_(struct file_desc &fd)
 //
 // @brief Try to connect the socket again. It is more portable to create a new one
 //
-void bk_client_us_nb::on_timer_(struct timer &)
+void client_us_nb::on_timer_(struct timer &)
 {
     if (close(fd_.fd) == -1)
     {
@@ -100,7 +101,7 @@ void bk_client_us_nb::on_timer_(struct timer &)
 //
 // @brief Connect to a server
 //
-void bk_client_us_nb::connect_()
+void client_us_nb::connect_()
 {
     struct sockaddr_un clt_addr;
     int ret;
@@ -161,7 +162,7 @@ void bk_client_us_nb::connect_()
 //
 // @brief Start the block
 //
-void bk_client_us_nb::start_()
+void client_us_nb::start_()
 {
     // Create the client socket
     // TODO: put the socket options in the configuration
@@ -184,7 +185,7 @@ void bk_client_us_nb::start_()
 //
 // @brief Stop the block
 //
-void bk_client_us_nb::stop_()
+void client_us_nb::stop_()
 {
     LOGGER_INFO("Stop block [bk_id=%d]", id_);
 
@@ -194,7 +195,7 @@ void bk_client_us_nb::stop_()
     }
 }
 
-int bk_client_us_nb::tx_(void *vdata)
+int client_us_nb::tx_(void *vdata)
 {
     LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", id_, vdata);
 
@@ -207,3 +208,5 @@ int bk_client_us_nb::tx_(void *vdata)
     // Drop the buffer
     return 0;
 }
+
+BLOCK_REGISTER(client_us_nb);

@@ -5,6 +5,7 @@
 #define LOGGER_TAG "[TU.hello]"
 
 // Project headers
+#include "block/hello.hpp"
 #include "c3qo/manager.hpp"
 
 // Gtest library
@@ -36,7 +37,7 @@ void tu_hello::TearDown()
 //
 TEST_F(tu_hello, hello)
 {
-    struct bk_hello block(&mgr_);
+    struct hello block(&mgr_);
     char conf[] = "hello from TU";
     char stats[] = "useless value";
     int count;
@@ -72,7 +73,7 @@ TEST_F(tu_hello, hello)
 //
 TEST_F(tu_hello, error)
 {
-    struct bk_hello block(&mgr_);
+    struct hello block(&mgr_);
     char stats[] = "lol";
 
     // We do not want to see ERROR level as it's expected

@@ -7,12 +7,13 @@
 #define LOGGER_TAG "[block.project_euler]"
 
 // Project headers
+#include "block/project_euler.hpp"
 #include "c3qo/manager.hpp"
 
 #include "problem.hpp"
 
-bk_project_euler::bk_project_euler(struct manager *mgr) : block(mgr) {}
-bk_project_euler::~bk_project_euler() {}
+project_euler::project_euler(struct manager *mgr) : block(mgr) {}
+project_euler::~project_euler() {}
 
 static void solve_problem(int index, char *param)
 {
@@ -39,7 +40,7 @@ static void solve_problem(int index, char *param)
 //
 // @brief Configure the block to execute a specific problem
 //
-void bk_project_euler::conf_(char *conf)
+void project_euler::conf_(char *conf)
 {
     char *token;
     int index;
@@ -67,3 +68,5 @@ void bk_project_euler::conf_(char *conf)
 
     solve_problem(index, arg);
 }
+
+BLOCK_REGISTER(project_euler);

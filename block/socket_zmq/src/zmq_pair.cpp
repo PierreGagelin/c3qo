@@ -3,9 +3,12 @@
 #define LOGGER_TAG "[block.zmq_pair]"
 
 // Project headers
+#include "block/hello.hpp"
+#include "block/trans_pb.hpp"
+#include "block/zmq_pair.hpp"
 #include "c3qo/manager.hpp"
 
-bk_zmq_pair::bk_zmq_pair(struct manager *mgr) : block(mgr), client_(false), addr_("tcp://127.0.0.1:6666"), rx_pkt_(0u), tx_pkt_(0u)
+zmq_pair::zmq_pair(struct manager *mgr) : block(mgr), client_(false), addr_("tcp://127.0.0.1:6666"), rx_pkt_(0u), tx_pkt_(0u)
 {
     // Create a ZMQ context
     zmq_ctx_ = zmq_ctx_new();
@@ -16,7 +19,7 @@ bk_zmq_pair::bk_zmq_pair(struct manager *mgr) : block(mgr), client_(false), addr
     ASSERT(zmq_sock_.socket != nullptr);
 }
 
-bk_zmq_pair::~bk_zmq_pair()
+zmq_pair::~zmq_pair()
 {
     // Close a ZMQ socket
     zmq_close(zmq_sock_.socket);
@@ -28,7 +31,7 @@ bk_zmq_pair::~bk_zmq_pair()
 //
 // @brief Callback to handle data available on the socket
 //
-void bk_zmq_pair::on_fd_(struct file_desc &fd)
+void zmq_pair::on_fd_(struct file_desc &fd)
 {
     struct c3qo_zmq_msg msg;
     bool more;
@@ -94,7 +97,7 @@ end:
     }
 }
 
-void bk_zmq_pair::conf_(char *conf)
+void zmq_pair::conf_(char *conf)
 {
     char *pos;
     char addr[ADDR_SIZE];
@@ -179,7 +182,7 @@ void bk_zmq_pair::conf_(char *conf)
 //
 // @brief Start the block
 //
-void bk_zmq_pair::start_()
+void zmq_pair::start_()
 {
     int ret;
 
@@ -218,7 +221,7 @@ void bk_zmq_pair::start_()
 //
 // @brief Stop the block
 //
-void bk_zmq_pair::stop_()
+void zmq_pair::stop_()
 {
     // Remove the socket's callback
     mgr_->fd_remove(zmq_sock_);
@@ -229,7 +232,7 @@ void bk_zmq_pair::stop_()
 //
 // @brief Send data to the exterior
 //
-int bk_zmq_pair::tx_(void *vdata)
+int zmq_pair::tx_(void *vdata)
 {
     struct c3qo_zmq_msg *data;
     bool ok;
@@ -253,3 +256,5 @@ int bk_zmq_pair::tx_(void *vdata)
 
     return 0;
 }
+
+BLOCK_REGISTER(zmq_pair);

@@ -14,4 +14,6 @@ struct block_derived : block
     ~block_derived() {}
 };
 
+BLOCK_REGISTER(block_derived);
+
 #endif // TU_HPP

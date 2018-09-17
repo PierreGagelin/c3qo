@@ -12,6 +12,5 @@ target_link_libraries(socket_us_nb socket)
 if (NOT ${GTEST_DISABLE})
     # Build TU for socket_us_nb
     c3qo_add_test(tu_socket_us_nb test/tu_socket_us_nb.cpp)
-    target_link_libraries(tu_socket_us_nb socket_us_nb)
+    c3qo_link_block(tu_socket_us_nb socket_us_nb)
 endif ()
-

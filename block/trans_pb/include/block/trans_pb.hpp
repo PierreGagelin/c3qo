@@ -20,10 +20,10 @@ struct trans_pb_notif
     } context;
 };
 
-struct bk_trans_pb : block
+struct trans_pb : block
 {
-    bk_trans_pb(struct manager *mgr);
-    virtual ~bk_trans_pb() override final;
+    trans_pb(struct manager *mgr);
+    virtual ~trans_pb() override final;
 
     virtual int ctrl_(void *vnotif) override final;
 };

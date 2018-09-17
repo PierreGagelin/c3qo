@@ -3,10 +3,13 @@
 #define LOGGER_TAG "[block.trans_pb]"
 
 // Project headers
+#include "block/hello.hpp"
+#include "block/trans_pb.hpp"
+#include "block/zmq_pair.hpp"
 #include "c3qo/manager.hpp"
 
-bk_trans_pb::bk_trans_pb(struct manager *mgr) : block(mgr) {}
-bk_trans_pb::~bk_trans_pb() {}
+trans_pb::trans_pb(struct manager *mgr) : block(mgr) {}
+trans_pb::~trans_pb() {}
 
 #ifdef C3QO_PROTOBUF
 
@@ -62,7 +65,7 @@ static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, struct zmq_pair_ctx
     trans_pb_serialize(msg_zmq, msg_bk);
 }
 
-int bk_trans_pb::ctrl_(void *vnotif)
+int trans_pb::ctrl_(void *vnotif)
 {
     struct trans_pb_notif *notif;
     struct c3qo_zmq_msg msg_zmq;
@@ -104,6 +107,8 @@ int bk_trans_pb::ctrl_(void *vnotif)
 
 #else
 
-int bk_trans_pb::ctrl_(void *) { return 0; }
+int trans_pb::ctrl_(void *) { return 0; }
 
 #endif // C3QO_PROTOBUF
+
+BLOCK_REGISTER(trans_pb);

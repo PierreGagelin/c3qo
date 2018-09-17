@@ -25,6 +25,8 @@ manager::~manager()
 //
 bool manager::block_add(int id, const char *type)
 {
+    struct block *(*constructor)(struct manager *);
+    void *handle;
     struct block *bk;
 
     // Retrieve block identifier
@@ -34,35 +36,25 @@ bool manager::block_add(int id, const char *type)
         return false;
     }
 
-    bk = nullptr;
-    if (strcmp(type, "hello") == 0)
+    handle = dlopen(nullptr, RTLD_LAZY);
+    if (handle == nullptr)
     {
-        bk = new struct bk_hello(this);
+        LOGGER_ERR("Failed to add block: dlopen failed: %s [bk_id=%d ; bk_type=%s]", dlerror(), id, type);
+        return false;
     }
-    if (strcmp(type, "client_us_nb") == 0)
+
+    std::string ctor_name = std::string(type) + "_create";
+    constructor = reinterpret_cast<struct block *(*)(struct manager *)>(dlsym(handle, ctor_name.c_str()));
+    if (constructor == nullptr)
     {
-        bk = new struct bk_client_us_nb(this);
+        LOGGER_ERR("Failed to add block: couldn't load constructor [bk_id=%d ; bk_type=%s ; ctor_symbol=%s]", id, type, ctor_name.c_str());
+        goto err;
     }
-    if (strcmp(type, "server_us_nb") == 0)
-    {
-        bk = new struct bk_server_us_nb(this);
-    }
-    if (strcmp(type, "zmq_pair") == 0)
-    {
-        bk = new struct bk_zmq_pair(this);
-    }
-    if (strcmp(type, "project_euler") == 0)
-    {
-        bk = new struct bk_project_euler(this);
-    }
-    if (strcmp(type, "trans_pb") == 0)
-    {
-        bk = new struct bk_trans_pb(this);
-    }
+    bk = constructor(this);
     if (bk == nullptr)
     {
-        LOGGER_ERR("Failed to find block interface [name=%s]", type);
-        return false;
+        LOGGER_ERR("Failed to add block: construction failed [ctor_name=%s]", ctor_name.c_str());
+        goto err;
     }
 
     bk->id_ = id;
@@ -74,7 +66,11 @@ bool manager::block_add(int id, const char *type)
     block_del(id);
     bk_map_.insert({id, bk});
 
+    dlclose(handle);
     return true;
+err:
+    dlclose(handle);
+    return false;
 }
 
 //

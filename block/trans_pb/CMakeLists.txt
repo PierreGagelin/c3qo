@@ -6,7 +6,7 @@ c3qo_add_block(trans_pb src/trans_pb.cpp)
 # Build test unit
 if (NOT ${GTEST_DISABLE})
     c3qo_add_test(tu_trans_pb test/tu_trans_pb.cpp)
-    target_link_libraries(tu_trans_pb trans_pb)
+    c3qo_link_block(tu_trans_pb trans_pb)
 endif ()
 
 if (${C3QO_PROTOBUF})

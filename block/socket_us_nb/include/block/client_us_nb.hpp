@@ -4,7 +4,7 @@
 // Project headers
 #include "c3qo/block.hpp"
 
-struct bk_client_us_nb : block
+struct client_us_nb : block
 {
     // Configuration
     int port_;  // Binding port
@@ -17,8 +17,8 @@ struct bk_client_us_nb : block
     size_t rx_pkt_; // RX: Number of packets read
     size_t tx_pkt_; // TX: Number of packets sent
 
-    bk_client_us_nb(struct manager *mgr);
-    virtual ~bk_client_us_nb() override final;
+    client_us_nb(struct manager *mgr);
+    virtual ~client_us_nb() override final;
 
     void connect_();
     void clean_();

@@ -3,12 +3,13 @@
 #define LOGGER_TAG "[block.hello]"
 
 // Project headers
+#include "block/hello.hpp"
 #include "c3qo/manager.hpp"
 
-bk_hello::bk_hello(struct manager *mgr) : block(mgr), name_("unknown"), count_(0) {}
-bk_hello::~bk_hello() {}
+hello::hello(struct manager *mgr) : block(mgr), name_("unknown"), count_(0) {}
+hello::~hello() {}
 
-void bk_hello::conf_(char *conf)
+void hello::conf_(char *conf)
 {
     // Verify input
     if (conf == nullptr)
@@ -22,17 +23,17 @@ void bk_hello::conf_(char *conf)
     LOGGER_INFO("Configure block [bk_id=%d ; conf=%s ; name=%s]", id_, conf, name_.c_str());
 }
 
-void bk_hello::start_()
+void hello::start_()
 {
     LOGGER_DEBUG("Hello world");
 }
 
-void bk_hello::stop_()
+void hello::stop_()
 {
     LOGGER_DEBUG("Goodbye world");
 }
 
-int bk_hello::rx_(void *vdata)
+int hello::rx_(void *vdata)
 {
     int ret;
 
@@ -44,7 +45,7 @@ int bk_hello::rx_(void *vdata)
     return ret;
 }
 
-int bk_hello::tx_(void *vdata)
+int hello::tx_(void *vdata)
 {
     int ret;
 
@@ -56,7 +57,7 @@ int bk_hello::tx_(void *vdata)
     return ret;
 }
 
-int bk_hello::ctrl_(void *vnotif)
+int hello::ctrl_(void *vnotif)
 {
     // Send a message
     process_tx_(count_ % 8, vnotif);
@@ -65,7 +66,7 @@ int bk_hello::ctrl_(void *vnotif)
     return 0;
 }
 
-size_t bk_hello::get_stats_(char *buf, size_t len)
+size_t hello::get_stats_(char *buf, size_t len)
 {
     int ret;
     size_t written;
@@ -96,3 +97,5 @@ size_t bk_hello::get_stats_(char *buf, size_t len)
 
     return written;
 }
+
+BLOCK_REGISTER(hello);

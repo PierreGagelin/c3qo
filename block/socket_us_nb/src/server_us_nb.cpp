@@ -9,20 +9,21 @@
 #define LOGGER_TAG "[block.server_us_nb]"
 
 // Project headers
+#include "block/server_us_nb.hpp"
 #include "c3qo/manager.hpp"
 
 #define SOCKET_NAME "/tmp/server_us_nb"
 #define SOCKET_READ_SIZE 256
 
-bk_server_us_nb::bk_server_us_nb(struct manager *mgr) : block(mgr), port_(0), rx_pkt_(0u), tx_pkt_(0u) {}
-bk_server_us_nb::~bk_server_us_nb() {}
+server_us_nb::server_us_nb(struct manager *mgr) : block(mgr), port_(0), rx_pkt_(0u), tx_pkt_(0u) {}
+server_us_nb::~server_us_nb() {}
 
 //
 // @brief Callback when a socket is ready for reading
 //
 // @param fd : file descriptor ready for read
 //
-void bk_server_us_nb::on_fd_(struct file_desc &fd)
+void server_us_nb::on_fd_(struct file_desc &fd)
 {
     LOGGER_DEBUG("Handle file descriptor callback [bk_id=%d ; fd=%d]", id_, fd.fd);
 
@@ -71,7 +72,7 @@ void bk_server_us_nb::on_fd_(struct file_desc &fd)
 
                 rx_pkt_++;
 
-                // For the moment this is OK because 
+                // For the moment this is OK because
                 //   - the data flow is synchronous (buf is processed as is)
                 //   - only one block is connected
                 process_rx_(port_, buf);
@@ -83,7 +84,7 @@ void bk_server_us_nb::on_fd_(struct file_desc &fd)
 //
 // @brief Start the block
 //
-void bk_server_us_nb::start_()
+void server_us_nb::start_()
 {
     struct sockaddr_un srv_addr;
     int ret;
@@ -139,7 +140,7 @@ err:
 //
 // @brief Stop the block
 //
-void bk_server_us_nb::stop_()
+void server_us_nb::stop_()
 {
     LOGGER_INFO("Stop block [bk_id=%d]", id_);
 
@@ -173,7 +174,7 @@ void bk_server_us_nb::stop_()
 //
 // @return Actual size written
 //
-size_t bk_server_us_nb::get_stats_(char *buf, size_t len)
+size_t server_us_nb::get_stats_(char *buf, size_t len)
 {
     int ret;
     size_t count;
@@ -201,7 +202,7 @@ size_t bk_server_us_nb::get_stats_(char *buf, size_t len)
     }
 }
 
-int bk_server_us_nb::tx_(void *vdata)
+int server_us_nb::tx_(void *vdata)
 {
     LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", id_, vdata);
 
@@ -217,3 +218,5 @@ int bk_server_us_nb::tx_(void *vdata)
     // Drop the buffer
     return 0;
 }
+
+BLOCK_REGISTER(server_us_nb);

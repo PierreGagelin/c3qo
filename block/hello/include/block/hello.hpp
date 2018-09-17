@@ -11,13 +11,13 @@ struct hello_ctx
     int bk_id;
 };
 
-struct bk_hello : block
+struct hello : block
 {
     std::string name_;
     int count_;
 
-    bk_hello(struct manager *mgr);
-    virtual ~bk_hello() override final;
+    hello(struct manager *mgr);
+    virtual ~hello() override final;
 
     virtual void conf_(char *conf) override final;
     virtual void start_() override final;

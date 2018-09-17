@@ -5,6 +5,7 @@
 #define LOGGER_TAG "[TU.zmq_pair]"
 
 // Project headers
+#include "block/zmq_pair.hpp"
 #include "c3qo/manager.hpp"
 
 // Gtest library
@@ -36,8 +37,8 @@ void tu_zmq_pair::TearDown()
 //
 TEST_F(tu_zmq_pair, data)
 {
-    struct bk_zmq_pair client(&mgr_);
-    struct bk_zmq_pair server(&mgr_);
+    struct zmq_pair client(&mgr_);
+    struct zmq_pair server(&mgr_);
     char conf_s[] = "type=server addr=tcp://127.0.0.1:5555";
     char conf_c[] = "type=client addr=tcp://127.0.0.1:5555";
 

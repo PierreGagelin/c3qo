@@ -6,6 +6,22 @@
 #include "utils/socket.hpp"
 
 //
+// Macro to "register" a block: access to class constructor and destructor via dlopen / dlsym
+//
+#define BLOCK_REGISTER(name)                              \
+    extern "C"                                            \
+    {                                                     \
+        struct block *name##_create(struct manager *mgr_) \
+        {                                                 \
+            return new struct name(mgr_);                 \
+        }                                                 \
+        void name##_destroy(struct block *bk_)            \
+        {                                                 \
+            delete static_cast<struct name *>(bk_);       \
+        }                                                 \
+    }
+
+//
 // @enum bk_cmd
 //
 // @brief Commands to manage a block
