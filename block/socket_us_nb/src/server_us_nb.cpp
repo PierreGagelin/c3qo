@@ -179,12 +179,12 @@ size_t server_us_nb::get_stats_(char *buf, size_t len)
     int ret;
     size_t count;
 
-    LOGGER_DEBUG("Get block statistics [bk_id=%d ; buf=%p ; len=%lu]", id_, buf, len);
+    LOGGER_DEBUG("Get block statistics [bk_id=%d ; buf=%p ; len=%zu]", id_, buf, len);
 
     ret = snprintf(buf, len, "%zu", clients_.size());
     if (ret < 0)
     {
-        LOGGER_ERR("Failed snprintf [bk_id=%d ; buf=%p ; len=%lu]", id_, buf, len);
+        LOGGER_ERR("Failed snprintf [bk_id=%d ; buf=%p ; len=%zu]", id_, buf, len);
         return 0;
     }
     else

@@ -11,7 +11,7 @@ struct block_timer : block
 {
     std::vector<std::string> zozo_l_asticot_;
 
-    block_timer(struct manager *mgr) : block(mgr) {}
+    explicit block_timer(struct manager *mgr) : block(mgr) {}
 
     virtual void on_timer_(struct timer &tm) override final
     {
@@ -31,7 +31,7 @@ class tu_manager_tm : public testing::Test
     {
         // Clear the list
         block_.zozo_l_asticot_.clear();
-        
+
         logger_set_level(LOGGER_LEVEL_NONE);
         LOGGER_CLOSE();
     }

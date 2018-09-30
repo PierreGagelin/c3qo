@@ -10,7 +10,7 @@
 // Generic purpose block structure
 struct block_derived : block
 {
-    block_derived(struct manager *mgr) : block(mgr) {}
+    explicit block_derived(struct manager *mgr) : block(mgr) {}
     ~block_derived() {}
 };
 

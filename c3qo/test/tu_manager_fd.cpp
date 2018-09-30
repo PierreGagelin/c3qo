@@ -14,7 +14,7 @@ struct block_fd : block
 {
     bool boule_;
 
-    block_fd(struct manager *mgr) : block(mgr), boule_(false) {}
+    explicit block_fd(struct manager *mgr) : block(mgr), boule_(false) {}
 
     virtual void on_fd_(struct file_desc &fd) override final
     {

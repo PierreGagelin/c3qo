@@ -77,13 +77,13 @@ size_t hello::get_stats_(char *buf, size_t len)
         return 0;
     }
 
-    LOGGER_DEBUG("Get block statistics [bk_id=%d ; len=%lu]", id_, len);
+    LOGGER_DEBUG("Get block statistics [bk_id=%d ; len=%zu]", id_, len);
 
     written = 0u;
     ret = snprintf(buf, len, "%d", count_);
     if (ret < 0)
     {
-        LOGGER_ERR("Failed snprintf [bk_id=%d ; len=%lu]", id_, len);
+        LOGGER_ERR("Failed snprintf [bk_id=%d ; len=%zu]", id_, len);
         return 0;
     }
     else if (static_cast<size_t>(ret) >= len)

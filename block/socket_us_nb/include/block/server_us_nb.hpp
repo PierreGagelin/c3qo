@@ -17,7 +17,7 @@ struct server_us_nb : block
     size_t rx_pkt_; // RX: Number of packets read
     size_t tx_pkt_; // TX: Number of packets sent
 
-    server_us_nb(struct manager *mgr);
+    explicit server_us_nb(struct manager *mgr);
     virtual ~server_us_nb() override final;
 
     virtual void start_() override final;

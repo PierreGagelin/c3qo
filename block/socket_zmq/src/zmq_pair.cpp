@@ -8,6 +8,10 @@
 #include "block/zmq_pair.hpp"
 #include "c3qo/manager.hpp"
 
+// Needle to look for in configuration
+#define NEEDLE_TYPE "type=" // either "server" or "client"
+#define NEEDLE_ADDR "addr=" // fully specified address
+
 zmq_pair::zmq_pair(struct manager *mgr) : block(mgr), client_(false), addr_("tcp://127.0.0.1:6666"), rx_pkt_(0u), tx_pkt_(0u)
 {
     // Create a ZMQ context
@@ -100,8 +104,6 @@ end:
 void zmq_pair::conf_(char *conf)
 {
     char *pos;
-    char addr[ADDR_SIZE];
-    char type[32];
     int ret;
 
     // Verify input
@@ -115,6 +117,8 @@ void zmq_pair::conf_(char *conf)
 
     // Retrieve socket type
     {
+        char type[32];
+
         pos = strstr(conf, NEEDLE_TYPE);
         if (pos == nullptr)
         {
@@ -122,7 +126,7 @@ void zmq_pair::conf_(char *conf)
             return;
         }
 
-        ret = sscanf(pos, NEEDLE_TYPE "%32s", type);
+        ret = sscanf(pos, NEEDLE_TYPE "%31s", type);
         if (ret == EOF)
         {
             LOGGER_ERR("Failed to call sscanf: %s [str=%s ; type=%s ; errno=%d]", strerror(errno), pos, type, errno);
@@ -154,6 +158,8 @@ void zmq_pair::conf_(char *conf)
 
     // Retrieve socket address
     {
+        char addr[32];
+
         pos = strstr(conf, NEEDLE_ADDR);
         if (pos == nullptr)
         {
@@ -161,7 +167,7 @@ void zmq_pair::conf_(char *conf)
             return;
         }
 
-        ret = sscanf(pos, NEEDLE_ADDR ADDR_FORMAT, addr);
+        ret = sscanf(pos, NEEDLE_ADDR "%31s", addr);
         if (ret == EOF)
         {
             LOGGER_ERR("Failed to call sscanf: %s [str=%s ; addr=%s ; errno=%d]", strerror(errno), pos, addr, errno);

@@ -17,7 +17,7 @@ struct client_us_nb : block
     size_t rx_pkt_; // RX: Number of packets read
     size_t tx_pkt_; // TX: Number of packets sent
 
-    client_us_nb(struct manager *mgr);
+    explicit client_us_nb(struct manager *mgr);
     virtual ~client_us_nb() override final;
 
     void connect_();

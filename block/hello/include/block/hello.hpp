@@ -16,7 +16,7 @@ struct hello : block
     std::string name_;
     int count_;
 
-    hello(struct manager *mgr);
+    explicit hello(struct manager *mgr);
     virtual ~hello() override final;
 
     virtual void conf_(char *conf) override final;

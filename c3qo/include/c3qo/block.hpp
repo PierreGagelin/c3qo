@@ -128,7 +128,7 @@ struct block
 
     struct manager *mgr_; // Manager of this block
 
-    block(struct manager *mgr);
+    explicit block(struct manager *mgr);
     virtual ~block() = 0;
 
     // Block management interface default implementation
