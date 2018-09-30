@@ -111,6 +111,7 @@ extern enum logger_level logger_level;
 #define LOGGER_CRIT(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
 #define LOGGER_ERR(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
 #define LOGGER_WARNING(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
+#define LOGGER_NOTICE(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
 #define LOGGER_INFO(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
 #define LOGGER_DEBUG(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
 

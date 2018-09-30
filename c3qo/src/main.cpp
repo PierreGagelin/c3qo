@@ -7,6 +7,21 @@
 
 extern char *optarg; // Comes with getopt
 
+bool end_signal_received = false;
+
+static void signal_handler(int sig, siginfo_t *, void *)
+{
+    if ((sig == SIGTERM) || (sig == SIGINT))
+    {
+        LOGGER_NOTICE("Received signal to end program [signum=%d]");
+        end_signal_received = true;
+    }
+    else
+    {
+        LOGGER_ERR("Received unexpected signal [signum=%d]", sig);
+    }
+}
+
 int main(int argc, char **argv)
 {
     struct manager mgr;
@@ -69,8 +84,29 @@ int main(int argc, char **argv)
         }
     }
 
+    // Register a signal handler
+    {
+        struct sigaction sa;
+
+        sa.sa_flags = SA_SIGINFO;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_sigaction = signal_handler;
+        if (sigaction(SIGINT, &sa, NULL) == -1)
+        {
+            LOGGER_ERR("Failed to register signal handler: %s [signal=SIGINT ; errno=%d]", strerror(errno), errno);
+            return 1;
+        }
+        LOGGER_NOTICE("Registered signal handler for SIGINT");
+        if (sigaction(SIGTERM, &sa, NULL) == -1)
+        {
+            LOGGER_ERR("Failed to register signal handler: %s [signal=SIGTERM ; errno=%d]", strerror(errno), errno);
+            return 1;
+        }
+        LOGGER_NOTICE("Registered signal handler for SIGTERM");
+    }
+
     // Main loop
-    while (true)
+    while (end_signal_received == false)
     {
         mgr.fd_poll();
         mgr.timer_check_exp();

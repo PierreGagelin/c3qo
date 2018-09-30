@@ -44,6 +44,11 @@ if (NOT ${GTEST_DISABLE})
     add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src ${CMAKE_BINARY_DIR}/googletest-src EXCLUDE_FROM_ALL)
 endif ()
 
+# Configure memory checking
+find_program(MEMORYCHECK_COMMAND valgrind)
+set(MEMORYCHECK_COMMAND_OPTIONS "--leak-check=full --show-leak-kinds=all")
+set(MEMORYCHECK_SUPPRESSIONS_FILE ${CMAKE_SOURCE_DIR}/c3qo_valgrind.supp)
+
 # Allow tests to register themselves as tests
 include(CTest)
 

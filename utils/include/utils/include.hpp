@@ -5,6 +5,7 @@ extern "C"
 {
 #include <dlfcn.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/un.h>
