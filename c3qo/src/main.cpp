@@ -13,7 +13,7 @@ static void signal_handler(int sig, siginfo_t *, void *)
 {
     if ((sig == SIGTERM) || (sig == SIGINT))
     {
-        LOGGER_NOTICE("Received signal to end program [signum=%d]");
+        LOGGER_NOTICE("Received signal to end program [signum=%d]", sig);
         end_signal_received = true;
     }
     else
