@@ -4,32 +4,35 @@
 # No error or undefined variables allowed
 set -eu
 
-
 # Get absolute path to this script
-dir_script=$(cd $(dirname $0) > /dev/null && pwd)
+DIR_SCRIPT=$(cd $(dirname $0) > /dev/null && pwd)
 
-source $dir_script/c3qo_lib.sh
+source $DIR_SCRIPT/c3qo_lib.sh
 
 # Generate every useful paths from source path
-c3qo_generate_path $dir_script
+c3qo_generate_path $DIR_SCRIPT
 
+#
+# C3QO customization parameters
+#
+C3QO_COVERAGE="OFF"
+C3QO_LOG="OFF"
+C3QO_PROTOBUF="OFF"
+C3QO_TEST="OFF"
 
-# Default values, can be overriden with command line options
-GCOV="OFF"     # Build with GCOV enabled
-LOG_NO="OFF"   # Disable the logs
-PROTOBUF="OFF" # Enable protobuf
-RELEASE="OFF"  # Build in release mode
-TEST_NO="OFF"  # Disable the tests
-
+# CMAKE customization
+CMAKE_BUILD_TYPE="Debug"
 
 # Action to do, specified from command line options
-ACTION_BUILD="false" # Build the project and compile it
-ACTION_CLEAN="false" # Clean the project
-ACTION_LCOV="false"  # Do a coverage report
-ACTION_PACK="false"  # Create a package
-ACTION_TEST="false"  # Run the tests
+ACTION_BUILD="false"
+ACTION_CLEAN="false"
+ACTION_LCOV="false"
+ACTION_PACK="false"
+ACTION_TEST="false"
 
-
+#
+# Clean the build directory
+#
 function action_clean
 {
     local FILES_GCNO=
@@ -63,7 +66,9 @@ function action_clean
     fi
 }
 
-
+#
+# Build c3qo
+#
 function action_build
 {
     mkdir -p $C3QO_DIR_BUILD
@@ -76,6 +81,9 @@ function action_build
     make -j 4 -C $C3QO_DIR_BUILD
 }
 
+#
+# Build a package of c3qo
+#
 function action_package
 {
     make -j 4 -C $C3QO_DIR_BUILD package
@@ -90,13 +98,17 @@ function action_package
     tar -C $C3QO_DIR_BUILD -xzf $C3QO_DIR_BUILD/c3qo-0.0.7-local.tar.gz
 }
 
-
+#
+# Run the unit tests
+#
 function action_test
 {
     make -C $C3QO_DIR_BUILD test
 }
 
-
+#
+# Gather coverage report
+#
 function action_lcov
 {
     local file_b="$C3QO_DIR_LCOV/coverage.build"
@@ -152,8 +164,10 @@ function action_lcov
     echo "HTML report available at: $C3QO_DIR_LCOV/index.html"
 }
 
-
-while getopts "bchlptGLPRST" opt
+#
+# Retrieve command line options
+#
+while getopts "bchlptB:GLPST" opt
 do
     case "${opt}" in
         b)
@@ -174,23 +188,23 @@ do
         t)
             ACTION_TEST="true"
             ;;
+        B)
+            CMAKE_BUILD_TYPE=$OPTARG
+            ;;
         G)
-            GCOV="ON"
+            C3QO_COVERAGE="ON"
             ;;
         L)
-            LOG_NO="ON"
+            C3QO_LOG="ON"
             ;;
         P)
-            PROTOBUF="ON"
-            ;;
-        R)
-            RELEASE="ON"
+            C3QO_PROTOBUF="ON"
             ;;
         S)
             STATIC="ON"
             ;;
         T)
-            TEST_NO="ON"
+            C3QO_TEST="ON"
             ;;
         *)
             echo "Invalid option" >&2
@@ -198,26 +212,28 @@ do
     esac
 done
 
-
+#
+# Prepare cmake options
+#
 CMAKE_OPTIONS=
-CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_COVERAGE:BOOL=$GCOV"
-CMAKE_OPTIONS="$CMAKE_OPTIONS -DLOGGER_DISABLE:BOOL=$LOG_NO"
-CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_RELEASE:BOOL=$RELEASE"
-CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_PROTOBUF:BOOL=$PROTOBUF"
-CMAKE_OPTIONS="$CMAKE_OPTIONS -DGTEST_DISABLE:BOOL=$TEST_NO"
+CMAKE_OPTIONS="$CMAKE_OPTIONS -DCMAKE_BUILD_TYPE:STRING=$CMAKE_BUILD_TYPE"
+CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_COVERAGE:BOOL=$C3QO_COVERAGE"
+CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_LOG:BOOL=$C3QO_LOG"
+CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_PROTOBUF:BOOL=$C3QO_PROTOBUF"
+CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_TEST:BOOL=$C3QO_TEST"
 
-
+#
+# Execute actions
+#
 if [ $ACTION_CLEAN = "true" ]
 then
     action_clean
 fi
 
-
 if [ $ACTION_BUILD = "true" ]
 then
     action_build
 fi
-
 
 if [ $ACTION_TEST = "true" ]
 then
@@ -229,10 +245,7 @@ then
     action_package
 fi
 
-
 if [ $ACTION_LCOV = "true" ]
 then
     action_lcov
 fi
-
-

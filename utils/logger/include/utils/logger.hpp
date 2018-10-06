@@ -38,7 +38,7 @@ void logger_set_level(enum logger_level l);
 //   - LOG_DEBUG   : debug-level message
 //
 
-#ifndef LOGGER_DISABLE
+#ifdef C3QO_LOG
 
 // Current level of log. Only log with lower level will be displayed
 extern enum logger_level logger_level;

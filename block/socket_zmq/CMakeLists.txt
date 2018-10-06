@@ -5,7 +5,7 @@ c3qo_add_block(zmq_pair src/zmq_pair.cpp)
 target_link_libraries(zmq_pair socket)
 
 
-if (NOT ${GTEST_DISABLE})
+if (${C3QO_TEST})
     # Build TU for zmq_pair
     c3qo_add_test(tu_zmq_pair test/tu_zmq_pair.cpp)
     c3qo_link_block(tu_zmq_pair zmq_pair)

@@ -4,7 +4,7 @@
 c3qo_add_block(trans_pb src/trans_pb.cpp)
 
 # Build test unit
-if (NOT ${GTEST_DISABLE})
+if (${C3QO_TEST})
     c3qo_add_test(tu_trans_pb test/tu_trans_pb.cpp)
     c3qo_link_block(tu_trans_pb trans_pb)
 endif ()

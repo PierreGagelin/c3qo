@@ -28,7 +28,7 @@ c3qo_add_executable(ncli src/network_cli.cpp)
 target_link_libraries(ncli socket)
 
 
-if (NOT ${GTEST_DISABLE})
+if (${C3QO_TEST})
     # Build TU for manager_bk
     c3qo_add_test(tu_manager_bk test/tu_manager_bk.cpp)
     target_link_libraries(tu_manager_bk manager)

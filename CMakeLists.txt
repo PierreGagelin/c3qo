@@ -1,19 +1,14 @@
-
+#
+# C3QO build system
+#
 
 cmake_minimum_required(VERSION 2.8)
 project(c3qo)
 
-
 # Generate a JSON file with compilation commands (used with Visual Studio Code)
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
-
-if (${C3QO_RELEASE})
-    set(CMAKE_BUILD_TYPE Release)
-else ()
-    set(CMAKE_BUILD_TYPE Debug)
-endif ()
-
+# Force a level of optimization
 set(CMAKE_CXX_FLAGS_RELEASE -O2)
 
 # Using GCOV on the code
@@ -22,20 +17,15 @@ if (${C3QO_COVERAGE})
     set(CMAKE_BUILD_TYPE Debug)
 endif ()
 
-
 #
-# Disable log:
-#   - if asked
-#   - if we are making code coverage
-#   - if we are in release
+# Enable logger
 #
-if (${LOGGER_DISABLE} OR ${C3QO_COVERAGE} OR (${CMAKE_BUILD_TYPE} STREQUAL Release))
-    add_definitions(-DLOGGER_DISABLE)
+if (${C3QO_LOG})
+    add_definitions(-DC3QO_LOG)
 endif ()
 
-
 # Configure gtest as an external project
-if (NOT ${GTEST_DISABLE})
+if (${C3QO_TEST})
     configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
     execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" . WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download)
     execute_process(COMMAND ${CMAKE_COMMAND} --build                 . WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download)
