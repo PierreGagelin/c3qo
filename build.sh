@@ -167,7 +167,7 @@ function action_lcov
 #
 # Retrieve command line options
 #
-while getopts "bchlptB:GLPST" opt
+while getopts "bchlptAB:GLPT" opt
 do
     case "${opt}" in
         b)
@@ -188,6 +188,11 @@ do
         t)
             ACTION_TEST="true"
             ;;
+        A)
+            C3QO_LOG="ON"
+            C3QO_PROTOBUF="ON"
+            C3QO_TEST="ON"
+            ;;
         B)
             CMAKE_BUILD_TYPE=$OPTARG
             ;;
@@ -199,9 +204,6 @@ do
             ;;
         P)
             C3QO_PROTOBUF="ON"
-            ;;
-        S)
-            STATIC="ON"
             ;;
         T)
             C3QO_TEST="ON"
