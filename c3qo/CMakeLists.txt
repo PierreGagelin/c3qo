@@ -4,6 +4,7 @@
 set(SOURCES_MANAGER)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/block.cpp)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_bk.cpp)
+set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_conf.cpp)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_fd.cpp)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_tm.cpp)
 
@@ -33,7 +34,12 @@ if (${C3QO_TEST})
     c3qo_add_test(tu_manager_bk test/tu_manager_bk.cpp)
     target_link_libraries(tu_manager_bk manager)
     c3qo_link_block(tu_manager_bk hello)
-    c3qo_link_block(tu_manager_bk socket_us_nb)
+
+    # Build TU for manager_conf
+    c3qo_add_test(tu_manager_conf test/tu_manager_conf.cpp)
+    target_link_libraries(tu_manager_conf manager)
+    c3qo_link_block(tu_manager_conf hello)
+    c3qo_link_block(tu_manager_conf socket_us_nb)
 
     # Build TU for manager_fd
     c3qo_add_test(tu_manager_fd test/tu_manager_fd.cpp)
