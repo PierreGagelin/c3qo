@@ -7,13 +7,4 @@
 // Gtest library
 #include "gtest/gtest.h"
 
-// Generic purpose block structure
-struct block_derived : block
-{
-    explicit block_derived(struct manager *mgr) : block(mgr) {}
-    ~block_derived() {}
-};
-
-BLOCK_REGISTER(block_derived);
-
 #endif // TU_HPP

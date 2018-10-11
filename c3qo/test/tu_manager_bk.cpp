@@ -7,12 +7,21 @@
 // c3qo test unit library
 #include "c3qo/tu.hpp"
 
+// Generic purpose block structure
+struct block_derived : block
+{
+    explicit block_derived(struct manager *mgr) : block(mgr) {}
+    ~block_derived() {}
+};
+
+BLOCK_REGISTER(block_derived);
+
 class tu_manager_bk : public testing::Test
 {
     void SetUp();
     void TearDown();
 
-public:
+  public:
     struct manager mgr_;
 };
 

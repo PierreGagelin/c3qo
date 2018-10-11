@@ -2,6 +2,7 @@
 #define C3QO_BLOCK_HPP
 
 // Project headers
+#include "utils/json.hpp"
 #include "utils/logger.hpp"
 #include "utils/socket.hpp"
 
@@ -101,7 +102,6 @@ struct file_desc
     bool write;       // Look for write events
 };
 
-
 bool operator==(const struct file_desc &a, const struct file_desc &b);
 
 // custom specialization of std::hash
@@ -112,7 +112,7 @@ struct hash<struct file_desc>
 {
     std::size_t operator()(const struct file_desc &entry) const noexcept;
 };
-}
+} // namespace std
 
 //
 // @struct block

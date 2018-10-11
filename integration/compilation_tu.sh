@@ -24,7 +24,6 @@ $C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -cb
 echo "Make a package"
 $C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -p
 
-
 echo "Clean build directory and do a GCOV build"
 $C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -GTcbt
 
