@@ -12,7 +12,10 @@ endif ()
 if (${C3QO_PROTOBUF})
     # Specify that protobuf is used to the block
     target_compile_options(trans_pb PRIVATE -DC3QO_PROTOBUF)
-    target_compile_options(tu_trans_pb PRIVATE -DC3QO_PROTOBUF)
+
+    if (${C3QO_TEST})
+        target_compile_options(tu_trans_pb PRIVATE -DC3QO_PROTOBUF)
+    endif ()
 
     # Generate protobuf library
     c3qo_add_library_protobuf(block_pb src/block.proto)
