@@ -22,6 +22,7 @@ C3QO_TEST="OFF"
 
 # CMAKE customization
 CMAKE_BUILD_TYPE="Debug"
+CMAKE_TOOLCHAIN_FILE=$C3QO_DIR_SOURCE/toolchain_linux_x86_64_gcc.cmake
 
 # Action to do, specified from command line options
 ACTION_BUILD="false"
@@ -167,7 +168,7 @@ function action_lcov
 #
 # Retrieve command line options
 #
-while getopts "bchlptAB:GLPT" opt
+while getopts "bchlptAB:C:GLPT" opt
 do
     case "${opt}" in
         b)
@@ -196,6 +197,9 @@ do
         B)
             CMAKE_BUILD_TYPE=$OPTARG
             ;;
+        C)
+            CMAKE_TOOLCHAIN_FILE=$OPTARG
+            ;;
         G)
             C3QO_COVERAGE="ON"
             ;;
@@ -219,6 +223,7 @@ done
 #
 CMAKE_OPTIONS=
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DCMAKE_BUILD_TYPE:STRING=$CMAKE_BUILD_TYPE"
+CMAKE_OPTIONS="$CMAKE_OPTIONS -DCMAKE_TOOLCHAIN_FILE:STRING=$CMAKE_TOOLCHAIN_FILE"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_COVERAGE:BOOL=$C3QO_COVERAGE"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_LOG:BOOL=$C3QO_LOG"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_PROTOBUF:BOOL=$C3QO_PROTOBUF"
