@@ -31,6 +31,7 @@
 //
 enum bk_cmd
 {
+    CMD_UNKNOWN,
     CMD_ADD,   // Create a block
     CMD_INIT,  // Initialize a block
     CMD_CONF,  // Configure a block
