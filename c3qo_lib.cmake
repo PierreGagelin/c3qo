@@ -200,7 +200,7 @@ function(c3qo_add_library_protobuf_c target_name proto_dir proto_prefix)
     )
 
     add_library(${target_name} STATIC ${proto_gen_file})
-    target_link_libraries(${target_name} /usr/lib/x86_64-linux-gnu/libprotobuf-c.a)
+    target_link_libraries(${target_name} /usr/local/lib/libprotobuf-c.a)
     target_compile_options(${target_name} PRIVATE ${COMPILE_FLAGS_C})
     target_include_directories(${target_name} PUBLIC ${proto_gen_dir})
 endfunction()

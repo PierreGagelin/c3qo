@@ -30,6 +30,7 @@ MAKE_JOBS=4
 # Action to do, specified from command line options
 ACTION_BUILD="false"
 ACTION_CLEAN="false"
+ACTION_INSTALL="false"
 ACTION_LCOV="false"
 ACTION_PACK="false"
 ACTION_TEST="false"
@@ -83,6 +84,30 @@ function action_build
     cd -
 
     make -j $MAKE_JOBS -C $C3QO_DIR_BUILD
+}
+
+#
+# Install required packages
+#
+function action_install
+{
+    wget --directory-prefix=/tmp/ https://github.com/protocolbuffers/protobuf/releases/download/v3.6.1/protobuf-cpp-3.6.1.tar.gz
+    wget --directory-prefix=/tmp/ https://github.com/protobuf-c/protobuf-c/releases/download/v1.3.1/protobuf-c-1.3.1.tar.gz
+
+    tar -C /tmp/ -xzf /tmp/protobuf-cpp-3.6.1.tar.gz
+    tar -C /tmp/ -xzf /tmp/protobuf-c-1.3.1.tar.gz
+
+    cd /tmp/protobuf-3.6.1
+    CFLAGS=-O2 CXXFLAGS="-std=c++11 -O2" ./configure
+    make -j 4
+    sudo make install
+    cd -
+
+    cd /tmp/protobuf-c-1.3.1
+    CFLAGS=-O2 CXXFLAGS="-O2" ./configure
+    make -j 4
+    sudo make install
+    cd -
 }
 
 #
@@ -171,7 +196,7 @@ function action_lcov
 #
 # Retrieve command line options
 #
-while getopts "bchlptAB:C:GJ:LPT" opt
+while getopts "bchilptAB:C:GJ:LPT" opt
 do
     case "${opt}" in
         b)
@@ -182,6 +207,9 @@ do
             ;;
         h)
             echo "lol, t'as cru un peu, non ?"
+            ;;
+        i)
+            ACTION_INSTALL="true"
             ;;
         l)
             ACTION_LCOV="true"
@@ -238,6 +266,11 @@ CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_TEST:BOOL=$C3QO_TEST"
 #
 # Execute actions
 #
+if [ $ACTION_INSTALL = "true" ]
+then
+    action_install
+fi
+
 if [ $ACTION_CLEAN = "true" ]
 then
     action_clean
