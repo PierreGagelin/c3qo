@@ -101,6 +101,7 @@ function action_install
     CFLAGS=-O2 CXXFLAGS="-std=c++11 -O2" ./configure
     make -j 4
     sudo make install
+    sudo ldconfig
     cd -
 
     cd /tmp/protobuf-c-1.3.1
