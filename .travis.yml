@@ -1,7 +1,6 @@
 dist: trusty
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y libzmq3-dev lcov
+  - sudo apt-get install -y libzmq3-dev lcov libprotobuf-c-dev protobuf-c-compiler
 script:
   - ./integration/compilation_tu.sh
-
