@@ -5,6 +5,9 @@
 // Project headers
 #include "c3qo/manager.hpp"
 
+// Generated protobuf command
+#include "conf.pb-c.h"
+
 //
 // @brief Execute a block command
 //
@@ -13,6 +16,12 @@
 bool manager::conf_exec_cmd(enum bk_cmd cmd, int id, char *arg)
 {
     LOGGER_DEBUG("Execute block command [bk_cmd=%s ; bk_id=%d ; bk_arg=%s]", bk_cmd_to_string(cmd), id, arg);
+
+    if (id == 0)
+    {
+        LOGGER_ERR("Failed to execute block command: id 0 is forbidden");
+        return false;
+    }
 
     switch (cmd)
     {
@@ -48,7 +57,7 @@ bool manager::conf_exec_cmd(enum bk_cmd cmd, int id, char *arg)
 
         if (arg == nullptr)
         {
-            LOGGER_DEBUG("Failed to bind block: configuration entry required as third argument");
+            LOGGER_ERR("Failed to bind block: configuration entry required as third argument");
             return false;
         }
 
@@ -249,4 +258,59 @@ size_t manager::conf_get(char *buf, size_t len)
     }
 
     return w;
+}
+
+//
+// @brief Convert protobuf command type to block command type
+//
+static enum bk_cmd pbc_cmd_type_to_bk_cmd(PbcCmd__CmdType type)
+{
+    switch (type)
+    {
+    case PBC_CMD__CMD_TYPE__CMD_ADD:
+        return CMD_ADD;
+    case PBC_CMD__CMD_TYPE__CMD_INIT:
+        return CMD_INIT;
+    case PBC_CMD__CMD_TYPE__CMD_CONF:
+        return CMD_CONF;
+    case PBC_CMD__CMD_TYPE__CMD_BIND:
+        return CMD_BIND;
+    case PBC_CMD__CMD_TYPE__CMD_START:
+        return CMD_START;
+    case PBC_CMD__CMD_TYPE__CMD_STOP:
+        return CMD_STOP;
+    default:
+        LOGGER_ERR("Failed to get bk_cmd: unknown pbc_cmd type [type=%d]", type);
+        return CMD_UNKNOWN;
+    }
+}
+
+//
+// @brief Parse and execute a protobuf pbc_cmd message
+//
+bool manager::conf_parse_pb_cmd(const uint8_t *pb_cmd, size_t size)
+{
+    enum bk_cmd command;
+    PbcCmd *cmd;
+
+    cmd = pbc_cmd__unpack(nullptr, size, pb_cmd);
+    if (cmd == nullptr)
+    {
+        LOGGER_ERR("Failed to unpack protobuf command: unknown reason [size=%zu]", size);
+        return false;
+    }
+
+    command = pbc_cmd_type_to_bk_cmd(cmd->type);
+    if (command == CMD_UNKNOWN)
+    {
+        // Error already logged
+        goto err;
+    }
+    conf_exec_cmd(command, cmd->block_id, cmd->block_arg);
+
+    pbc_cmd__free_unpacked(cmd, nullptr);
+    return true;
+err:
+    pbc_cmd__free_unpacked(cmd, nullptr);
+    return false;
 }

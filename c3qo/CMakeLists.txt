@@ -1,5 +1,8 @@
 
 
+# Generate configuration interface
+c3qo_add_library_protobuf_c(pb_config src conf)
+
 # Build manager library
 set(SOURCES_MANAGER)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/block.cpp)
@@ -11,6 +14,7 @@ set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_tm.cpp)
 c3qo_add_library(manager "${SOURCES_MANAGER}")
 c3qo_target_include(manager)
 target_link_libraries(manager dl)
+target_link_libraries(manager pb_config)
 target_link_libraries(manager logger)
 
 
@@ -26,6 +30,7 @@ c3qo_link_block(c3qo zmq_pair)
 
 # Build network CLI executable
 c3qo_add_executable(ncli src/network_cli.cpp)
+target_link_libraries(ncli pb_config)
 target_link_libraries(ncli socket)
 
 

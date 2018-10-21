@@ -39,6 +39,12 @@ set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Wswitch)
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Wsign-conversion)
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Wshadow)
 
+# C compilations flags
+set(CMAKE_C_STANDARD 11)
+set(COMPILE_FLAGS_C)
+set(COMPILE_FLAGS_C ${COMPILE_FLAGS_C} -Wall)
+set(COMPILE_FLAGS_C ${COMPILE_FLAGS_C} -Wextra)
+
 #
 # Add include directories
 #
@@ -172,3 +178,29 @@ function (c3qo_add_library_protobuf target_name target_sources)
 
     target_link_libraries(${target_name} ${PROTOBUF_LITE_LIBRARIES})
 endfunction (c3qo_add_library_protobuf)
+
+#
+# Add a protobuf-c library
+#
+function(c3qo_add_library_protobuf_c target_name proto_dir proto_prefix)
+
+    set(proto_src_dir ${CMAKE_CURRENT_SOURCE_DIR}/${proto_dir})
+    set(proto_src_file ${proto_prefix}.proto)
+
+    set(proto_gen_dir ${CMAKE_CURRENT_BINARY_DIR}/${proto_dir})
+    set(proto_gen_file ${proto_gen_dir}/${proto_prefix}.pb-c.c)
+    set(proto_gen_cmd protoc-c --c_out=${proto_gen_dir} ${proto_src_file})
+
+    execute_process(COMMAND mkdir -p ${proto_gen_dir})
+    add_custom_command(
+        OUTPUT            ${proto_gen_file}
+        COMMAND           ${proto_gen_cmd}
+        WORKING_DIRECTORY ${proto_src_dir}
+        DEPENDS           ${proto_src_dir}/${proto_src_file}
+    )
+
+    add_library(${target_name} STATIC ${proto_gen_file})
+    target_link_libraries(${target_name} /usr/lib/x86_64-linux-gnu/libprotobuf-c.a)
+    target_compile_options(${target_name} PRIVATE ${COMPILE_FLAGS_C})
+    target_include_directories(${target_name} PUBLIC ${proto_gen_dir})
+endfunction()

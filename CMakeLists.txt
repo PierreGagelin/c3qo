@@ -10,6 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
 # Force a level of optimization
 set(CMAKE_CXX_FLAGS_RELEASE -O2)
+set(CMAKE_C_FLAGS_RELEASE -O2)
 
 # Using GCOV on the code
 if (${C3QO_COVERAGE})

@@ -6,6 +6,13 @@
 set -eu
 
 
+# Colors
+COLOR_RED="\033[0;31m"
+COLOR_GREEN="\033[0;32m"
+COLOR_BLUE="\033[0;34m"
+COLOR_NO="\033[0m"
+
+
 # Get absolute path of a directory
 #   - $1 : directory to get an absolute path from
 function get_abs_path()

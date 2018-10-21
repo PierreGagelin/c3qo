@@ -65,13 +65,17 @@ void zmq_pair::on_fd_(struct file_desc &fd)
     }
     rx_pkt_++;
 
-    LOGGER_DEBUG("Message received on ZMQ socket [bk_id=%d ; topic=%s ; payload=%s]", id_, msg.topic, msg.data);
+    LOGGER_DEBUG("Message received on ZMQ socket [bk_id=%d ; topic=%s ; payload_size=%zu]", id_, msg.topic, msg.data_len);
 
     // Action to take upon topic value
     if (strcmp(msg.topic, "CONF.LINE") == 0)
     {
         // Process the configuration line
         mgr_->conf_parse_line(msg.data);
+    }
+    else if (strcmp(msg.topic, "CONF.PROTO.CMD") == 0)
+    {
+        mgr_->conf_parse_pb_cmd(reinterpret_cast<uint8_t *>(msg.data), msg.data_len);
     }
     else if (strcmp(msg.topic, "STATS") == 0)
     {
@@ -88,6 +92,11 @@ void zmq_pair::on_fd_(struct file_desc &fd)
 
             process_notif_(1, &notif);
         }
+    }
+    else
+    {
+        LOGGER_ERR("Failed to decode ZMQ message: unknown topic [topic=%s]", msg.topic);
+        goto end;
     }
 
 end:

@@ -57,6 +57,7 @@ struct manager
     bool conf_exec_cmd(enum bk_cmd cmd, int id, char *arg);
     bool conf_parse_line(char *line);
     bool conf_parse(const char *filename);
+    bool conf_parse_pb_cmd(const uint8_t *pb_cmd, size_t size);
     size_t conf_get(char *buf, size_t len);
 
     //

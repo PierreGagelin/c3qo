@@ -211,11 +211,10 @@ bool socket_zmq_read(void *socket, char **data, size_t *len, int flags)
         return false;
     }
 
-    // Copy the message and add a terminal null byte
-    size = zmq_msg_size(&part) + 1;
+    // Copy the message
+    size = zmq_msg_size(&part);
     msg = new char[size];
-    memcpy(msg, zmq_msg_data(&part), size - 1);
-    msg[size - 1] = '\0';
+    memcpy(msg, zmq_msg_data(&part), size);
 
     // Look if there is another part to come
     ret = zmq_msg_more(&part);

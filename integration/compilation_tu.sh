@@ -12,24 +12,25 @@ source $dir_script/../c3qo_lib.sh
 # Generate every useful paths from source path
 c3qo_generate_path $dir_script/..
 
-echo "Clean build directory and do a CLASSIC build"
-$C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -Tcbt
+echo -e "$COLOR_BLUE\n    CLASSIC build $COLOR_NO\n"
+$C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -Tbt
 
-echo "Clean build directory and do a RELEASE build"
-$C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -B Release -Tcbt
+echo -e "$COLOR_BLUE\n    RELEASE build $COLOR_NO\n"
+$C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -B Release -Tbt
 
-echo "Clean build directory and do a TESTLESS build"
-$C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -cb
+echo -e "$COLOR_BLUE\n    TESTLESS build $COLOR_NO\n"
+$C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -b
 
-echo "Make a package"
+echo -e "$COLOR_BLUE\n    Make a package $COLOR_NO\n"
 $C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -p
 
-echo "Clean build directory and do a GCOV build"
-$C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -GTcbt
+echo -e "$COLOR_BLUE\n    GCOV build $COLOR_NO\n"
+$C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -GTbt
 
-echo "Execute functional tests"
+echo -e "$COLOR_BLUE\n    Execute functional tests $COLOR_NO\n"
+echo -e "\nExecute functional tests"
 $C3QO_DIR_INT/tf_socket_us_nb.sh
 $C3QO_DIR_INT/tf_network_cli.sh
 
-echo "Make a LCOV report"
+echo -e "$COLOR_BLUE\n    Make a LCOV report $COLOR_NO\n"
 $C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -l

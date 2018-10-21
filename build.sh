@@ -24,6 +24,9 @@ C3QO_TEST="OFF"
 CMAKE_BUILD_TYPE="Debug"
 CMAKE_TOOLCHAIN_FILE=$C3QO_DIR_SOURCE/toolchain_linux_x86_64_gcc.cmake
 
+# MAKE customization
+MAKE_JOBS=4
+
 # Action to do, specified from command line options
 ACTION_BUILD="false"
 ACTION_CLEAN="false"
@@ -79,7 +82,7 @@ function action_build
     cmake $CMAKE_OPTIONS $C3QO_DIR_SOURCE
     cd -
 
-    make -j 4 -C $C3QO_DIR_BUILD
+    make -j $MAKE_JOBS -C $C3QO_DIR_BUILD
 }
 
 #
@@ -87,7 +90,7 @@ function action_build
 #
 function action_package
 {
-    make -j 4 -C $C3QO_DIR_BUILD package
+    make -j $MAKE_JOBS -C $C3QO_DIR_BUILD package
 
     # Remove a previously extracted package
     if [ -d $C3QO_DIR_BUILD/c3qo-0.0.7-local ]
@@ -168,7 +171,7 @@ function action_lcov
 #
 # Retrieve command line options
 #
-while getopts "bchlptAB:C:GLPT" opt
+while getopts "bchlptAB:C:GJ:LPT" opt
 do
     case "${opt}" in
         b)
@@ -202,6 +205,9 @@ do
             ;;
         G)
             C3QO_COVERAGE="ON"
+            ;;
+        J)
+            MAKE_JOBS=$OPTARG
             ;;
         L)
             C3QO_LOG="ON"

@@ -5,6 +5,9 @@
 // c3qo test unit library
 #include "c3qo/tu.hpp"
 
+// Generated protobuf command
+#include "conf.pb-c.h"
+
 class tu_manager_conf : public testing::Test
 {
     void SetUp()
@@ -19,6 +22,7 @@ class tu_manager_conf : public testing::Test
     }
 
   public:
+    bool proto_cmd_send(int block_id, PbcCmd__CmdType cmd_type, const char *arg, bool raw_dump);
     struct manager mgr_;
 };
 
@@ -187,4 +191,101 @@ TEST_F(tu_manager_conf, errors)
         file.close();
         EXPECT_EQ(mgr_.conf_parse(fname), false);
     }
+}
+
+//
+// @brief Send a protobuf command and return its result
+//
+bool tu_manager_conf::proto_cmd_send(int block_id, PbcCmd__CmdType cmd_type, const char *arg, bool raw_dump = true)
+{
+    PbcCmd cmd;
+    uint8_t *buffer;
+    bool ret;
+
+    // Prepare a protobuf message
+    pbc_cmd__init(&cmd);
+    cmd.block_arg = strdup(arg);
+    cmd.has_block_id = 1;
+    cmd.block_id = block_id;
+    cmd.type = cmd_type;
+
+    size_t size = pbc_cmd__get_packed_size(&cmd);
+    buffer = new uint8_t[size + 1];
+
+    pbc_cmd__pack(&cmd, buffer);
+    buffer[size] = '\0';
+
+    ret = mgr_.conf_parse_pb_cmd(buffer, size);
+
+    // Dump a raw output of a command
+    if (raw_dump == true)
+    {
+        const char *filename;
+
+        switch (cmd_type)
+        {
+        case PBC_CMD__CMD_TYPE__CMD_ADD:
+            filename = "/tmp/pbc_add.txt";
+            break;
+        case PBC_CMD__CMD_TYPE__CMD_INIT:
+            filename = "/tmp/pbc_init.txt";
+            break;
+        case PBC_CMD__CMD_TYPE__CMD_CONF:
+            filename = "/tmp/pbc_conf.txt";
+            break;
+        case PBC_CMD__CMD_TYPE__CMD_BIND:
+            filename = "/tmp/pbc_bind.txt";
+            break;
+        case PBC_CMD__CMD_TYPE__CMD_START:
+            filename = "/tmp/pbc_start.txt";
+            break;
+        case PBC_CMD__CMD_TYPE__CMD_STOP:
+            filename = "/tmp/pbc_stop.txt";
+            break;
+        default:
+            ASSERT(false);
+        }
+
+        FILE *out = fopen(filename, "w");
+        ASSERT(out != nullptr);
+        int fd = fileno(out);
+        ASSERT(fd != -1);
+        ssize_t ret = write(fd, buffer, size);
+        ASSERT(static_cast<size_t>(ret) == size);
+        int close = fclose(out);
+        ASSERT(close == 0);
+    }
+
+    free(cmd.block_arg);
+    delete[] buffer;
+
+    return ret;
+}
+
+TEST_F(tu_manager_conf, pbc_conf)
+{
+    struct block *bk;
+    int bk_id = 42;
+
+    // Add a block
+    EXPECT_TRUE(proto_cmd_send(bk_id, PBC_CMD__CMD_TYPE__CMD_ADD, "hello"));
+    bk = mgr_.block_get(bk_id);
+    EXPECT_NE(bk, nullptr);
+
+    EXPECT_TRUE(proto_cmd_send(bk_id, PBC_CMD__CMD_TYPE__CMD_INIT, ""));
+    EXPECT_EQ(bk->state_, STATE_INIT);
+
+    EXPECT_TRUE(proto_cmd_send(bk_id, PBC_CMD__CMD_TYPE__CMD_CONF, "my_name_is"));
+    EXPECT_TRUE(proto_cmd_send(bk_id, PBC_CMD__CMD_TYPE__CMD_BIND, "2:5"));
+
+    EXPECT_TRUE(proto_cmd_send(bk_id, PBC_CMD__CMD_TYPE__CMD_START, ""));
+    EXPECT_EQ(bk->state_, STATE_START);
+
+    EXPECT_TRUE(proto_cmd_send(bk_id, PBC_CMD__CMD_TYPE__CMD_STOP, ""));
+    EXPECT_EQ(bk->state_, STATE_STOP);
+}
+
+TEST_F(tu_manager_conf, error)
+{
+    EXPECT_FALSE(proto_cmd_send(42, static_cast<PbcCmd__CmdType>(12), "", false));
 }
