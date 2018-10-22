@@ -11,58 +11,60 @@
 trans_pb::trans_pb(struct manager *mgr) : block(mgr) {}
 trans_pb::~trans_pb() {}
 
-#ifdef C3QO_PROTOBUF
-
 // Protobuf sources
-#include "block.pb.h"
+#include "block.pb-c.h"
 
-static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, class pb_msg_block &msg_bk) noexcept
+static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, PbMsgBlock *msg_bk)
 {
     const char topic[] = "BLOCK.MSG";
 
-    // Fill the topic (forget about the '\0' in ZeroMQ messages)
-    msg_zmq.topic_len = sizeof(topic) - 1;
+    // Fill the topic (with the '\0')
+    msg_zmq.topic_len = sizeof(topic);
     msg_zmq.topic = new char[msg_zmq.topic_len];
     memcpy(msg_zmq.topic, topic, msg_zmq.topic_len);
 
     // Fill the data
-    msg_zmq.data_len = static_cast<size_t>(msg_bk.ByteSize());
+    msg_zmq.data_len = pb_msg_block__get_packed_size(msg_bk);
     msg_zmq.data = new char[msg_zmq.data_len];
-
-    // Serialize the message
-    bool ok = msg_bk.SerializeToArray(msg_zmq.data, msg_zmq.data_len);
-    if (ok == false)
+    size_t size = pb_msg_block__pack(msg_bk, reinterpret_cast<uint8_t *>(msg_zmq.data));
+    if (size != msg_zmq.data_len)
     {
-        LOGGER_ERR("Failed to serialize hello message: protobuf error");
+        LOGGER_ERR("Failed to serialize block message: protobuf-c error");
     }
 }
 
-static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, struct hello_ctx *ctx) noexcept
+static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, struct hello_ctx *ctx)
 {
-    class pb_msg_block msg_bk;
-    class pb_msg_hello *hello;
+    PbMsgBlock msg_bk;
+    PbMsgHello hello;
 
-    hello = new class pb_msg_hello;
-    hello->set_bk_id(ctx->bk_id);
+    pb_msg_block__init(&msg_bk);
+    pb_msg_hello__init(&hello);
 
-    msg_bk.set_type(pb_msg_block::MSG_HELLO);
-    msg_bk.set_allocated_hello(hello);
+    hello.bk_id = static_cast<int32_t>(ctx->bk_id);
 
-    trans_pb_serialize(msg_zmq, msg_bk);
+    msg_bk.type = PB_MSG_BLOCK__MSG_TYPE__MSG_HELLO;
+    msg_bk.msg_block_case = PB_MSG_BLOCK__MSG_BLOCK_HELLO;
+    msg_bk.hello = &hello;
+
+    trans_pb_serialize(msg_zmq, &msg_bk);
 }
 
-static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, struct zmq_pair_ctx *ctx) noexcept
+static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, struct zmq_pair_ctx *ctx)
 {
-    class pb_msg_block msg_bk;
-    class pb_msg_zmq_pair *zmq_pair;
+    PbMsgBlock msg_bk;
+    PbMsgZmqPair zmq_pair;
 
-    zmq_pair = new class pb_msg_zmq_pair;
-    zmq_pair->set_bk_id(ctx->bk_id);
+    pb_msg_block__init(&msg_bk);
+    pb_msg_zmq_pair__init(&zmq_pair);
 
-    msg_bk.set_type(pb_msg_block::MSG_ZMQ_PAIR);
-    msg_bk.set_allocated_zmq_pair(zmq_pair);
+    zmq_pair.bk_id = static_cast<int32_t>(ctx->bk_id);
 
-    trans_pb_serialize(msg_zmq, msg_bk);
+    msg_bk.type = PB_MSG_BLOCK__MSG_TYPE__MSG_HELLO;
+    msg_bk.msg_block_case = PB_MSG_BLOCK__MSG_BLOCK_HELLO;
+    msg_bk.zmq_pair = &zmq_pair;
+
+    trans_pb_serialize(msg_zmq, &msg_bk);
 }
 
 int trans_pb::ctrl_(void *vnotif)
@@ -104,11 +106,5 @@ int trans_pb::ctrl_(void *vnotif)
 
     return 0;
 }
-
-#else
-
-int trans_pb::ctrl_(void *) { return 0; }
-
-#endif // C3QO_PROTOBUF
 
 BLOCK_REGISTER(trans_pb);

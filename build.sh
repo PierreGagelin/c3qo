@@ -17,7 +17,6 @@ c3qo_generate_path $DIR_SCRIPT
 #
 C3QO_COVERAGE="OFF"
 C3QO_LOG="OFF"
-C3QO_PROTOBUF="OFF"
 C3QO_TEST="OFF"
 
 # CMAKE customization
@@ -197,7 +196,7 @@ function action_lcov
 #
 # Retrieve command line options
 #
-while getopts "bchilptAB:C:GJ:LPT" opt
+while getopts "bchilptAB:C:GJ:LT" opt
 do
     case "${opt}" in
         b)
@@ -223,7 +222,6 @@ do
             ;;
         A)
             C3QO_LOG="ON"
-            C3QO_PROTOBUF="ON"
             C3QO_TEST="ON"
             ;;
         B)
@@ -240,9 +238,6 @@ do
             ;;
         L)
             C3QO_LOG="ON"
-            ;;
-        P)
-            C3QO_PROTOBUF="ON"
             ;;
         T)
             C3QO_TEST="ON"
@@ -261,7 +256,6 @@ CMAKE_OPTIONS="$CMAKE_OPTIONS -DCMAKE_BUILD_TYPE:STRING=$CMAKE_BUILD_TYPE"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DCMAKE_TOOLCHAIN_FILE:STRING=$CMAKE_TOOLCHAIN_FILE"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_COVERAGE:BOOL=$C3QO_COVERAGE"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_LOG:BOOL=$C3QO_LOG"
-CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_PROTOBUF:BOOL=$C3QO_PROTOBUF"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_TEST:BOOL=$C3QO_TEST"
 
 #

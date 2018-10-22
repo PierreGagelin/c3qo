@@ -1,7 +1,5 @@
 syntax = "proto2";
 
-option optimize_for = LITE_RUNTIME;
-
 message pb_msg_hello
 {
     required int32 bk_id = 1;

@@ -32,6 +32,20 @@ zmq_pair::~zmq_pair()
     zmq_ctx_term(zmq_ctx_);
 }
 
+// Compare a zmq string (not NULL terminated) with a string
+bool zmq_string_equal(const char *str, const char *zmq_str, size_t zmq_size)
+{
+    if (strlen(str) != zmq_size)
+    {
+        return false;
+    }
+    if (strncmp(str, zmq_str, zmq_size) != 0)
+    {
+        return false;
+    }
+    return true;
+}
+
 //
 // @brief Callback to handle data available on the socket
 //
@@ -68,20 +82,20 @@ void zmq_pair::on_fd_(struct file_desc &fd)
     LOGGER_DEBUG("Message received on ZMQ socket [bk_id=%d ; topic=%s ; payload_size=%zu]", id_, msg.topic, msg.data_len);
 
     // Action to take upon topic value
-    if (strcmp(msg.topic, "CONF.LINE") == 0)
+    if (zmq_string_equal("CONF.LINE", msg.topic, msg.topic_len) == true)
     {
         // Process the configuration line
         mgr_->conf_parse_line(msg.data);
     }
-    else if (strcmp(msg.topic, "CONF.PROTO.CMD") == 0)
+    else if (zmq_string_equal("CONF.PROTO.CMD", msg.topic, msg.topic_len) == true)
     {
         mgr_->conf_parse_pb_cmd(reinterpret_cast<uint8_t *>(msg.data), msg.data_len);
     }
-    else if (strcmp(msg.topic, "STATS") == 0)
+    else if (zmq_string_equal("STATS", msg.topic, msg.topic_len) == true)
     {
         struct trans_pb_notif notif;
 
-        if (strcmp(msg.data, "HELLO") == 0)
+        if (zmq_string_equal("HELLO", msg.data, msg.data_len) == true)
         {
             struct hello_ctx ctx_hello;
 
@@ -265,7 +279,7 @@ int zmq_pair::tx_(void *vdata)
 
     if (ok == true)
     {
-        LOGGER_DEBUG("Message sent on ZMQ socket [bk_id=%d ; topic=%s ; payload=%s]", id_, data->topic, data->data);
+        LOGGER_DEBUG("Message sent on ZMQ socket [bk_id=%d ; topic=%s ; payload_size=%zu]", id_, data->topic, data->data_len);
         tx_pkt_++;
     }
 

@@ -33,8 +33,6 @@ void tu_trans_pb::TearDown()
     LOGGER_CLOSE();
 }
 
-#ifdef C3QO_PROTOBUF
-
 //
 // @brief Test serialization of hello message
 //
@@ -91,14 +89,3 @@ TEST_F(tu_trans_pb, error)
     notif.type = static_cast<enum bk_type>(42);
     EXPECT_EQ(block.ctrl_(&notif), 0);
 }
-
-#else
-
-TEST_F(tu_trans_pb, block)
-{
-    struct trans_pb block(&mgr_);
-
-    EXPECT_EQ(block.ctrl_(nullptr), 0);
-}
-
-#endif //C3QO_PROTOBUF

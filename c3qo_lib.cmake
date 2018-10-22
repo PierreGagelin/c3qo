@@ -144,42 +144,6 @@ function (c3qo_add_test target_name target_sources)
 endfunction (c3qo_add_test)
 
 #
-# Enable protobuf
-#
-if (${C3QO_PROTOBUF})
-    include(FindProtobuf)
-    find_package(Protobuf REQUIRED)
-    set(PROTOBUF_USE_STATIC_LIBS on)
-endif (${C3QO_PROTOBUF})
-
-#
-# Add a protobuf library
-#
-function (c3qo_add_library_protobuf target_name target_sources)
-    if (NOT ${C3QO_PROTOBUF})
-        return()
-    endif ()
-
-    # Generate python for test
-    protobuf_generate_python(PROTO_PY "${target_sources}")
-    add_custom_target(${target_name}_py ALL DEPENDS ${PROTO_PY})
-    install(FILES ${PROTO_PY} DESTINATION test)
-
-    # Generate C++
-    protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS "${target_sources}")
-
-    add_library(${target_name} STATIC ${PROTO_SRCS} ${PROTO_HDRS})
-
-    target_compile_options(${target_name} PRIVATE ${COMPILE_FLAGS_COMMON})
-    target_compile_options(${target_name} PUBLIC -DGOOGLE_PROTOBUF_NO_RTTI)
-
-    target_include_directories(${target_name} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
-    target_include_directories(${target_name} PUBLIC ${PROTOBUF_INCLUDE_DIRS})
-
-    target_link_libraries(${target_name} ${PROTOBUF_LITE_LIBRARIES})
-endfunction (c3qo_add_library_protobuf)
-
-#
 # Add a protobuf-c library
 #
 function(c3qo_add_library_protobuf_c target_name proto_dir proto_prefix)
