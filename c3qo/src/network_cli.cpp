@@ -50,7 +50,7 @@ static PbcCmd__CmdType string_to_pbc_type(const char *string)
 //
 // @brief Fills a ZMQ message to send a raw configuration line
 //
-static bool ncli_conf_proto(int argc, char **argv, struct c3qo_zmq_msg &msg)
+static bool ncli_conf_proto(int argc, char **argv, std::vector<struct c3qo_zmq_part> &msg)
 {
     const char options[] = "a:i:t:";
     char *block_arg;
@@ -101,12 +101,15 @@ static bool ncli_conf_proto(int argc, char **argv, struct c3qo_zmq_msg &msg)
     pbc_cmd__pack(&cmd, buffer);
 
     // Fill ZMQ message
-    msg.topic = strdup("CONF.PROTO.CMD");
-    ASSERT(msg.topic != nullptr);
-    msg.topic_len = strlen(msg.topic);
+    struct c3qo_zmq_part part;
+    part.data = strdup("CONF.PROTO.CMD");
+    ASSERT(part.data != nullptr);
+    part.len = strlen(part.data);
+    msg.push_back(part);
 
-    msg.data = reinterpret_cast<char *>(buffer);
-    msg.data_len = size;
+    part.data = reinterpret_cast<char *>(buffer);
+    part.len = size;
+    msg.push_back(part);
 
     return true;
 }
@@ -114,7 +117,7 @@ static bool ncli_conf_proto(int argc, char **argv, struct c3qo_zmq_msg &msg)
 //
 // @brief Fills a ZMQ message to send a raw configuration line
 //
-static bool ncli_conf_raw(int argc, char **argv, struct c3qo_zmq_msg &msg)
+static bool ncli_conf_raw(int argc, char **argv, std::vector<struct c3qo_zmq_part> &msg)
 {
     const char options[] = "p:";
     const char *payload = "1 1 1";
@@ -137,13 +140,16 @@ static bool ncli_conf_raw(int argc, char **argv, struct c3qo_zmq_msg &msg)
     }
 
     // Fill ZMQ message
-    msg.topic = strdup("CONF.LINE");
-    ASSERT(msg.topic != nullptr);
-    msg.topic_len = sizeof("CONF.LINE");
+    struct c3qo_zmq_part part;
+    part.data = strdup("CONF.LINE");
+    ASSERT(part.data != nullptr);
+    part.len = sizeof("CONF.LINE");
+    msg.push_back(part);
 
-    msg.data = strdup(payload);
-    ASSERT(msg.data != nullptr);
-    msg.data_len = strlen(msg.data) + 1;
+    part.data = strdup(payload);
+    ASSERT(part.data != nullptr);
+    part.len = strlen(part.data) + 1;
+    msg.push_back(part);
 
     return true;
 }
@@ -156,6 +162,7 @@ int main(int argc, char **argv)
     char *ncli_type;
     char *ncli_args;
     int rc;
+    bool ok;
 
     LOGGER_OPEN("network_cli");
     logger_set_level(LOGGER_LEVEL_DEBUG);
@@ -206,14 +213,16 @@ int main(int argc, char **argv)
     wordexp_t we;
     ASSERT(wordexp(ncli_args, &we, 0) == 0);
 
-    struct c3qo_zmq_msg msg;
+    std::vector<struct c3qo_zmq_part> msg;
     if (strcmp(ncli_type, "raw") == 0)
     {
-        ASSERT(ncli_conf_raw(we.we_wordc, we.we_wordv, msg) == true);
+        ok = ncli_conf_raw(we.we_wordc, we.we_wordv, msg);
+        ASSERT(ok == true);
     }
     else if (strcmp(ncli_type, "proto") == 0)
     {
-        ASSERT(ncli_conf_proto(we.we_wordc, we.we_wordv, msg) == true);
+        ok = ncli_conf_proto(we.we_wordc, we.we_wordv, msg);
+        ASSERT(ok == true);
     }
     else
     {
@@ -252,11 +261,10 @@ int main(int argc, char **argv)
     ASSERT(rc != -1);
 
     // Send a two-parts message
-    socket_zmq_write(client, msg.topic, msg.topic_len, ZMQ_SNDMORE);
-    socket_zmq_write(client, msg.data, msg.data_len, 0);
+    ok = socket_zmq_write(client, msg);
+    ASSERT(ok == true);
 
-    free(msg.topic);
-    free(msg.data);
+    c3qo_zmq_msg_del(msg);
 
     // Close down the sockets
     zmq_close(client);

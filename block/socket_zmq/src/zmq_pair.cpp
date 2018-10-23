@@ -32,27 +32,12 @@ zmq_pair::~zmq_pair()
     zmq_ctx_term(zmq_ctx_);
 }
 
-// Compare a zmq string (not NULL terminated) with a string
-bool zmq_string_equal(const char *str, const char *zmq_str, size_t zmq_size)
-{
-    if (strlen(str) != zmq_size)
-    {
-        return false;
-    }
-    if (strncmp(str, zmq_str, zmq_size) != 0)
-    {
-        return false;
-    }
-    return true;
-}
-
 //
 // @brief Callback to handle data available on the socket
 //
 void zmq_pair::on_fd_(struct file_desc &fd)
 {
-    struct c3qo_zmq_msg msg;
-    bool more;
+    std::vector<struct c3qo_zmq_part> msg;
 
     if (fd.socket != zmq_sock_.socket)
     {
@@ -60,42 +45,32 @@ void zmq_pair::on_fd_(struct file_desc &fd)
         return;
     }
 
-    msg.topic = nullptr;
-    msg.data = nullptr;
-
     // Get a topic and payload
-    more = socket_zmq_read(zmq_sock_.socket, &msg.topic, &msg.topic_len);
-    if (more == false)
+    socket_zmq_read(zmq_sock_.socket, msg);
+    if (msg.size() != 2u)
     {
-        LOGGER_ERR("Failed to receive ZMQ message: expected 2 parts and got 1 [bk_id=%d]", id_);
+        LOGGER_ERR("Failed to receive ZMQ message: expected 2 parts [actual=%zu]", msg.size());
         goto end;
     }
-    more = socket_zmq_read(zmq_sock_.socket, &msg.data, &msg.data_len);
-    if (more == true)
-    {
-        LOGGER_ERR("Failed to receive ZMQ message: expected 2 parts and got more [bk_id=%d]", id_);
-        socket_zmq_flush(zmq_sock_.socket);
-        goto end;
-    }
-    rx_pkt_++;
+    ++rx_pkt_;
 
-    LOGGER_DEBUG("Message received on ZMQ socket [bk_id=%d ; topic=%s ; payload_size=%zu]", id_, msg.topic, msg.data_len);
+    LOGGER_DEBUG("Message received on ZMQ socket [bk_id=%d ; topic=%s ; payload_size=%zu]", id_, msg[0].data, msg[1].len);
 
     // Action to take upon topic value
-    if (zmq_string_equal("CONF.LINE", msg.topic, msg.topic_len) == true)
+    if (strcmp("CONF.LINE", msg[0].data) == 0)
     {
         // Process the configuration line
-        mgr_->conf_parse_line(msg.data);
+        mgr_->conf_parse_line(msg[1].data);
     }
-    else if (zmq_string_equal("CONF.PROTO.CMD", msg.topic, msg.topic_len) == true)
+    else if (strcmp("CONF.PROTO.CMD", msg[0].data) == 0)
     {
-        mgr_->conf_parse_pb_cmd(reinterpret_cast<uint8_t *>(msg.data), msg.data_len);
+        mgr_->conf_parse_pb_cmd(reinterpret_cast<uint8_t *>(msg[1].data), msg[1].len);
     }
-    else if (zmq_string_equal("STATS", msg.topic, msg.topic_len) == true)
+    else if (strcmp("STATS", msg[0].data) == 0)
     {
         struct trans_pb_notif notif;
 
-        if (zmq_string_equal("HELLO", msg.data, msg.data_len) == true)
+        if (strcmp("HELLO", msg[1].data) == 0)
         {
             struct hello_ctx ctx_hello;
 
@@ -109,19 +84,12 @@ void zmq_pair::on_fd_(struct file_desc &fd)
     }
     else
     {
-        LOGGER_ERR("Failed to decode ZMQ message: unknown topic [topic=%s]", msg.topic);
+        LOGGER_ERR("Failed to decode ZMQ message: unknown topic [topic=%s]", msg[0].data);
         goto end;
     }
 
 end:
-    if (msg.topic != nullptr)
-    {
-        delete[] msg.topic;
-    }
-    if (msg.data != nullptr)
-    {
-        delete[] msg.data;
-    }
+    c3qo_zmq_msg_del(msg);
 }
 
 void zmq_pair::conf_(char *conf)
@@ -263,23 +231,21 @@ void zmq_pair::stop_()
 //
 int zmq_pair::tx_(void *vdata)
 {
-    struct c3qo_zmq_msg *data;
+    std::vector<struct c3qo_zmq_part> *msg;
     bool ok;
 
     if (vdata == nullptr)
     {
-        LOGGER_ERR("Failed to process buffer: nullptr context or data");
+        LOGGER_ERR("Failed to process buffer: nullptr data");
         return 0;
     }
-    data = static_cast<struct c3qo_zmq_msg *>(vdata);
+    msg = static_cast<std::vector<struct c3qo_zmq_part> *>(vdata);
 
     // Send topic and data
-    ok = socket_zmq_write(zmq_sock_.socket, data->topic, data->topic_len, ZMQ_DONTWAIT | ZMQ_SNDMORE);
-    ok = (ok == true) && socket_zmq_write(zmq_sock_.socket, data->data, data->data_len, ZMQ_DONTWAIT);
-
+    ok = socket_zmq_write(zmq_sock_.socket, *msg);
     if (ok == true)
     {
-        LOGGER_DEBUG("Message sent on ZMQ socket [bk_id=%d ; topic=%s ; payload_size=%zu]", id_, data->topic, data->data_len);
+        LOGGER_DEBUG("Message sent on ZMQ socket [bk_id=%d ; parts=%zu]", id_, msg->size());
         tx_pkt_++;
     }
 

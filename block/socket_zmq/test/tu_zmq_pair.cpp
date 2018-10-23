@@ -61,15 +61,17 @@ TEST_F(tu_zmq_pair, data)
     // Some messages are lost because subscription can take some time
     for (int i = 0; i < 10; i++)
     {
-        struct c3qo_zmq_msg msg;
+        std::vector<struct c3qo_zmq_part> msg;
+        struct c3qo_zmq_part part;
         char topic[] = "hello";
-        char data[] = "world";
+        char payload[] = "world";
 
-        //FIXME: we shouldn't use such cast -> change API to use a std::string?
-        msg.topic = topic;
-        msg.topic_len = strlen(msg.topic);
-        msg.data = data;
-        msg.data_len = strlen(msg.data);
+        part.data = topic;
+        part.len = strlen(part.data);
+        msg.push_back(part);
+        part.data = payload;
+        part.len = strlen(part.data);
+        msg.push_back(part);
 
         client.tx_(&msg);
         server.tx_(&msg);

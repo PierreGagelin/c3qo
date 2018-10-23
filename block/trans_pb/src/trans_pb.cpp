@@ -14,26 +14,30 @@ trans_pb::~trans_pb() {}
 // Protobuf sources
 #include "block.pb-c.h"
 
-static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, PbMsgBlock *msg_bk)
+static void trans_pb_serialize(std::vector<struct c3qo_zmq_part> &msg_zmq, PbMsgBlock *msg_bk)
 {
+    struct c3qo_zmq_part part;
     const char topic[] = "BLOCK.MSG";
 
     // Fill the topic (with the '\0')
-    msg_zmq.topic_len = sizeof(topic);
-    msg_zmq.topic = new char[msg_zmq.topic_len];
-    memcpy(msg_zmq.topic, topic, msg_zmq.topic_len);
+    part.len = sizeof(topic);
+    part.data = new char[part.len];
+    memcpy(part.data, topic, part.len);
+    msg_zmq.push_back(part);
 
     // Fill the data
-    msg_zmq.data_len = pb_msg_block__get_packed_size(msg_bk);
-    msg_zmq.data = new char[msg_zmq.data_len];
-    size_t size = pb_msg_block__pack(msg_bk, reinterpret_cast<uint8_t *>(msg_zmq.data));
-    if (size != msg_zmq.data_len)
+    part.len = pb_msg_block__get_packed_size(msg_bk);
+    part.data = new char[part.len];
+    size_t size = pb_msg_block__pack(msg_bk, reinterpret_cast<uint8_t *>(part.data));
+    if (size != part.len)
     {
-        LOGGER_ERR("Failed to serialize block message: protobuf-c error");
+        LOGGER_ERR("Failed to serialize block message: unexpected serialized size [expected=%zu ; actual=%zu]",
+                   part.len, size);
     }
+    msg_zmq.push_back(part);
 }
 
-static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, struct hello_ctx *ctx)
+static void trans_pb_serialize(std::vector<struct c3qo_zmq_part> &msg_zmq, struct hello_ctx *ctx)
 {
     PbMsgBlock msg_bk;
     PbMsgHello hello;
@@ -50,7 +54,7 @@ static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, struct hello_ctx *c
     trans_pb_serialize(msg_zmq, &msg_bk);
 }
 
-static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, struct zmq_pair_ctx *ctx)
+static void trans_pb_serialize(std::vector<struct c3qo_zmq_part> &msg_zmq, struct zmq_pair_ctx *ctx)
 {
     PbMsgBlock msg_bk;
     PbMsgZmqPair zmq_pair;
@@ -70,7 +74,7 @@ static void trans_pb_serialize(struct c3qo_zmq_msg &msg_zmq, struct zmq_pair_ctx
 int trans_pb::ctrl_(void *vnotif)
 {
     struct trans_pb_notif *notif;
-    struct c3qo_zmq_msg msg_zmq;
+    std::vector<struct c3qo_zmq_part> msg;
 
     if (vnotif == nullptr)
     {
@@ -82,10 +86,10 @@ int trans_pb::ctrl_(void *vnotif)
     switch (notif->type)
     {
     case BLOCK_HELLO:
-        trans_pb_serialize(msg_zmq, notif->context.hello);
+        trans_pb_serialize(msg, notif->context.hello);
         break;
     case BLOCK_ZMQ_PAIR:
-        trans_pb_serialize(msg_zmq, notif->context.zmq_pair);
+        trans_pb_serialize(msg, notif->context.zmq_pair);
         break;
     default:
         LOGGER_ERR("trans_pb control failed: Unknown notification type [type=%d]", notif->type);
@@ -93,16 +97,9 @@ int trans_pb::ctrl_(void *vnotif)
     }
 
     // Sending message to the ZMQ socket
-    process_tx_(1, &msg_zmq);
+    process_tx_(1, &msg);
 
-    if (msg_zmq.topic != nullptr)
-    {
-        delete[] msg_zmq.topic;
-    }
-    if (msg_zmq.data != nullptr)
-    {
-        delete[] msg_zmq.data;
-    }
+    c3qo_zmq_msg_del(msg);
 
     return 0;
 }

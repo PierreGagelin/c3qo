@@ -5,17 +5,14 @@
 #include "utils/include.hpp"
 
 //
-// @struct c3qo_zmq_msg
+// @struct c3qo_zmq_part
 //
-// @brief Structure to send a ZMQ message
+// @brief ZMQ message part, a message can contain several
 //
-struct c3qo_zmq_msg
+struct c3qo_zmq_part
 {
-    char *topic;
-    size_t topic_len;
-
     char *data;
-    size_t data_len;
+    size_t len;
 };
 
 int socket_nb(int domain, int type, int protocol);
@@ -26,9 +23,9 @@ bool socket_nb_connect_check(int fd);
 ssize_t socket_nb_write(int fd, const char *buff, size_t size);
 ssize_t socket_nb_read(int fd, char *buff, size_t size);
 
-bool socket_zmq_read(void *socket, char **data, size_t *len, int flags = ZMQ_DONTWAIT);
-bool socket_zmq_write(void *socket, char *data, size_t len, int flags = ZMQ_DONTWAIT);
-void socket_zmq_flush(void *socket);
+void c3qo_zmq_msg_del(std::vector<struct c3qo_zmq_part> &msg);
+void socket_zmq_read(void *socket, std::vector<struct c3qo_zmq_part> &msg, int flags = ZMQ_DONTWAIT);
+bool socket_zmq_write(void *socket, std::vector<struct c3qo_zmq_part> &msg, int flags = ZMQ_DONTWAIT);
 int socket_zmq_get_event(void *monitor);
 
 #endif // C3QO_SOCKET_HPP

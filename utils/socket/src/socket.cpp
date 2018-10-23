@@ -184,93 +184,87 @@ int socket_nb_connect(int fd, const struct sockaddr *addr, socklen_t len)
     }
 }
 
+void c3qo_zmq_msg_del(std::vector<struct c3qo_zmq_part> &msg)
+{
+    for (const auto &it: msg)
+    {
+        delete[] it.data;
+    }
+}
+
 //
 // @brief Receive data from a ZMQ socket
 //
-// @return True if there's more data part to read
-//
-bool socket_zmq_read(void *socket, char **data, size_t *len, int flags)
+void socket_zmq_read(void *socket, std::vector<struct c3qo_zmq_part> &msg, int flags)
 {
-    zmq_msg_t part;
-    char *msg;
-    size_t size;
-    int ret;
-    bool more;
+    struct c3qo_zmq_part msg_part;
 
-    // Initialization
-    *data = nullptr;
-    *len = 0;
-
-    // Receive a message
-    zmq_msg_init(&part);
-    ret = zmq_msg_recv(&part, socket, flags);
-    if (ret <= 0)
+    while (true)
     {
-        LOGGER_ERR("Failed to receive data from ZMQ socket: %s [errno=%d]", strerror(errno), errno);
+        zmq_msg_t part;
+        int ret;
+
+        // Receive a message
+        zmq_msg_init(&part);
+
+        ret = zmq_msg_recv(&part, socket, flags);
+        if (ret <= 0)
+        {
+            LOGGER_ERR("Failed to receive data from ZMQ socket: %s [errno=%d]", strerror(errno), errno);
+            break;
+        }
+
+        // Copy the message
+        // - add a NULL byte in case it's a string
+        // - do not count it in the message length
+        msg_part.len = zmq_msg_size(&part);
+        msg_part.data = new char[msg_part.len + 1];
+        memcpy(msg_part.data, zmq_msg_data(&part), msg_part.len);
+        msg_part.data[msg_part.len] = '\0';
+
+        msg.push_back(msg_part);
+
+        // Look if there is another part to come
+        ret = zmq_msg_more(&part);
+
         zmq_msg_close(&part);
-        return false;
+        if (ret != 1)
+        {
+            break;
+        }
     }
-
-    // Copy the message
-    size = zmq_msg_size(&part);
-    msg = new char[size];
-    memcpy(msg, zmq_msg_data(&part), size);
-
-    // Look if there is another part to come
-    ret = zmq_msg_more(&part);
-    more = (ret == 1);
-
-    zmq_msg_close(&part);
-
-    // Fill user information
-    *data = msg;
-    *len = size;
-
-    return more;
 }
 
 //
-// @brief Send data from a ZMQ socket
+// @brief Send a ZMQ multi-part message
 //
 // @return True on success
 //
-bool socket_zmq_write(void *socket, char *data, size_t len, int flags)
+bool socket_zmq_write(void *socket, std::vector<struct c3qo_zmq_part> &msg, int flags)
 {
-    zmq_msg_t message;
-    int rc;
-
-    zmq_msg_init_size(&message, len);
-    memcpy(zmq_msg_data(&message), data, len);
-
-    rc = zmq_msg_send(&message, socket, flags);
-    if (rc == -1)
+    flags |= ZMQ_SNDMORE;
+    for (size_t idx = 0u; idx < msg.size(); ++idx)
     {
-        LOGGER_ERR("Failed to write ZMQ message: %s [errno=%d ; len=%zu ; data=%s]", strerror(errno), errno, len, data);
-        zmq_msg_close(&message);
-        return false;
+        zmq_msg_t message;
+        int rc;
+
+        zmq_msg_init_size(&message, msg[idx].len);
+        memcpy(zmq_msg_data(&message), msg[idx].data, msg[idx].len);
+
+        if (idx == msg.size() - 1)
+        {
+            flags &= ~ZMQ_SNDMORE;
+        }
+        rc = zmq_msg_send(&message, socket, flags);
+        if (rc == -1)
+        {
+            LOGGER_ERR("Failed to write ZMQ message: %s [errno=%d ; len=%zu ; data=%s]",
+                       strerror(errno), errno, msg[idx].len, msg[idx].data);
+            zmq_msg_close(&message);
+            return false;
+        }
     }
     return true;
-}
-
-//
-// @brief Flush every ZMQ part message on the socket
-//
-void socket_zmq_flush(void *socket)
-{
-    bool more;
-
-    do
-    {
-        char *data;
-        size_t len;
-
-        more = socket_zmq_read(socket, &data, &len);
-        if (data != nullptr)
-        {
-            free(data);
-        }
-
-    } while (more == true);
 }
 
 //
@@ -280,44 +274,21 @@ void socket_zmq_flush(void *socket)
 //
 int socket_zmq_get_event(void *monitor)
 {
-    uint8_t *data;
-    size_t len;
+    std::vector<struct c3qo_zmq_part> msg;
     uint16_t event;
-    bool more;
 
     // Retrieve event in the first message part
-    more = socket_zmq_read(monitor, (char **)&data, &len, 0);
-    if (data != nullptr)
+    socket_zmq_read(monitor, msg, 0);
+    if (msg.size() != 2u)
     {
-        event = *(uint16_t *)(data);
-        free(data);
+        event = 0xffff;
     }
     else
     {
-        event = 0xffff;
+        event = *(uint16_t *)(msg[0].data);
     }
 
-    // Second message part contains event address but we don't care
-    if (more == true)
-    {
-        more = socket_zmq_read(monitor, (char **)&data, &len, 0);
-        if (data != nullptr)
-        {
-            free(data);
-        }
-    }
-    else
-    {
-        // Two frames are required, information above must be corrupted
-        event = 0xffff;
-    }
-
-    // There must not be any part left
-    if (more == true)
-    {
-        socket_zmq_flush(monitor);
-        event = 0xffff;
-    }
+    c3qo_zmq_msg_del(msg);
 
     return event;
 }
