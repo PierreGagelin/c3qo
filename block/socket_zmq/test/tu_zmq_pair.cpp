@@ -13,27 +13,47 @@
 
 class tu_zmq_pair : public testing::Test
 {
-    void SetUp();
-    void TearDown();
+    void SetUp()
+    {
+        LOGGER_OPEN("tu_zmq_pair");
+        logger_set_level(LOGGER_LEVEL_DEBUG);
+    }
+    void TearDown()
+    {
+        logger_set_level(LOGGER_LEVEL_NONE);
+        LOGGER_CLOSE();
+    }
 
   public:
     struct manager mgr_;
 };
 
-void tu_zmq_pair::SetUp()
+void message_create(std::vector<struct c3qo_zmq_part> &msg, const char *topic, const char *payload)
 {
-    LOGGER_OPEN("tu_zmq_pair");
-    logger_set_level(LOGGER_LEVEL_DEBUG);
+    struct c3qo_zmq_part part;
+
+    part.data = strdup(topic);
+    ASSERT(part.data != nullptr);
+    part.len = strlen(part.data);
+    msg.push_back(part);
+
+    part.data = strdup(payload);
+    ASSERT(part.data != nullptr);
+    part.len = strlen(part.data);
+    msg.push_back(part);
 }
 
-void tu_zmq_pair::TearDown()
+void message_destroy(std::vector<struct c3qo_zmq_part> &msg)
 {
-    logger_set_level(LOGGER_LEVEL_NONE);
-    LOGGER_CLOSE();
+    for (const auto &it : msg)
+    {
+        free(it.data);
+    }
+    msg.clear();
 }
 
 //
-// @brief Nothing yet
+// @brief Verify data transmission between client and server
 //
 TEST_F(tu_zmq_pair, data)
 {
@@ -41,6 +61,7 @@ TEST_F(tu_zmq_pair, data)
     struct zmq_pair server(&mgr_);
     char conf_s[] = "type=server addr=tcp://127.0.0.1:5555";
     char conf_c[] = "type=client addr=tcp://127.0.0.1:5555";
+    std::vector<struct c3qo_zmq_part> msg;
 
     // Initialize two ZMQ pairs
     server.id_ = 1;
@@ -61,28 +82,56 @@ TEST_F(tu_zmq_pair, data)
     // Some messages are lost because subscription can take some time
     for (int i = 0; i < 10; i++)
     {
-        std::vector<struct c3qo_zmq_part> msg;
-        struct c3qo_zmq_part part;
-        char topic[] = "hello";
-        char payload[] = "world";
-
-        part.data = topic;
-        part.len = strlen(part.data);
-        msg.push_back(part);
-        part.data = payload;
-        part.len = strlen(part.data);
-        msg.push_back(part);
+        message_create(msg, "hello", "world");
 
         client.tx_(&msg);
         server.tx_(&msg);
 
         mgr_.fd_poll();
+
+        message_destroy(msg);
     }
 
     // At least one message should be received
     EXPECT_GT(client.rx_pkt_, 0lu);
     EXPECT_GT(server.rx_pkt_, 0lu);
 
+    // Send several of the expected messages
+    {
+        message_create(msg, "STATS", "HELLO");
+        client.tx_(&msg);
+        mgr_.fd_poll();
+        message_destroy(msg);
+
+        message_create(msg, "CONF.LINE", "1 2 3");
+        client.tx_(&msg);
+        mgr_.fd_poll();
+        message_destroy(msg);
+    }
+
+
     client.stop_();
     server.stop_();
+}
+
+// Test error cases
+TEST_F(tu_zmq_pair, error)
+{
+    struct zmq_pair block(&mgr_);
+
+    block.id_ = 1;
+
+    block.conf_(nullptr);
+
+    // Type error
+    block.conf_(const_cast<char *>("hello"));
+    block.conf_(const_cast<char *>("type="));
+    block.conf_(const_cast<char *>("type= "));
+    block.conf_(const_cast<char *>("type=banana "));
+
+    // Address error
+    block.conf_(const_cast<char *>("type=client addr="));
+    block.conf_(const_cast<char *>("type=client addr= "));
+
+    block.tx_(nullptr);
 }
