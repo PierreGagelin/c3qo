@@ -103,17 +103,6 @@ void manager::timer_clear()
 }
 
 // Operators for struct timespec
-bool operator==(const struct timespec &a, const struct timespec &b)
-{
-    if ((a.tv_sec == b.tv_sec) && (a.tv_sec == b.tv_sec))
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
 bool operator<(const struct timespec &a, const struct timespec &b)
 {
     if (a.tv_sec < b.tv_sec)
