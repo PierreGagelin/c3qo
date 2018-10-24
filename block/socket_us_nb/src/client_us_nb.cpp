@@ -32,50 +32,33 @@ void client_us_nb::clean_()
 
 void client_us_nb::on_fd_(struct file_desc &fd)
 {
-    if (connected_ == true)
+    char buf[SOCKET_READ_SIZE];
+    ssize_t ret;
+
+    if (fd.fd != fd_.fd)
     {
-        char buf[SOCKET_READ_SIZE];
-        ssize_t ret;
-
-        if (fd.fd != fd_.fd)
-        {
-            LOGGER_ERR("Failed to handle file descriptor callback: unknown file descriptor [bk_id=%d ; fd_exp=%d ; fd_recv=%d]", id_, fd_.fd, fd.fd);
-        }
-
-        LOGGER_DEBUG("Handle file descriptor callback [bk_id=%d ; fd=%d]", id_, fd.fd);
-
-        // Flush the file descriptor
-        do
-        {
-            ret = socket_nb_read(fd_.fd, buf, sizeof(buf));
-            if (ret > 0)
-            {
-                LOGGER_DEBUG("Received data on socket [bk_id=%d ; fd=%d ; buf=%p ; size=%zd]", id_, fd_.fd, buf, ret);
-
-                rx_pkt_++;
-
-                // For the moment this is OK because
-                //   - the data flow is synchronous
-                //   - only one block is bound
-                process_rx_(1, buf);
-            }
-        } while (ret > 0);
+        LOGGER_ERR("Failed to handle file descriptor callback: unknown file descriptor [bk_id=%d ; fd_exp=%d ; fd_recv=%d]",
+                   id_, fd_.fd, fd.fd);
     }
-    else
+
+    LOGGER_DEBUG("Handle file descriptor callback [bk_id=%d ; fd=%d]", id_, fd.fd);
+
+    // Flush the file descriptor
+    do
     {
-        if (fd.fd != fd_.fd)
+        ret = socket_nb_read(fd_.fd, buf, sizeof(buf));
+        if (ret > 0)
         {
-            LOGGER_ERR("Failed to check socket connection status: unknown file descriptor [bk_id=%d ; fd_exp=%d ; fd_recv=%d]", id_, fd_.fd, fd.fd);
-        }
+            LOGGER_DEBUG("Received data on socket [bk_id=%d ; fd=%d ; buf=%p ; size=%zd]", id_, fd_.fd, buf, ret);
 
-        if (socket_nb_connect_check(fd_.fd) == true)
-        {
-            // Socket is connected, no need to look for write occasion anymore
-            connected_ = true;
-            fd_.write = false;
-            mgr_->fd_add(fd_);
+            rx_pkt_++;
+
+            // For the moment this is OK because
+            //   - the data flow is synchronous
+            //   - only one block is bound
+            process_rx_(1, buf);
         }
-    }
+    } while (ret > 0);
 }
 
 //
@@ -112,32 +95,32 @@ void client_us_nb::connect_()
     ret = snprintf(clt_addr.sun_path, sizeof(clt_addr.sun_path), SOCKET_NAME);
     if (ret < 0)
     {
-        LOGGER_ERR("Failed to connect socket: snprintf error [buf=%p ; size=%lu ; string=%s]", clt_addr.sun_path, sizeof(clt_addr.sun_path), SOCKET_NAME);
+        LOGGER_ERR("Failed to connect socket: snprintf error [buf=%p ; size=%lu ; string=%s]",
+                   clt_addr.sun_path, sizeof(clt_addr.sun_path), SOCKET_NAME);
         return;
     }
     else if ((static_cast<size_t>(ret)) > sizeof(clt_addr.sun_path))
     {
-        LOGGER_ERR("Failed to connect socket: socket name too long [sun_path=%s ; max_size=%lu]", SOCKET_NAME, sizeof(clt_addr.sun_path));
+        LOGGER_ERR("Failed to connect socket: socket name too long [sun_path=%s ; max_size=%lu]",
+                   SOCKET_NAME, sizeof(clt_addr.sun_path));
         return;
     }
 
     // Connect the socket
-    ret = socket_nb_connect(fd_.fd, (struct sockaddr *)&clt_addr, sizeof(clt_addr));
-    switch (ret)
+    if (socket_nb_connect(fd_.fd, (struct sockaddr *)&clt_addr, sizeof(clt_addr)) == true)
     {
-    case 1:
-        LOGGER_DEBUG("Client socket connection in progress [bk_id=%d ; fd=%d]", id_, fd_.fd);
+        LOGGER_DEBUG("Client socket connected [bk_id=%d ; fd=%d]", id_, fd_.fd);
 
-        // Register file descriptor for writing to check the connection when it's ready
-        fd_.write = true;
+        // Register the file descriptor for data reception
+        fd_.read = true;
         mgr_->fd_add(fd_);
-        break;
-
-    case -1:
-    case 2:
+        connected_ = true;
+    }
+    else
+    {
         struct timer tm;
 
-        LOGGER_DEBUG("Prepare a timer for socket connection retry [bk_id=%d ; fd=%d]", id_, fd_.fd);
+        LOGGER_DEBUG("Couldn't connect: prepare a timer for socket connection retry [bk_id=%d ; fd=%d]", id_, fd_.fd);
 
         // Prepare a 100ms timer for connection retry
         tm.tid = fd_.fd;
@@ -146,16 +129,6 @@ void client_us_nb::connect_()
         tm.time.tv_sec = 0;
         tm.time.tv_nsec = 100 * 1000 * 1000;
         mgr_->timer_add(tm);
-        break;
-
-    case 0:
-        LOGGER_DEBUG("Client socket connected [bk_id=%d ; fd=%d]", id_, fd_.fd);
-
-        // Register the file descriptor for data reception
-        fd_.read = true;
-        mgr_->fd_add(fd_);
-        connected_ = true;
-        break;
     }
 }
 

@@ -107,80 +107,19 @@ ssize_t socket_nb_read(int fd, char *buff, size_t size)
 }
 
 //
-// @brief Check if a socket is connected
-//
-bool socket_nb_connect_check(int fd)
-{
-    socklen_t len;
-    int optval;
-
-    // Verify connection status
-    len = sizeof(optval);
-    if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (void *)(&optval), &len) != 0)
-    {
-        LOGGER_ERR("Failed to check socket connection status: getsockopt failed [fd=%d]", fd);
-        return false;
-    }
-
-    if (optval != 0)
-    {
-        LOGGER_DEBUG("Check socket connection status: socket not connected [fd=%d]", fd);
-        return false;
-    }
-
-    LOGGER_DEBUG("Check socket connection status: socket connected [fd=%d]", fd);
-
-    return true;
-}
-
-//
 // @brief Connect in a non-blocking way
 //
-// @param fd : socket that shall be non-blocking
-//
-// @return Several codes :
-//           - -1 : failure
-//           - 0  : success
-//           - 1  : need to call getsockopt
-//           - 2  : need to call connect again
-//
-int socket_nb_connect(int fd, const struct sockaddr *addr, socklen_t len)
+bool socket_nb_connect(int fd, const struct sockaddr *addr, socklen_t len)
 {
-    int ret;
-
-    ret = connect(fd, addr, len);
-    if (ret == 0)
+    int ret = connect(fd, addr, len);
+    if ((ret == 0) || (errno == EISCONN))
     {
         LOGGER_DEBUG("Connected non-blocking socket [fd=%d]", fd);
-        return 0;
+        return true;
     }
-
-    switch (errno)
+    else
     {
-    case EISCONN:
-        // Socket already connected, nothing to do
-        return 0;
-
-    case EINPROGRESS:
-    case EALREADY:
-        // EINPROGRESS: server is listening but not answering, waiting for getsockopt
-        // EALREADY   : socket was already in EINPROGRESS, waiting for getsockopt
-        LOGGER_DEBUG("Cannot connect non-blocking socket: %s [fd=%d ; errno=%d]", strerror(errno), fd, errno);
-        return 1;
-
-    case ECONNREFUSED:
-        LOGGER_DEBUG("Cannot connect non-blocking socket: %s [fd=%d ; errno=%d]", strerror(errno), fd, errno);
-        return 2;
-
-    case EAGAIN:
-        LOGGER_DEBUG("Cannot connect non-blocking socket: %s [fd=%d ; errno=%d]", strerror(errno), fd, errno);
-        return 2;
-
-    case EADDRNOTAVAIL:
-    default:
-        // La pauvre socket n'a pas de travail, dommage pour elle
-        LOGGER_ERR("Failed to connect non-blocking socket: %s [fd=%d ; errno=%d]", strerror(errno), fd, errno);
-        return -1;
+        return false;
     }
 }
 

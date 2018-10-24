@@ -17,8 +17,7 @@ struct c3qo_zmq_part
 
 int socket_nb(int domain, int type, int protocol);
 void socket_nb_set(int fd);
-int socket_nb_connect(int fd, const struct sockaddr *addr, socklen_t len);
-bool socket_nb_connect_check(int fd);
+bool socket_nb_connect(int fd, const struct sockaddr *addr, socklen_t len);
 
 ssize_t socket_nb_write(int fd, const char *buff, size_t size);
 ssize_t socket_nb_read(int fd, char *buff, size_t size);
