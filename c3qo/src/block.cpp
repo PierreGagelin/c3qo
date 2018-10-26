@@ -83,22 +83,6 @@ const char *flow_type_to_string(enum flow_type type)
 //
 file_desc::file_desc() : bk(nullptr), fd(-1), socket(nullptr), read(false), write(false) {}
 
-bool operator==(const struct file_desc &a, const struct file_desc &b)
-{
-    return ((a.fd == b.fd) && (a.socket == b.socket));
-}
-
-// custom specialization of std::hash
-namespace std
-{
-std::size_t hash<struct file_desc>::operator()(const struct file_desc &entry) const noexcept
-{
-    const std::size_t h1(std::hash<int>{}(entry.fd));
-    const std::size_t h2(std::hash<void *>{}(entry.socket));
-    return h1 ^ (h2 << 1);
-}
-}
-
 //
 // @brief Block constructor and destructor
 //
@@ -153,7 +137,8 @@ void block::process_flow_(int port, void *data, enum flow_type type)
 {
     if (state_ != STATE_START)
     {
-        LOGGER_WARNING("Cannot start data flow: block is not started [bk_id=%d ; bk_state=%s]", id_, bk_state_to_string(state_));
+        LOGGER_WARNING("Cannot start data flow: block is not started [bk_id=%d ; bk_state=%s ; flow_type=%s]",
+                       id_, bk_state_to_string(state_), flow_type_to_string(type));
         return;
     }
 

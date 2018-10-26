@@ -52,7 +52,7 @@ void server_us_nb::on_fd_(struct file_desc &fd)
         mgr_->fd_add(fd_client);
 
         // Keep the new file descriptor
-        clients_.insert(fd_client);
+        clients_.insert({fd_client.fd, fd_client});
 
         LOGGER_INFO("New client connected [fd_server=%d ; fd_client=%d]", server_.fd, fd_client.fd);
     }
@@ -147,9 +147,9 @@ void server_us_nb::stop_()
     // Close every client
     for (const auto &fd : clients_)
     {
-        LOGGER_DEBUG("Close client connection [fd=%d]", fd.fd);
-        mgr_->fd_remove(fd);
-        close(fd.fd);
+        LOGGER_DEBUG("Close client connection [fd=%d]", fd.second.fd);
+        mgr_->fd_remove(fd.second);
+        close(fd.second.fd);
     }
     clients_.clear();
 
@@ -212,7 +212,7 @@ int server_us_nb::tx_(void *vdata)
     // Broadcast to every client
     for (const auto &fd : clients_)
     {
-        socket_nb_write(fd.fd, static_cast<const char *>(vdata), SOCKET_READ_SIZE);
+        socket_nb_write(fd.second.fd, static_cast<const char *>(vdata), SOCKET_READ_SIZE);
     }
 
     // Drop the buffer

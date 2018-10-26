@@ -7,7 +7,7 @@
 struct server_us_nb : block
 {
     // File descriptors in use
-    std::unordered_set<struct file_desc> clients_;
+    std::unordered_map<int, struct file_desc> clients_;
     struct file_desc server_;
 
     // Binding ID
