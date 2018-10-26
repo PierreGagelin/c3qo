@@ -8,6 +8,9 @@
 // Generated protobuf command
 #include "conf.pb-c.h"
 
+// C++ headers
+#include <fstream>
+
 class tu_manager_conf : public testing::Test
 {
     void SetUp()
