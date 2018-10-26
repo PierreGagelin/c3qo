@@ -5,10 +5,7 @@
 #define LOGGER_TAG "[TU.c3qo.perf]"
 
 // Project headers
-#include "c3qo/manager.hpp"
-
-// Gtest library
-#include "gtest/gtest.h"
+#include "c3qo/tu.hpp"
 
 class tu_perf : public testing::Test
 {

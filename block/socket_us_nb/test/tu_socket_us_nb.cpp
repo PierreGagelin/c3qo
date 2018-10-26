@@ -7,10 +7,7 @@
 // Project libraries
 #include "block/client_us_nb.hpp"
 #include "block/server_us_nb.hpp"
-#include "c3qo/manager.hpp"
-
-// Gtest library
-#include "gtest/gtest.h"
+#include "c3qo/tu.hpp"
 
 class tu_socket_us_nb : public testing::Test
 {

@@ -8,7 +8,6 @@
 
 // Project headers
 #include "block/project_euler.hpp"
-#include "c3qo/manager.hpp"
 
 #include "problem.hpp"
 

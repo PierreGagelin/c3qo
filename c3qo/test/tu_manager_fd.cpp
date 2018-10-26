@@ -5,10 +5,7 @@
 #define LOGGER_TAG "[TU.engine.fd]"
 
 // Project headers
-#include "c3qo/manager.hpp"
-
-// Gtest library
-#include "gtest/gtest.h"
+#include "c3qo/tu.hpp"
 
 struct block_fd : block
 {

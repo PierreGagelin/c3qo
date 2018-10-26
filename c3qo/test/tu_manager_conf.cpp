@@ -2,7 +2,7 @@
 // @brief Test file for the block manager
 //
 
-// c3qo test unit library
+// Project headers
 #include "c3qo/tu.hpp"
 
 // Generated protobuf command

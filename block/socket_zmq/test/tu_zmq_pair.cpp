@@ -6,10 +6,7 @@
 
 // Project headers
 #include "block/zmq_pair.hpp"
-#include "c3qo/manager.hpp"
-
-// Gtest library
-#include "gtest/gtest.h"
+#include "c3qo/tu.hpp"
 
 class tu_zmq_pair : public testing::Test
 {

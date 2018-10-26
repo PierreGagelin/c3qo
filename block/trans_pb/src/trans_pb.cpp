@@ -6,7 +6,6 @@
 #include "block/hello.hpp"
 #include "block/trans_pb.hpp"
 #include "block/zmq_pair.hpp"
-#include "c3qo/manager.hpp"
 
 trans_pb::trans_pb(struct manager *mgr) : block(mgr) {}
 trans_pb::~trans_pb() {}

@@ -6,10 +6,7 @@
 
 // Project headers
 #include "block/hello.hpp"
-#include "c3qo/manager.hpp"
-
-// Gtest library
-#include "gtest/gtest.h"
+#include "c3qo/tu.hpp"
 
 class tu_hello : public testing::Test
 {

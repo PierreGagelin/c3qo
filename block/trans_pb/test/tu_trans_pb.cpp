@@ -8,9 +8,7 @@
 #include "block/hello.hpp"
 #include "block/trans_pb.hpp"
 #include "block/zmq_pair.hpp"
-#include "c3qo/manager.hpp"
-
-#include "gtest/gtest.h"
+#include "c3qo/tu.hpp"
 
 class tu_trans_pb : public testing::Test
 {

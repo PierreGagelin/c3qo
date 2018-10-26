@@ -6,10 +6,7 @@
 
 // Project headers
 #include "block/project_euler.hpp"
-#include "c3qo/manager.hpp"
-
-// Gtest library
-#include "gtest/gtest.h"
+#include "c3qo/tu.hpp"
 
 class tu_project_euler : public testing::Test
 {

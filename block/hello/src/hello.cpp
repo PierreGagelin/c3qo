@@ -4,7 +4,6 @@
 
 // Project headers
 #include "block/hello.hpp"
-#include "c3qo/manager.hpp"
 
 hello::hello(struct manager *mgr) : block(mgr), name_("unknown"), count_(0) {}
 hello::~hello() {}
