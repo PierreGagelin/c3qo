@@ -4,10 +4,20 @@
 // Project headers
 #include "utils/include.hpp"
 
+// ZMQ header
+#include <zmq.h>
+
+// C headers
+extern "C"
+{
+#include <sys/socket.h>
+#include <unistd.h>
+}
+
 //
 // @struct c3qo_zmq_part
 //
-// @brief ZMQ message part, a message can contain several
+// @brief ZMQ message part, a message can contain several of these
 //
 struct c3qo_zmq_part
 {

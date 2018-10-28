@@ -1,7 +1,13 @@
 #ifndef C3QO_MANAGER_HPP
 #define C3QO_MANAGER_HPP
 
+// Project headers
 #include "c3qo/block.hpp"
+#include "utils/logger.hpp"
+#include "utils/socket.hpp"
+
+// C++ headers
+#include <forward_list>
 
 #define NSEC_MAX (1000 * 1000 * 1000) // Maximum number of nsec + 1
 

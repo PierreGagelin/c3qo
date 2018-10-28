@@ -6,12 +6,13 @@
 #include "block/hello.hpp"
 #include "block/trans_pb.hpp"
 #include "block/zmq_pair.hpp"
+#include "utils/socket.hpp"
+
+// Protobuf generated header
+#include "block.pb-c.h"
 
 trans_pb::trans_pb(struct manager *mgr) : block(mgr) {}
 trans_pb::~trans_pb() {}
-
-// Protobuf sources
-#include "block.pb-c.h"
 
 static void trans_pb_serialize(std::vector<struct c3qo_zmq_part> &msg_zmq, PbMsgBlock *msg_bk)
 {

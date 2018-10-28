@@ -8,6 +8,12 @@
 #include "utils/socket.hpp"
 #include "utils/logger.hpp"
 
+// C headers
+extern "C"
+{
+#include <fcntl.h>
+}
+
 //
 // @brief Create a socket and set it to be non-blocking
 //

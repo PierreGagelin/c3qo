@@ -5,6 +5,12 @@
 // Project headers
 #include "c3qo/manager.hpp"
 
+// C headers
+extern "C"
+{
+#include <dlfcn.h>
+}
+
 //
 // @brief Constructor and destructor
 //

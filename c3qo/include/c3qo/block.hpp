@@ -2,8 +2,8 @@
 #define C3QO_BLOCK_HPP
 
 // Project headers
+#include "utils/include.hpp"
 #include "utils/logger.hpp"
-#include "utils/socket.hpp"
 
 //
 // Macro to "register" a block: access to class constructor and destructor via dlopen / dlsym

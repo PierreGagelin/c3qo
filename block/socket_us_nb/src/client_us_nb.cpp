@@ -12,6 +12,12 @@
 #include "block/client_us_nb.hpp"
 #include "c3qo/manager.hpp"
 
+// C headers
+extern "C"
+{
+#include <sys/un.h>
+}
+
 #define SOCKET_NAME "/tmp/server_us_nb"
 #define SOCKET_READ_SIZE 256
 

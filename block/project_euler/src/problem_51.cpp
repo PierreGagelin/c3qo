@@ -2,7 +2,10 @@
 
 #define LOGGER_TAG "[block.project_euler]"
 
-// Local header
+// C++ headers
+#include <cstdint>
+
+// Local headers
 #include "problem.hpp"
 
 // Add a prime number to the vector

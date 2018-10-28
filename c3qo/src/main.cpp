@@ -5,6 +5,12 @@
 // Project headers
 #include "c3qo/manager.hpp"
 
+// C headers
+extern "C"
+{
+#include <signal.h>
+}
+
 extern char *optarg; // Comes with getopt
 
 bool end_signal_received = false;

@@ -4,6 +4,15 @@
 // Project headers
 #include "utils/include.hpp"
 
+// C headers
+extern "C"
+{
+#include <syslog.h>
+}
+
+// C++ headers
+#include <tuple>
+
 // Open and close connection to syslog
 #define LOGGER_OPEN(name) openlog(name, 0, 0);
 #define LOGGER_CLOSE() closelog();
