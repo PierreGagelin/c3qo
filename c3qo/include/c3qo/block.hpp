@@ -125,7 +125,6 @@ struct block
     virtual void bind_(int port, int bk_id);
     virtual void start_();
     virtual void stop_();
-    virtual size_t get_stats_(char *buf, size_t len);
     virtual int rx_(void *vdata);
     virtual int tx_(void *vdata);
     virtual int ctrl_(void *vnotif);

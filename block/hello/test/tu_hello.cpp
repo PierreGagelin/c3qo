@@ -36,8 +36,6 @@ TEST_F(tu_hello, hello)
 {
     struct hello block(&mgr_);
     char conf[] = "hello from TU";
-    char stats[] = "useless value";
-    int count;
 
     // configure and start the block
     block.conf_(conf);
@@ -56,10 +54,8 @@ TEST_F(tu_hello, hello)
     // Do not forward notification
     EXPECT_EQ(block.ctrl_(nullptr), 0);
 
-    // Block should count 16 data (2 characters)
-    EXPECT_EQ(block.get_stats_(stats, sizeof(stats)), 2u);
-    count = atoi(stats);
-    EXPECT_EQ(count, 16);
+    // Block should count 16 data
+    EXPECT_EQ(block.count_, 16);
 
     // Stop block
     block.stop_();
@@ -71,18 +67,10 @@ TEST_F(tu_hello, hello)
 TEST_F(tu_hello, error)
 {
     struct hello block(&mgr_);
-    char stats[] = "lol";
 
     // We do not want to see ERROR level as it's expected
     logger_set_level(LOGGER_LEVEL_CRIT);
 
     // Configure without a configuration
     block.conf_(nullptr);
-
-    // Get statistics without buffer
-    EXPECT_EQ(block.get_stats_(nullptr, 4u), 0u);
-    EXPECT_EQ(block.get_stats_(stats, 0u), 0u);
-
-    // Get statistics with a short buffer
-    EXPECT_EQ(block.get_stats_(stats, 1u), 0u);
 }

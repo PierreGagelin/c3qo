@@ -22,7 +22,6 @@ struct hello : block
     virtual void conf_(char *conf) override final;
     virtual void start_() override final;
     virtual void stop_() override final;
-    virtual size_t get_stats_(char *buf, size_t len) override final;
     virtual int rx_(void *vdata) override final;
     virtual int tx_(void *vdata) override final;
     virtual int ctrl_(void *vnotif) override final;

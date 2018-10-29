@@ -5,6 +5,7 @@
 #define LOGGER_TAG "[TU.c3qo.perf]"
 
 // Project headers
+#include "block/hello.hpp"
 #include "c3qo/tu.hpp"
 
 class tu_perf : public testing::Test
@@ -79,16 +80,11 @@ TEST_F(tu_perf, commutation)
     // Verify that buffers crossed bk_2 to the last block
     for (size_t i = 2; i < nb_block + 1; i++)
     {
-        struct block *bi;
-        char buf[16];
-        size_t count;
+        struct hello *bi;
 
-        bi = mgr_.block_get(i);
+        bi = static_cast<struct hello *>(mgr_.block_get(i));
         ASSERT_NE(bi, nullptr);
-
-        bi->get_stats_(buf, sizeof(buf));
-        count = static_cast<size_t>(std::stoul(buf));
-        EXPECT_EQ(count, nb_buf);
+        EXPECT_EQ(bi->count_, static_cast<int>(nb_buf));
     }
 
     // Clean blocks

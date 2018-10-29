@@ -95,7 +95,6 @@ void block::conf_(char *) {}
 void block::bind_(int, int) {}
 void block::start_() {}
 void block::stop_() {}
-size_t block::get_stats_(char *, size_t) { return 0u; }
 int block::rx_(void *) { return 0; }
 int block::tx_(void *) { return 0; }
 int block::ctrl_(void *) { return 0; }

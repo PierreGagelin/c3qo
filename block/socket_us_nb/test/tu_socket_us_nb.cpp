@@ -57,8 +57,6 @@ TEST_F(tu_socket_us_nb, connect)
 {
     struct server_us_nb server(&mgr_);
     struct client_us_nb client(&mgr_);
-    char stats[16]; // buffer to retrieve statistics
-    int fd_count;   // count of file descriptor handled by the server
 
     server.init_();
     client.init_();
@@ -67,12 +65,9 @@ TEST_F(tu_socket_us_nb, connect)
     client.start_();
 
     // Trigger client connection to the server
+    EXPECT_EQ(server.clients_.size(), 0u);
     mgr_.fd_poll();
-
-    // Verify that server has a new client
-    server.get_stats_(stats, sizeof(stats));
-    fd_count = atoi(stats);
-    EXPECT_EQ(fd_count, 1);
+    EXPECT_EQ(server.clients_.size(), 1u);
 
     client.stop_();
     server.stop_();

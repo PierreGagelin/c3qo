@@ -172,42 +172,6 @@ void server_us_nb::stop_()
     unlink(SOCKET_NAME);
 }
 
-//
-// @brief Dump statistics of the block in a string
-//
-// @param buf : String to dump statistics
-// @param len : Size of the string
-//
-// @return Actual size written
-//
-size_t server_us_nb::get_stats_(char *buf, size_t len)
-{
-    int ret;
-    size_t count;
-
-    LOGGER_DEBUG("Get block statistics [bk_id=%d ; buf=%p ; len=%zu]", id_, buf, len);
-
-    ret = snprintf(buf, len, "%zu", clients_.size());
-    if (ret < 0)
-    {
-        LOGGER_ERR("Failed snprintf [bk_id=%d ; buf=%p ; len=%zu]", id_, buf, len);
-        return 0;
-    }
-    else
-    {
-        count = static_cast<size_t>(ret);
-    }
-
-    if (count > len)
-    {
-        return len;
-    }
-    else
-    {
-        return count;
-    }
-}
-
 int server_us_nb::tx_(void *vdata)
 {
     LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", id_, vdata);

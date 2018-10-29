@@ -3,6 +3,7 @@
 //
 
 // Project headers
+#include "block/hello.hpp"
 #include "c3qo/tu.hpp"
 
 // Generic purpose block structure
@@ -43,7 +44,6 @@ TEST_F(tu_manager_bk, block)
     bk.bind_(0, 0);
     bk.start_();
     bk.stop_();
-    EXPECT_EQ(bk.get_stats_(nullptr, 0u), 0u);
     EXPECT_EQ(bk.rx_(nullptr), 0);
     EXPECT_EQ(bk.tx_(nullptr), 0);
     EXPECT_EQ(bk.ctrl_(nullptr), 0);
@@ -56,10 +56,9 @@ TEST_F(tu_manager_bk, block)
 //
 TEST_F(tu_manager_bk, flow)
 {
-    struct block *bk_1;
-    struct block *bk_2;
-    char stats[] = "useless value";
-    int count;
+    struct hello *bk_1;
+    struct hello *bk_2;
+    char notif[] = "dummy value";
 
     // Add, initialize and start 2 blocks
     for (int i = 1; i < 3; i++)
@@ -79,29 +78,21 @@ TEST_F(tu_manager_bk, flow)
     }
 
     // Retrieve block 1 and block 2
-    bk_1 = mgr_.block_get(1);
-    bk_2 = mgr_.block_get(2);
+    bk_1 = static_cast<struct hello *>(mgr_.block_get(1));
+    bk_2 = static_cast<struct hello *>(mgr_.block_get(2));
     ASSERT_NE(bk_1, nullptr);
     ASSERT_NE(bk_2, nullptr);
 
     // No data should have gone through blocks
-    bk_1->get_stats_(stats, sizeof(stats));
-    count = atoi(stats);
-    EXPECT_TRUE(count == 0);
-    bk_2->get_stats_(stats, sizeof(stats));
-    count = atoi(stats);
-    EXPECT_TRUE(count == 0);
+    EXPECT_EQ(bk_1->count_, 0);
+    EXPECT_EQ(bk_2->count_, 0);
 
     // Notify the block to generate a TX data flow: it shall return 0
-    EXPECT_TRUE(bk_1->ctrl_(stats) == 0);
+    EXPECT_EQ(bk_1->ctrl_(notif), 0);
 
     // A buffer should have crossed block 2
-    bk_1->get_stats_(stats, sizeof(stats));
-    count = atoi(stats);
-    EXPECT_EQ(count, 0);
-    bk_2->get_stats_(stats, sizeof(stats));
-    count = atoi(stats);
-    EXPECT_EQ(count, 1);
+    EXPECT_EQ(bk_1->count_, 0);
+    EXPECT_EQ(bk_2->count_, 1);
 
     // Clear blocks
     mgr_.block_clear();
