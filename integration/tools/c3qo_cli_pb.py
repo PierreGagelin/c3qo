@@ -5,6 +5,7 @@ import zmq
 
 # Protobuf generated file
 import block_pb2
+import conf_pb2
 
 # Disable bytecode
 sys.dont_write_bytecode = 1
@@ -18,7 +19,30 @@ poller = zmq.Poller()
 poller.register(sock, zmq.POLLIN)
 
 # Connect to c3qo
-sock.connect('tcp://127.0.0.1:1664')
+sock.connect('tcp://127.0.0.1:5555')
+
+def send_pbc_cmd(cmd_type, bk_id, bk_arg = ""):
+    """
+    Send a protobuf management command
+    """
+    topic = b"CONF.PROTO.CMD"
+    data = conf_pb2.pbc_cmd()
+
+    # customize
+    data.type = cmd_type
+    data.block_id = bk_id
+    data.block_arg = bk_arg
+
+    data = data.SerializeToString()
+    msg_parts = [topic, data]
+    sock.send_multipart(msg_parts)
+
+# Send management commands to c3qo
+send_pbc_cmd(conf_pb2.pbc_cmd.CMD_ADD, 1, "hello")
+send_pbc_cmd(conf_pb2.pbc_cmd.CMD_INIT, 1)
+send_pbc_cmd(conf_pb2.pbc_cmd.CMD_START, 1)
+send_pbc_cmd(conf_pb2.pbc_cmd.CMD_STOP, 1)
+
 
 # Send a stats request
 topic = b"STATS"

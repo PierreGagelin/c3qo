@@ -13,3 +13,9 @@ add_custom_target(block_pb_py ALL
                   COMMAND cp ${PROTO_SRCS_PY} ${CMAKE_CURRENT_BINARY_DIR}/tools/
                   DEPENDS ${PROTO_SRCS_PY})
 install(FILES ${PROTO_SRCS_PY} DESTINATION test)
+
+protobuf_generate_python(PROTO_SRCS_PY ../c3qo/src/conf.proto)
+add_custom_target(conf_pb_py ALL
+                  COMMAND cp ${PROTO_SRCS_PY} ${CMAKE_CURRENT_BINARY_DIR}/tools/
+                  DEPENDS ${PROTO_SRCS_PY})
+install(FILES ${PROTO_SRCS_PY} DESTINATION test)
