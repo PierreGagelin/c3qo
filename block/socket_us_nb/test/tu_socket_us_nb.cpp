@@ -58,9 +58,6 @@ TEST_F(tu_socket_us_nb, connect)
     struct server_us_nb server(&mgr_);
     struct client_us_nb client(&mgr_);
 
-    server.init_();
-    client.init_();
-
     server.start_();
     client.start_();
 
@@ -90,12 +87,6 @@ TEST_F(tu_socket_us_nb, multi_connect)
         client_us_nb(&mgr_),
         client_us_nb(&mgr_),
         client_us_nb(&mgr_)};
-
-    server.init_();
-    for (int i = 0; i < 10; i++)
-    {
-        client[i].init_();
-    }
 
     server.start_();
     for (int i = 0; i < 10; i++)

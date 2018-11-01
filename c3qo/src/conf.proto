@@ -5,11 +5,11 @@ message pbc_cmd
     enum cmd_type
     {
         CMD_ADD = 1;
-        CMD_INIT = 2;
-        CMD_CONF = 3;
-        CMD_BIND = 4;
-        CMD_START = 5;
-        CMD_STOP = 6;
+        CMD_START = 2;
+        CMD_STOP = 3;
+        CMD_DEL = 4;
+        CMD_CONF = 5;
+        CMD_BIND = 6;
     }
     required cmd_type type = 1;
     optional int32 block_id = 2;

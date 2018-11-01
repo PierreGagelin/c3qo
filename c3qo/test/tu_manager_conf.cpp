@@ -51,11 +51,6 @@ TEST_F(tu_manager_conf, conf)
     file << CMD_ADD << "   3    client_us_nb " << std::endl;
     file << CMD_ADD << "   4    server_us_nb " << std::endl;
 
-    file << CMD_INIT << "  1 " << std::endl;
-    file << CMD_INIT << "  2 " << std::endl;
-    file << CMD_INIT << "  3 " << std::endl;
-    file << CMD_INIT << "  4 " << std::endl;
-
     file << CMD_CONF << "  1  hello_1 " << std::endl;
     file << CMD_CONF << "  2  hello_2 " << std::endl;
 
@@ -156,8 +151,8 @@ TEST_F(tu_manager_conf, errors)
             break;
 
         case 2:
-            // Initialize an unexisting block
-            file << CMD_INIT << " 4 no_arg" << std::endl;
+            // Delete an unexisting block
+            file << CMD_DEL << " 4 no_arg" << std::endl;
             break;
 
         case 3:
@@ -230,20 +225,20 @@ bool tu_manager_conf::proto_cmd_send(int block_id, PbcCmd__CmdType cmd_type, con
         case PBC_CMD__CMD_TYPE__CMD_ADD:
             filename = "/tmp/pbc_add.txt";
             break;
-        case PBC_CMD__CMD_TYPE__CMD_INIT:
-            filename = "/tmp/pbc_init.txt";
+        case PBC_CMD__CMD_TYPE__CMD_START:
+            filename = "/tmp/pbc_start.txt";
+            break;
+        case PBC_CMD__CMD_TYPE__CMD_STOP:
+            filename = "/tmp/pbc_stop.txt";
+            break;
+        case PBC_CMD__CMD_TYPE__CMD_DEL:
+            filename = "/tmp/pbc_del.txt";
             break;
         case PBC_CMD__CMD_TYPE__CMD_CONF:
             filename = "/tmp/pbc_conf.txt";
             break;
         case PBC_CMD__CMD_TYPE__CMD_BIND:
             filename = "/tmp/pbc_bind.txt";
-            break;
-        case PBC_CMD__CMD_TYPE__CMD_START:
-            filename = "/tmp/pbc_start.txt";
-            break;
-        case PBC_CMD__CMD_TYPE__CMD_STOP:
-            filename = "/tmp/pbc_stop.txt";
             break;
         default:
             ASSERT(false);
@@ -275,9 +270,6 @@ TEST_F(tu_manager_conf, pbc_conf)
     bk = mgr_.block_get(bk_id);
     EXPECT_NE(bk, nullptr);
 
-    EXPECT_TRUE(proto_cmd_send(bk_id, PBC_CMD__CMD_TYPE__CMD_INIT, ""));
-    EXPECT_EQ(bk->state_, STATE_INIT);
-
     EXPECT_TRUE(proto_cmd_send(bk_id, PBC_CMD__CMD_TYPE__CMD_CONF, "my_name_is"));
     EXPECT_TRUE(proto_cmd_send(bk_id, PBC_CMD__CMD_TYPE__CMD_BIND, "2:5"));
 
@@ -286,6 +278,9 @@ TEST_F(tu_manager_conf, pbc_conf)
 
     EXPECT_TRUE(proto_cmd_send(bk_id, PBC_CMD__CMD_TYPE__CMD_STOP, ""));
     EXPECT_EQ(bk->state_, STATE_STOP);
+
+    EXPECT_TRUE(proto_cmd_send(bk_id, PBC_CMD__CMD_TYPE__CMD_DEL, ""));
+    EXPECT_EQ(mgr_.block_get(bk_id), nullptr);
 }
 
 TEST_F(tu_manager_conf, error)

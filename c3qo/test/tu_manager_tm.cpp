@@ -49,41 +49,22 @@ public:
 TEST_F(tu_manager_tm, expiration)
 {
     struct timer t;
-    char arg[8] = "world";
+    char dummy[8] = "dummy";
 
-    // Register a 40 ms timer
+    // Register a 1 ms timer
     t.tid = 0;
     t.bk = &block_;
-    t.arg = arg;
+    t.arg = dummy;
     t.time.tv_sec = 0;
-    t.time.tv_nsec = 40 * 1000 * 1000;
+    t.time.tv_nsec = 1 * 1000 * 1000;
     EXPECT_EQ(mgr_.timer_add(t), true);
 
     // Verify timer expiration
-    for (int i = 0; i < 4; i++)
-    {
-        struct timeval sleep;
-
-        // Sleep 10 ms
-        sleep.tv_sec = 0;
-        sleep.tv_usec = 10 * 1000;
-        EXPECT_EQ(select(0, nullptr, nullptr, nullptr, &sleep), 0);
-
-        // Check timer expiration
-        mgr_.timer_check_exp();
-
-        if (i < 3)
-        {
-            // Timer shouldn't have expired but this
-            // isn't real-time system, we can't assure it
-        }
-        else
-        {
-            // Timer should have expired
-            ASSERT_EQ(block_.zozo_l_asticot_.size(), 1lu);
-            EXPECT_EQ(block_.zozo_l_asticot_[0], std::string(arg));
-        }
-    }
+    // We can't verify it doesn't expire earlier
+    // because it's not a real-time system
+    usleep(1 * 1000);
+    mgr_.timer_check_exp();
+    EXPECT_EQ(block_.zozo_l_asticot_.size(), 1u);
 }
 
 //
@@ -94,72 +75,69 @@ TEST_F(tu_manager_tm, order)
     struct timer t_0;
     struct timer t_1;
     struct timer t_2;
-    struct timespec time_start;
-    struct timespec time_cur;
     char arg[3][8] = {"timer0", "timer1", "timer2"};
 
-    // Get system time
-    ASSERT_NE(clock_gettime(CLOCK_REALTIME, &time_start), -1);
-
     // Register three timers:
-    //   - 40ms
-    //   - 80ms
-    //   - 120ms
+    //   - 1ms
+    //   - 2ms
+    //   - 3ms
     // Insert them in the wrong order
+    // Hope it takes less than 1ms to register
     t_0.bk = &block_;
     t_0.tid = 0;
     t_0.arg = arg[0];
     t_0.time.tv_sec = 0;
-    t_0.time.tv_nsec = 40 * 1000 * 1000;
+    t_0.time.tv_nsec = 1 * 1000 * 1000;
     t_1.bk = &block_;
     t_1.tid = 1;
     t_1.arg = arg[1];
     t_1.time.tv_sec = 0;
-    t_1.time.tv_nsec = 80 * 1000 * 1000;
+    t_1.time.tv_nsec = 2 * 1000 * 1000;
     t_2.bk = &block_;
     t_2.tid = 2;
     t_2.arg = arg[2];
     t_2.time.tv_sec = 0;
-    t_2.time.tv_nsec = 120 * 1000 * 1000;
+    t_2.time.tv_nsec = 3 * 1000 * 1000;
     EXPECT_EQ(mgr_.timer_add(t_2), true);
     EXPECT_EQ(mgr_.timer_add(t_0), true);
     EXPECT_EQ(mgr_.timer_add(t_1), true);
 
     // Verify the order of expiration
-    for (int i = 0; i < 6; i++)
+    usleep(3 * 1000);
+    mgr_.timer_check_exp();
+    ASSERT_EQ(block_.zozo_l_asticot_.size(), 3lu);
+    EXPECT_EQ(block_.zozo_l_asticot_[0], std::string(arg[0]));
+    EXPECT_EQ(block_.zozo_l_asticot_[1], std::string(arg[1]));
+    EXPECT_EQ(block_.zozo_l_asticot_[2], std::string(arg[2]));
+
+    // Check struct timer operator<
     {
-        struct timeval sleep;
+        struct timer a;
+        struct timer b;
 
-        // Sleep 20 ms
-        sleep.tv_sec = 0;
-        sleep.tv_usec = 20 * 1000;
-        EXPECT_EQ(select(0, nullptr, nullptr, nullptr, &sleep), 0);
+        // Compare sec
+        a.time.tv_sec = 0;
+        a.time.tv_nsec = 0;
+        b.time.tv_sec = 1;
+        b.time.tv_nsec = 0;
+        EXPECT_TRUE(a < b);
+        EXPECT_FALSE(b < a);
 
-        // Check timer expiration
-        ASSERT_NE(clock_gettime(CLOCK_REALTIME, &time_cur), -1);
-        mgr_.timer_check_exp();
+        // Compare sec then nsec
+        a.time.tv_sec = 1;
+        a.time.tv_nsec = 0;
+        b.time.tv_sec = 1;
+        b.time.tv_nsec = 1;
+        EXPECT_TRUE(a < b);
+        EXPECT_FALSE(b < a);
 
-        ASSERT_LT(time_start, time_cur);
-
-        time_cur.tv_sec -= time_start.tv_sec;
-        time_cur.tv_nsec -= time_start.tv_nsec;
-
-        // Wrap microseconds value to be both in range and positive
-        time_cur.tv_sec -= time_start.tv_nsec / NSEC_MAX;
-        time_cur.tv_nsec = time_start.tv_nsec % NSEC_MAX;
-
-        if (i < 5)
-        {
-            // Timers shouldn't have all expired
-        }
-        else
-        {
-            // Timers should have expired
-            ASSERT_EQ(block_.zozo_l_asticot_.size(), 3lu);
-            EXPECT_EQ(block_.zozo_l_asticot_[0], std::string(arg[0]));
-            EXPECT_EQ(block_.zozo_l_asticot_[1], std::string(arg[1]));
-            EXPECT_EQ(block_.zozo_l_asticot_[2], std::string(arg[2]));
-        }
+        // Compare sec then nsec
+        a.time.tv_sec = 1;
+        a.time.tv_nsec = 0;
+        b.time.tv_sec = 1;
+        b.time.tv_nsec = 0;
+        EXPECT_FALSE(a < b);
+        EXPECT_FALSE(b < a);
     }
 }
 
@@ -169,43 +147,62 @@ TEST_F(tu_manager_tm, order)
 TEST_F(tu_manager_tm, id)
 {
     struct timer t;
-    char arg[8] = "world";
+    char arg[] = "expected";
+    char dummy[] = "dummy";
 
     // Register two timers with the same ID:
-    //   - 2000ms
-    //   - 30ms
     t.bk = &block_;
     t.tid = 0;
+    t.time.tv_sec = 0;
+    t.time.tv_nsec = 1 * 1000 * 1000;
+
+    t.arg = dummy;
+    EXPECT_EQ(mgr_.timer_add(t), true);
     t.arg = arg;
-    t.time.tv_sec = 0;
-    t.time.tv_nsec = 2 * 1000 * 1000 * 1000;
-    EXPECT_EQ(mgr_.timer_add(t), true);
-    t.time.tv_sec = 0;
-    t.time.tv_nsec = 30 * 1000 * 1000;
     EXPECT_EQ(mgr_.timer_add(t), true);
 
-    // Verify only the 30ms is kept
-    for (int i = 0; i < 4; i++)
-    {
-        struct timeval sleep;
+    // Verify only the 1ms is kept and expired
+    usleep(1 * 1000);
+    mgr_.timer_check_exp();
+    ASSERT_GT(block_.zozo_l_asticot_.size(), 0u);
+    EXPECT_EQ(block_.zozo_l_asticot_.size(), 1u);
+    EXPECT_EQ(block_.zozo_l_asticot_[0], std::string(arg));
+}
 
-        // Sleep 10 ms
-        sleep.tv_sec = 0;
-        sleep.tv_usec = 10 * 1000;
-        EXPECT_EQ(select(0, nullptr, nullptr, nullptr, &sleep), 0);
+//
+// @brief Timer removal
+//
+TEST_F(tu_manager_tm, del)
+{
+    struct timer t;
+    char dummy[8] = "dummy";
 
-        // Check timer expiration
-        mgr_.timer_check_exp();
+    // Register several different timers
+    t.bk = &block_;
+    t.tid = 0;
+    t.arg = dummy;
+    t.time.tv_sec = 0;
+    t.time.tv_nsec = 1 * 1000 * 1000;
+    EXPECT_EQ(mgr_.timer_add(t), true);
 
-        if (i < 2)
-        {
-            // Timer shouldn't have expired
-        }
-        else
-        {
-            // Timer should expire
-            ASSERT_EQ(block_.zozo_l_asticot_.size(), 1lu);
-            EXPECT_EQ(block_.zozo_l_asticot_[0], std::string(arg));
-        }
-    }
+    // Remove the timer
+    mgr_.timer_del(t);
+
+    // Verify that it does not expire
+    usleep(1 * 1000);
+    mgr_.timer_check_exp();
+    EXPECT_EQ(block_.zozo_l_asticot_.size(), 0u);
+}
+
+//
+// @brief Timer error conditions
+//
+TEST_F(tu_manager_tm, error)
+{
+    // Hide logs as errors are normal
+    logger_set_level(LOGGER_LEVEL_NONE);
+
+    struct timer t;
+    t.bk = nullptr;
+    EXPECT_EQ(mgr_.timer_add(t), false);
 }

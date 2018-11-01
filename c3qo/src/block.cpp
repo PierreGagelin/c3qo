@@ -13,23 +13,20 @@ const char *bk_cmd_to_string(enum bk_cmd t)
     case CMD_ADD:
         return "BLOCK_COMMAND_ADD";
 
-    case CMD_INIT:
-        return "BLOCK_COMMAND_INIT";
-
-    case CMD_CONF:
-        return "BLOCK_COMMAND_CONF";
-
-    case CMD_BIND:
-        return "BLOCK_COMMAND_BIND";
-
     case CMD_START:
         return "BLOCK_COMMAND_START";
 
     case CMD_STOP:
         return "BLOCK_COMMAND_STOP";
 
-    case CMD_STATS:
-        return "BLOCK_COMMAND_STATS";
+    case CMD_DEL:
+        return "BLOCK_COMMAND_DEL";
+
+    case CMD_CONF:
+        return "BLOCK_COMMAND_CONF";
+
+    case CMD_BIND:
+        return "BLOCK_COMMAND_BIND";
 
     default:
         return "BLOCK_COMMAND_UNKOWN";
@@ -45,9 +42,6 @@ const char *bk_state_to_string(enum bk_state t)
     {
     case STATE_STOP:
         return "BLOCK_STATE_STOPPED";
-
-    case STATE_INIT:
-        return "BLOCK_STATE_INITIALIZED";
 
     case STATE_START:
         return "BLOCK_STATE_STARTED";
@@ -90,7 +84,6 @@ block::block(struct manager *mgr) : id_(0), state_(STATE_STOP), mgr_(mgr) {}
 block::~block() {}
 
 // Management interface default implementation
-void block::init_() {}
 void block::conf_(char *) {}
 void block::bind_(int, int) {}
 void block::start_() {}
@@ -194,7 +187,8 @@ void block::process_flow_(int port, void *data, enum flow_type type)
             break;
 
         default:
-            LOGGER_WARNING("Could not continue data flow: unknown flow type value [bk_id=%d ; data=%p ; flow_type=%d]", src->id_, data, type);
+            LOGGER_ERR("Failed to flow data: unknown flow type [bk_id=%d ; data=%p ; flow_type=%d]",
+                       src->id_, data, type);
             return;
         }
     }

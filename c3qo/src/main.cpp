@@ -43,10 +43,8 @@ int main(int argc, char **argv)
         switch (opt)
         {
         case 'h':
-        {
             LOGGER_DEBUG("CLI help: lol, help is for the weaks");
-        }
-        break;
+            return 0;
 
         case 'f':
         {
@@ -75,26 +73,21 @@ int main(int argc, char **argv)
 
         default:
             LOGGER_ERR("CLI argument error");
+            break;
         }
     }
+
+    // Add the ZMQ monitoring server
+    mgr.block_add(-1, "zmq_pair");
+    char conf[] = "type=server addr=tcp://127.0.0.1:1664";
+    mgr.block_conf(-1, conf);
+    mgr.block_start(-1);
 
     // Parse configuration file
     if (filename != nullptr)
     {
-        bool conf;
-
-        conf = mgr.conf_parse(filename);
-        if (conf == false)
-        {
-            // We don't care, it will be configured from socket
-        }
+        mgr.conf_parse(filename);
     }
-
-    mgr.block_add(-1, "zmq_pair");
-    mgr.block_init(-1);
-    char conf[] = "type=server addr=tcp://127.0.0.1:5555";
-    mgr.block_conf(-1, conf);
-    mgr.block_start(-1);
 
     // Register a signal handler
     {

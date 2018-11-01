@@ -6,7 +6,9 @@
 #include "utils/logger.hpp"
 
 //
-// Macro to "register" a block: access to class constructor and destructor via dlopen / dlsym
+// Macro to "register" a block
+// Gives access to a constructor
+// Destructor is handled by virtual inheritance
 //
 #define BLOCK_REGISTER(name)                              \
     extern "C"                                            \
@@ -14,10 +16,6 @@
         struct block *name##_create(struct manager *mgr_) \
         {                                                 \
             return new struct name(mgr_);                 \
-        }                                                 \
-        void name##_destroy(struct block *bk_)            \
-        {                                                 \
-            delete static_cast<struct name *>(bk_);       \
         }                                                 \
     }
 
@@ -32,12 +30,11 @@ enum bk_cmd
 {
     CMD_UNKNOWN,
     CMD_ADD,   // Create a block
-    CMD_INIT,  // Initialize a block
     CMD_CONF,  // Configure a block
     CMD_BIND,  // Bind a block to another
     CMD_START, // Start a block
     CMD_STOP,  // Stop a block
-    CMD_STATS, // Retrieve block's statistics
+    CMD_DEL,   // Delete a block
 };
 const char *bk_cmd_to_string(enum bk_cmd t);
 
@@ -49,7 +46,6 @@ const char *bk_cmd_to_string(enum bk_cmd t);
 enum bk_state
 {
     STATE_STOP,  // Block is stopped
-    STATE_INIT,  // Block is initialized
     STATE_START, // Block is started
 };
 const char *bk_state_to_string(enum bk_state t);
@@ -119,21 +115,22 @@ struct block
     explicit block(struct manager *mgr);
     virtual ~block() = 0;
 
-    // Block management interface default implementation
-    virtual void init_();
+    // Management callbacks
     virtual void conf_(char *conf);
     virtual void bind_(int port, int bk_id);
     virtual void start_();
     virtual void stop_();
-    virtual int rx_(void *vdata);
-    virtual int tx_(void *vdata);
-    virtual int ctrl_(void *vnotif);
 
     // Timer callback
     virtual void on_timer_(struct timer &tm);
 
     // File descriptor callback
     virtual void on_fd_(struct file_desc &fd);
+
+    // Data callbacks
+    virtual int rx_(void *vdata);
+    virtual int tx_(void *vdata);
+    virtual int ctrl_(void *vnotif);
 
     // Data flow methods
     void process_rx_(int port, void *data);

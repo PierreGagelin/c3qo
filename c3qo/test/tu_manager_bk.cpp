@@ -39,14 +39,20 @@ TEST_F(tu_manager_bk, block)
 {
     struct block_derived bk(&mgr_);
 
-    bk.init_();
     bk.conf_(nullptr);
     bk.bind_(0, 0);
     bk.start_();
     bk.stop_();
+
     EXPECT_EQ(bk.rx_(nullptr), 0);
     EXPECT_EQ(bk.tx_(nullptr), 0);
     EXPECT_EQ(bk.ctrl_(nullptr), 0);
+
+    struct timer t;
+    bk.on_timer_(t);
+
+    struct file_desc f;
+    bk.on_fd_(f);
 }
 
 //
@@ -64,7 +70,6 @@ TEST_F(tu_manager_bk, flow)
     for (int i = 1; i < 3; i++)
     {
         EXPECT_EQ(mgr_.block_add(i, "hello"), true);
-        EXPECT_EQ(mgr_.block_init(i), true);
         EXPECT_EQ(mgr_.block_start(i), true);
     }
 
@@ -105,7 +110,8 @@ TEST_F(tu_manager_bk, strings)
 {
     for (int i = 0; i < 10; i++)
     {
-        bk_cmd_to_string((enum bk_cmd)i);
-        bk_state_to_string((enum bk_state)i);
+        bk_cmd_to_string(static_cast<enum bk_cmd>(i));
+        bk_state_to_string(static_cast<enum bk_state>(i));
+        flow_type_to_string(static_cast<enum flow_type>(i));
     }
 }

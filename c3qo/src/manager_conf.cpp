@@ -35,9 +35,17 @@ bool manager::conf_exec_cmd(enum bk_cmd cmd, int id, char *arg)
 
         return block_add(id, arg);
     }
-    case CMD_INIT:
+    case CMD_START:
     {
-        return block_init(id);
+        return block_start(id);
+    }
+    case CMD_STOP:
+    {
+        return block_stop(id);
+    }
+    case CMD_DEL:
+    {
+        return block_del(id);
     }
     case CMD_CONF:
     {
@@ -70,14 +78,6 @@ bool manager::conf_exec_cmd(enum bk_cmd cmd, int id, char *arg)
         }
 
         return block_bind(id, port, dest);
-    }
-    case CMD_START:
-    {
-        return block_start(id);
-    }
-    case CMD_STOP:
-    {
-        return block_stop(id);
     }
     default:
         // Ignore this entry
@@ -269,16 +269,16 @@ static enum bk_cmd pbc_cmd_type_to_bk_cmd(PbcCmd__CmdType type)
     {
     case PBC_CMD__CMD_TYPE__CMD_ADD:
         return CMD_ADD;
-    case PBC_CMD__CMD_TYPE__CMD_INIT:
-        return CMD_INIT;
-    case PBC_CMD__CMD_TYPE__CMD_CONF:
-        return CMD_CONF;
-    case PBC_CMD__CMD_TYPE__CMD_BIND:
-        return CMD_BIND;
     case PBC_CMD__CMD_TYPE__CMD_START:
         return CMD_START;
     case PBC_CMD__CMD_TYPE__CMD_STOP:
         return CMD_STOP;
+    case PBC_CMD__CMD_TYPE__CMD_DEL:
+        return CMD_DEL;
+    case PBC_CMD__CMD_TYPE__CMD_CONF:
+        return CMD_CONF;
+    case PBC_CMD__CMD_TYPE__CMD_BIND:
+        return CMD_BIND;
     default:
         LOGGER_ERR("Failed to get bk_cmd: unknown pbc_cmd type [type=%d]", type);
         return CMD_UNKNOWN;

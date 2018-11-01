@@ -35,10 +35,15 @@ bool manager::block_add(int id, const char *type)
     void *handle;
     struct block *bk;
 
-    // Retrieve block identifier
+    // Check input
     if (id == 0)
     {
         LOGGER_ERR("Failed to add block: forbidden block ID [bk_id=%d ; bk_type=%s]", id, type);
+        return false;
+    }
+    if (block_get(id) != nullptr)
+    {
+        LOGGER_ERR("Failed to add block: block already exists [bk_id=%d]", id);
         return false;
     }
 
@@ -53,7 +58,8 @@ bool manager::block_add(int id, const char *type)
     constructor = reinterpret_cast<struct block *(*)(struct manager *)>(dlsym(handle, ctor_name.c_str()));
     if (constructor == nullptr)
     {
-        LOGGER_ERR("Failed to add block: couldn't load constructor [bk_id=%d ; bk_type=%s ; ctor_symbol=%s]", id, type, ctor_name.c_str());
+        LOGGER_ERR("Failed to add block: couldn't load constructor [bk_id=%d ; bk_type=%s ; ctor_symbol=%s]",
+                   id, type, ctor_name.c_str());
         goto err;
     }
     bk = constructor(this);
@@ -69,7 +75,6 @@ bool manager::block_add(int id, const char *type)
 
     LOGGER_INFO("Add block [bk_id=%d ; bk_type=%s]", bk->id_, bk->type_.c_str());
 
-    block_del(id);
     bk_map_.insert({id, bk});
 
     dlclose(handle);
@@ -77,108 +82,6 @@ bool manager::block_add(int id, const char *type)
 err:
     dlclose(handle);
     return false;
-}
-
-//
-// @brief Initialize a block
-//
-bool manager::block_init(int id)
-{
-    // Find the block concerned by the command
-    const auto &it = bk_map_.find(id);
-    if (it == bk_map_.end())
-    {
-        LOGGER_WARNING("Cannot initialize block: unknown block ID [bk_id=%d]", id);
-        return false;
-    }
-
-    // Verify block state
-    switch (it->second->state_)
-    {
-    case STATE_STOP:
-        // Normal case
-        break;
-
-    default:
-        LOGGER_WARNING("Cannot initialize block: block not stopped [bk_id=%d ; bk_state=%s]", id, bk_state_to_string(it->second->state_));
-        return false;
-    }
-
-    LOGGER_INFO("Initialize block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second->id_, it->second->type_.c_str(), bk_state_to_string(STATE_INIT));
-
-    it->second->id_ = id;
-    it->second->state_ = STATE_INIT;
-
-    it->second->init_();
-
-    return true;
-}
-
-//
-// @brief Configure a block
-//
-bool manager::block_conf(int id, char *conf)
-{
-    // Find the block concerned by the command
-    const auto &it = bk_map_.find(id);
-    if (it == bk_map_.end())
-    {
-        LOGGER_WARNING("Cannot configure block: unknown block ID [bk_id=%d]", id);
-        return false;
-    }
-
-    if (it->second->state_ == STATE_STOP)
-    {
-        LOGGER_WARNING("Cannot configure block: block stopped [bk_id=%d]", id);
-        return false;
-    }
-
-    LOGGER_INFO("Configure block [bk_id=%d ; bk_type=%s ; conf=%s]", id, it->second->type_.c_str(), conf);
-
-
-    it->second->conf_(conf);
-
-    return true;
-}
-
-//
-// @brief Bind a block
-//
-bool manager::block_bind(int id, int port, int bk_id)
-{
-    struct bind_info bind;
-
-    // Find the block concerned by the command
-    const auto &source = bk_map_.find(id);
-    const auto &end = bk_map_.end();
-    if (source == end)
-    {
-        LOGGER_WARNING("Cannot bind block: unknown source [bk_id=%d]", id);
-        return false;
-    }
-
-    if (source->second->state_ == STATE_STOP)
-    {
-        LOGGER_WARNING("Cannot bind block: block stopped [bk_id=%d]", id);
-        return false;
-    }
-
-    LOGGER_INFO("Bind block [bk_id=%d ; port=%d ; bk_id_dest=%d]", source->first, port, bk_id);
-
-    source->second->bind_(port, bk_id);
-
-    // Add a binding in the engine with a weak reference to the block
-    // If the block does not exist, we just let it undefined
-    const auto &dest = bk_map_.find(bk_id);
-    if (dest != end)
-    {
-        bind.bk = dest->second;
-    }
-    bind.port = port;
-    bind.bk_id = bk_id;
-    source->second->binds_.push_back(bind);
-
-    return true;
 }
 
 //
@@ -195,18 +98,14 @@ bool manager::block_start(int id)
     }
 
     // Verify block state
-    switch (it->second->state_)
+    if (it->second->state_ == STATE_START)
     {
-    case STATE_INIT:
-        // Normal case
-        break;
-
-    default:
-        LOGGER_WARNING("Cannot start block: block not initialized [bk_id=%d ; bk_state=%s]", id, bk_state_to_string(it->second->state_));
-        return false;
+        // Nothing to do
+        return true;
     }
 
-    LOGGER_INFO("Start block [bk_id=%d ; bk_type=%s ; bk_state=%s]", it->second->id_, it->second->type_.c_str(), bk_state_to_string(STATE_START));
+    LOGGER_INFO("Start block [bk_id=%d ; bk_type=%s ; bk_state=%s]",
+                it->second->id_, it->second->type_.c_str(), bk_state_to_string(STATE_START));
 
     it->second->state_ = STATE_START;
 
@@ -229,22 +128,103 @@ bool manager::block_stop(int id)
     }
 
     // Verify block state
-    switch (it->second->state_)
+    if (it->second->state_ == STATE_STOP)
     {
-    case STATE_START:
-        // Normal case
-        break;
-
-    default:
-        LOGGER_WARNING("Cannot stop block: block not started [bk_id=%d ; bk_state=%s]", id, bk_state_to_string(it->second->state_));
-        return false;
+        // Nothing to do
+        return true;
     }
 
-    LOGGER_INFO("Stop block [bk_id=%d ; bk_type=%s ; bk_state=%s]", id, it->second->type_.c_str(), bk_state_to_string(STATE_STOP));
+    LOGGER_INFO("Stop block [bk_id=%d ; bk_type=%s ; bk_state=%s]",
+                id, it->second->type_.c_str(), bk_state_to_string(STATE_STOP));
 
     it->second->state_ = STATE_STOP;
 
     it->second->stop_();
+
+    return true;
+}
+
+//
+// @brief Stop and delete a block
+//
+// @param id : Block ID
+//
+bool manager::block_del(int id)
+{
+    const auto &it = bk_map_.find(id);
+    if (it == bk_map_.end())
+    {
+        LOGGER_WARNING("Cannot delete block: unknown block ID [bk_id=%d]", id);
+        return false;
+    }
+
+    // Verify block state
+    if (it->second->state_ != STATE_STOP)
+    {
+        LOGGER_WARNING("Cannot delete block: block not stopped [bk_id=%d ; bk_state=%s]",
+                       id, bk_state_to_string(it->second->state_));
+        return false;
+    }
+
+    LOGGER_INFO("Delete block [bk_id=%d ; bk_type=%s]", it->second->id_, it->second->type_.c_str());
+
+    delete it->second;
+
+    bk_map_.erase(it);
+
+    return true;
+}
+
+//
+// @brief Configure a block
+//
+bool manager::block_conf(int id, char *conf)
+{
+    // Find the block concerned by the command
+    const auto &it = bk_map_.find(id);
+    if (it == bk_map_.end())
+    {
+        LOGGER_WARNING("Cannot configure block: unknown block ID [bk_id=%d]", id);
+        return false;
+    }
+
+    LOGGER_INFO("Configure block [bk_id=%d ; bk_type=%s ; conf=%s]", id, it->second->type_.c_str(), conf);
+
+    it->second->conf_(conf);
+
+    return true;
+}
+
+//
+// @brief Bind a block
+//
+bool manager::block_bind(int id, int port, int bk_id)
+{
+    struct bind_info bind;
+
+    // Find the block concerned by the command
+    const auto &source = bk_map_.find(id);
+    const auto &end = bk_map_.end();
+    if (source == end)
+    {
+        LOGGER_WARNING("Cannot bind block: unknown source [bk_id=%d]", id);
+        return false;
+    }
+
+    LOGGER_INFO("Bind block [bk_id=%d ; port=%d ; bk_id_dest=%d]", source->first, port, bk_id);
+
+    source->second->bind_(port, bk_id);
+
+    // Add a binding in the engine with a weak reference to the block
+    // If the block does not exist, we just let it undefined
+    const auto &dest = bk_map_.find(bk_id);
+    if (dest != end)
+    {
+        bind.bk = dest->second;
+    }
+    bind.port = port;
+    bind.bk_id = bk_id;
+    source->second->binds_.push_back(bind);
 
     return true;
 }
@@ -264,38 +244,14 @@ struct block *manager::block_get(int id)
 }
 
 //
-// @brief Stop and delete a block
-//
-// @param id : Block ID
-//
-void manager::block_del(int id)
-{
-    const auto &it = bk_map_.find(id);
-    if (it == bk_map_.end())
-    {
-        // Block does not exist, nothing to do
-        return;
-    }
-
-    block_stop(it->first);
-    delete it->second;
-
-    LOGGER_INFO("Delete block [bk_id=%d ; bk_type=%s]", it->second->id_, it->second->type_.c_str());
-
-    bk_map_.erase(it);
-}
-
-//
 // @brief Clear all blocks
 //
 void manager::block_clear()
 {
-    // Stop every blocks
-    for (const auto &it : bk_map_)
+    while (bk_map_.empty() == false)
     {
-        block_stop(it.first);
-        delete it.second;
+        const auto &it = bk_map_.cbegin();
+        block_stop(it->first);
+        block_del(it->first);
     }
-
-    bk_map_.clear();
 }

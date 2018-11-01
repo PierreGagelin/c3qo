@@ -45,15 +45,14 @@ struct manager
 
   public:
     bool block_add(int id, const char *type);
-    bool block_init(int id);
-    bool block_conf(int id, char *conf);
-    bool block_bind(int id, int port, int bk_id);
     bool block_start(int id);
     bool block_stop(int id);
+    bool block_del(int id);
+    bool block_conf(int id, char *conf);
+    bool block_bind(int id, int port, int bk_id);
 
   public:
     struct block *block_get(int id);
-    void block_del(int id);
     void block_clear();
 
     //
@@ -74,8 +73,8 @@ struct manager
     std::forward_list<struct timer> tm_list_;
 
   public:
-    bool timer_add(struct timer &tm);
-    void timer_del(struct timer &tm);
+    bool timer_add(struct timer tm);
+    void timer_del(const struct timer &tm);
 
   public:
     void timer_check_exp();

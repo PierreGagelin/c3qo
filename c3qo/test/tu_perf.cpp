@@ -44,7 +44,6 @@ TEST_F(tu_perf, commutation)
     for (size_t i = 1; i < nb_block + 1; i++)
     {
         EXPECT_EQ(mgr_.block_add(i, "hello"), true);
-        EXPECT_EQ(mgr_.block_init(i), true);
         EXPECT_EQ(mgr_.block_start(i), true);
     }
 

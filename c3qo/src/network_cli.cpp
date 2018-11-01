@@ -21,9 +21,17 @@ static PbcCmd__CmdType string_to_pbc_type(const char *string)
     {
         return PBC_CMD__CMD_TYPE__CMD_ADD;
     }
-    else if (strcmp(string, "init") == 0)
+    else if (strcmp(string, "start") == 0)
     {
-        return PBC_CMD__CMD_TYPE__CMD_INIT;
+        return PBC_CMD__CMD_TYPE__CMD_START;
+    }
+    else if (strcmp(string, "stop") == 0)
+    {
+        return PBC_CMD__CMD_TYPE__CMD_STOP;
+    }
+    else if (strcmp(string, "del") == 0)
+    {
+        return PBC_CMD__CMD_TYPE__CMD_DEL;
     }
     else if (strcmp(string, "conf") == 0)
     {
@@ -32,14 +40,6 @@ static PbcCmd__CmdType string_to_pbc_type(const char *string)
     else if (strcmp(string, "bind") == 0)
     {
         return PBC_CMD__CMD_TYPE__CMD_BIND;
-    }
-    else if (strcmp(string, "start") == 0)
-    {
-        return PBC_CMD__CMD_TYPE__CMD_START;
-    }
-    else if (strcmp(string, "stop") == 0)
-    {
-        return PBC_CMD__CMD_TYPE__CMD_STOP;
     }
     else
     {
@@ -158,7 +158,7 @@ int main(int argc, char **argv)
 {
     const char options[] = "ha:T:A:";
     char *addr;
-    char addr_def[] = "tcp://127.0.0.1:6666";
+    char addr_def[] = "tcp://127.0.0.1:1664";
     char *ncli_type;
     char *ncli_args;
     int rc;

@@ -13,7 +13,9 @@
 //
 // @brief Add or replace an entry in the timer list
 //
-bool manager::timer_add(struct timer &tm)
+// It takes a copy in order not to change time value in caller
+//
+bool manager::timer_add(struct timer tm)
 {
     struct timespec t;
 
@@ -52,7 +54,7 @@ bool manager::timer_add(struct timer &tm)
 //
 // @brief Delete a timer
 //
-void manager::timer_del(struct timer &tm)
+void manager::timer_del(const struct timer &tm)
 {
     tm_list_.remove(tm);
 }

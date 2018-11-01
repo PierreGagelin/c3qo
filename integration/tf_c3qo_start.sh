@@ -1,5 +1,9 @@
 #!/bin/bash
 
+#
+# Test initialization
+#
+
 # No errors or use of undefined variables allowed
 set -eu
 
@@ -11,12 +15,18 @@ source $dir_script/../c3qo_lib.sh
 # Generate every useful paths from source path
 c3qo_generate_path $dir_script/..
 
-# Run the client
-$C3QO_DIR_C3QO/c3qo -f $C3QO_DIR_INT/client_us_nb.txt &
+#
+# Check c3qo CLI interface
+#
 
-# Run the server
-$C3QO_DIR_C3QO/c3qo -f $C3QO_DIR_INT/server_us_nb.txt &
+# Option: help: should return
+$C3QO_DIR_C3QO/c3qo -h
 
-sleep 1
+# Option: log level
+$C3QO_DIR_C3QO/c3qo -l 3 &
+$C3QO_DIR_C3QO/c3qo -l 300000000000000000000000000000000000 &
+
+# Option: unknown
+$C3QO_DIR_C3QO/c3qo -z &
 
 killall c3qo
