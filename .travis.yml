@@ -1,8 +1,0 @@
-dist: trusty
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y libzmq3-dev lcov python3-pip
-  - sudo python3 -m pip install robotframework
-script:
-  - ./build.sh -i
-  - ./integration/compilation_tu.sh
