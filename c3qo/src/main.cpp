@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 
         default:
             LOGGER_ERR("CLI argument error");
-            break;
+            return 1;
         }
     }
 

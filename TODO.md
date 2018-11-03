@@ -13,6 +13,7 @@ This file contains some ideas of things to do
 
 ## Integration
 
+- look at code "TODO:"
 - do real functional tests (at the moment there is no verifications)
 - setup functional tests with robot framework
 - setup tests with Docker
