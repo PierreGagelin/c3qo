@@ -19,7 +19,7 @@ poller = zmq.Poller()
 poller.register(sock, zmq.POLLIN)
 
 # Connect to c3qo
-sock.connect('tcp://127.0.0.1:5555')
+sock.connect('tcp://127.0.0.1:1664')
 
 def send_pbc_cmd(cmd_type, bk_id, bk_arg = ""):
     """
@@ -39,9 +39,9 @@ def send_pbc_cmd(cmd_type, bk_id, bk_arg = ""):
 
 # Send management commands to c3qo
 send_pbc_cmd(conf_pb2.pbc_cmd.CMD_ADD, 1, "hello")
-send_pbc_cmd(conf_pb2.pbc_cmd.CMD_INIT, 1)
 send_pbc_cmd(conf_pb2.pbc_cmd.CMD_START, 1)
 send_pbc_cmd(conf_pb2.pbc_cmd.CMD_STOP, 1)
+send_pbc_cmd(conf_pb2.pbc_cmd.CMD_DEL, 1)
 
 
 # Send a stats request

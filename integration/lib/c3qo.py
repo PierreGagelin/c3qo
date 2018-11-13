@@ -69,8 +69,7 @@ class c3qo(object):
         - arg: Custom argument to provide to command line
 
         """
-        # TODO: integrate the package installation to known c3qo location
-        command = ["/home/pir/build/c3qo/c3qo"]
+        command = ["/tmp/c3qo-0.0.7-local/bin/c3qo"]
 
         # Custom argument
         if not (arg is None):
@@ -93,7 +92,7 @@ class c3qo(object):
             command.append(str(log_level))
 
         # Run in background without logs
-        command += "> /dev/null &".split()
+        command += "> /dev/null 2>&1 &".split()
 
         self.instances[key] = command
 
@@ -136,7 +135,7 @@ class c3qo(object):
                 continue
 
             # Look for c3qo
-            if process_path == "/home/pir/build/c3qo/c3qo":
+            if process_path == "/tmp/c3qo-0.0.7-local/bin/c3qo":
                 present = True
                 break
 

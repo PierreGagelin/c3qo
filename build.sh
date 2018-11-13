@@ -118,13 +118,13 @@ function action_package
     make -j $MAKE_JOBS -C $C3QO_DIR_BUILD package
 
     # Remove a previously extracted package
-    if [ -d $C3QO_DIR_BUILD/c3qo-0.0.7-local ]
+    if [ -d /tmp/c3qo-0.0.7-local ]
     then
-        rm -r $C3QO_DIR_BUILD/c3qo-0.0.7-local
+        rm -r /tmp/c3qo-0.0.7-local
     fi
 
     # Extract the package
-    tar -C $C3QO_DIR_BUILD -xzf $C3QO_DIR_BUILD/c3qo-0.0.7-local.tar.gz
+    tar -C /tmp -xzf $C3QO_DIR_BUILD/c3qo-0.0.7-local.tar.gz
 }
 
 #
