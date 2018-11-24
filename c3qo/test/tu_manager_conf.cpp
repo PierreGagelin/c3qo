@@ -48,16 +48,12 @@ TEST_F(tu_manager_conf, conf)
     // Spaces should not matter, but 3 values are mandatory
     file << CMD_ADD << "   1    hello        " << std::endl;
     file << CMD_ADD << "   2    hello        " << std::endl;
-    file << CMD_ADD << "   3    client_us_nb " << std::endl;
-    file << CMD_ADD << "   4    server_us_nb " << std::endl;
 
     file << CMD_CONF << "  1  hello_1 " << std::endl;
     file << CMD_CONF << "  2  hello_2 " << std::endl;
 
     file << CMD_START << " 1 " << std::endl;
     file << CMD_START << " 2 " << std::endl;
-    file << CMD_START << " 3 " << std::endl;
-    file << CMD_START << " 4 " << std::endl;
 
     // Bindings for block 1:
     //   - port=0 ; bk_id=2
@@ -78,8 +74,6 @@ TEST_F(tu_manager_conf, conf)
     //   - format : "<bk_id> <bk_type> <bk_state>;"
     ss << "1 hello " << STATE_START << ";";
     ss << "2 hello " << STATE_START << ";";
-    ss << "3 client_us_nb " << STATE_START << ";";
-    ss << "4 server_us_nb " << STATE_START << ";";
     buf_exp = ss.str();
 
     // Verify the configuration dump
@@ -87,7 +81,7 @@ TEST_F(tu_manager_conf, conf)
     EXPECT_EQ(len, buf_exp.length());
 
     // Verify block informations
-    for (int i = 1; i < 5; i++)
+    for (int i = 1; i < 3; i++)
     {
         const struct block *bi;
 
@@ -96,26 +90,7 @@ TEST_F(tu_manager_conf, conf)
 
         EXPECT_EQ(bi->id_, i);
         EXPECT_EQ(bi->state_, STATE_START);
-
-        switch (i)
-        {
-        case 1:
-        case 2:
-            EXPECT_EQ(bi->type_, "hello");
-            break;
-
-        case 3:
-            EXPECT_EQ(bi->type_, "client_us_nb");
-            break;
-
-        case 4:
-            EXPECT_EQ(bi->type_, "server_us_nb");
-            break;
-
-        default:
-            ASSERT_TRUE(false);
-            break;
-        }
+        EXPECT_EQ(bi->type_, "hello");
     }
 
     // Clean blocks

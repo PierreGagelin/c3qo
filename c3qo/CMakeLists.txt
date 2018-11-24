@@ -23,7 +23,6 @@ c3qo_add_executable(c3qo src/main.cpp)
 target_link_libraries(c3qo manager)
 c3qo_link_block(c3qo hello)
 c3qo_link_block(c3qo project_euler)
-c3qo_link_block(c3qo socket_us_nb)
 c3qo_link_block(c3qo trans_pb)
 c3qo_link_block(c3qo zmq_pair)
 
@@ -44,7 +43,6 @@ if (${C3QO_TEST})
     c3qo_add_test(tu_manager_conf test/tu_manager_conf.cpp)
     target_link_libraries(tu_manager_conf manager)
     c3qo_link_block(tu_manager_conf hello)
-    c3qo_link_block(tu_manager_conf socket_us_nb)
 
     # Build TU for manager_fd
     c3qo_add_test(tu_manager_fd test/tu_manager_fd.cpp)

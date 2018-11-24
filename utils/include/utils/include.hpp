@@ -9,6 +9,12 @@
 #include <unordered_map>
 #include <vector>
 
+// C headers
+extern "C"
+{
+#include <getopt.h>
+}
+
 #define ASSERT(condition)         \
     do                            \
     {                             \

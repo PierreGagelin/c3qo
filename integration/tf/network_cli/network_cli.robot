@@ -1,6 +1,6 @@
 *** Settings ***
-Library    ../lib/c3qo.py
-Library    ../lib/ncli.py
+Library    ../../lib/c3qo.py
+Library    ../../lib/ncli.py
 
 *** Test Cases ***
 Check Command Raw
@@ -34,7 +34,7 @@ Server Is Present
 
 Server Run
     Builtin.Wait Until Keyword Succeeds    3s    1s    Server Is Absent
-    c3qo.Add    key=server_007    conf_filename=/tmp/c3qo-0.0.7-local/test/server_zmq.txt
+    c3qo.Add    key=server_007
     c3qo.Run    key=server_007
     Builtin.Wait Until Keyword Succeeds    3s    1s    Server Is Present
 

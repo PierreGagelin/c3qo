@@ -7,13 +7,6 @@
 // ZMQ header
 #include <zmq.h>
 
-// C headers
-extern "C"
-{
-#include <sys/socket.h>
-#include <unistd.h>
-}
-
 //
 // @struct c3qo_zmq_part
 //
@@ -24,13 +17,6 @@ struct c3qo_zmq_part
     char *data;
     size_t len;
 };
-
-int socket_nb(int domain, int type, int protocol);
-void socket_nb_set(int fd);
-bool socket_nb_connect(int fd, const struct sockaddr *addr, socklen_t len);
-
-ssize_t socket_nb_write(int fd, const char *buff, size_t size);
-ssize_t socket_nb_read(int fd, char *buff, size_t size);
 
 void c3qo_zmq_msg_del(std::vector<struct c3qo_zmq_part> &msg);
 void socket_zmq_read(void *socket, std::vector<struct c3qo_zmq_part> &msg, int flags = ZMQ_DONTWAIT);

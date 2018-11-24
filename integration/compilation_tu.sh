@@ -32,7 +32,6 @@ $C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -t
 $C3QO_DIR_SOURCE/integration/lib/c3qo.py
 
 echo -e "$COLOR_BLUE\nExecute functional tests\n$COLOR_NO\n"
-$C3QO_DIR_INT/tf_socket_us_nb.sh
 $C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -p
 PYTHONDONTWRITEBYTECODE=1 robot --output NONE --report NONE --log NONE $C3QO_DIR_INT/tf/
 
