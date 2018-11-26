@@ -116,6 +116,18 @@ static void tu_zmq_pair_error()
     block.conf_(const_cast<char *>("type=client addr= "));
 
     block.tx_(nullptr);
+
+    // Connect failure
+    block.addr_ = "well, obviously it's not an address";
+    block.client_ = true;
+    block.start_();
+    block.client_ = false;
+    block.start_();
+
+    // Callback on unknown socket
+    struct file_desc fd;
+    fd.socket = nullptr;
+    block.on_fd_(fd);
 }
 
 int main(int, char **)
