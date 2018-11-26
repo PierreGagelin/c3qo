@@ -8,31 +8,12 @@
 #include "block/hello.hpp"
 #include "c3qo/tu.hpp"
 
-class tu_perf : public testing::Test
-{
-    void SetUp();
-    void TearDown();
-
-  public:
-    struct manager mgr_;
-};
-
-void tu_perf::SetUp()
-{
-    LOGGER_OPEN("tu_perf");
-    logger_set_level(LOGGER_LEVEL_DEBUG);
-}
-
-void tu_perf::TearDown()
-{
-    logger_set_level(LOGGER_LEVEL_NONE);
-    LOGGER_CLOSE();
-}
+struct manager mgr_;
 
 //
 // @brief Test the speed of commutation
 //
-TEST_F(tu_perf, commutation)
+static void tu_perf_commutation()
 {
     size_t nb_block = 1 * 100;
     size_t nb_buf = 1 * 10 * 1000;
@@ -43,8 +24,8 @@ TEST_F(tu_perf, commutation)
     // Add, init and start some blocks
     for (size_t i = 1; i < nb_block + 1; i++)
     {
-        EXPECT_EQ(mgr_.block_add(i, "hello"), true);
-        EXPECT_EQ(mgr_.block_start(i), true);
+        ASSERT(mgr_.block_add(i, "hello") == true);
+        ASSERT(mgr_.block_start(i) == true);
     }
 
     // Configure a chain of N blocks:
@@ -54,14 +35,14 @@ TEST_F(tu_perf, commutation)
         for (int j = 0; j < 8; j++)
         {
             // Bind port j of bk_i to bk_i+1
-            EXPECT_EQ(mgr_.block_bind(i, j, i + 1), true);
+            ASSERT(mgr_.block_bind(i, j, i + 1) == true);
         }
     }
 
     // Bind the last block to 0 (trash)
     for (int j = 0; j < 8; j++)
     {
-        EXPECT_EQ(mgr_.block_bind(nb_block, j, 0), true);
+        ASSERT(mgr_.block_bind(nb_block, j, 0) == true);
     }
 
     // Send data from bk_1
@@ -71,7 +52,7 @@ TEST_F(tu_perf, commutation)
         char buf[] = "yolooooo";
 
         bi = mgr_.block_get(1);
-        ASSERT_NE(bi, nullptr);
+        ASSERT(bi != nullptr);
 
         bi->ctrl_(buf);
     }
@@ -82,10 +63,21 @@ TEST_F(tu_perf, commutation)
         struct hello *bi;
 
         bi = static_cast<struct hello *>(mgr_.block_get(i));
-        ASSERT_NE(bi, nullptr);
-        EXPECT_EQ(bi->count_, static_cast<int>(nb_buf));
+        ASSERT(bi != nullptr);
+        ASSERT(bi->count_ == static_cast<int>(nb_buf));
     }
 
     // Clean blocks
     mgr_.block_clear();
+}
+
+int main(int, char **)
+{
+    LOGGER_OPEN("tu_perf");
+    logger_set_level(LOGGER_LEVEL_DEBUG);
+
+    tu_perf_commutation();
+
+    LOGGER_CLOSE();
+    return 0;
 }

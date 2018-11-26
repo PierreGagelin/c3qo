@@ -8,22 +8,7 @@
 #include "block/zmq_pair.hpp"
 #include "c3qo/tu.hpp"
 
-class tu_zmq_pair : public testing::Test
-{
-    void SetUp()
-    {
-        LOGGER_OPEN("tu_zmq_pair");
-        logger_set_level(LOGGER_LEVEL_DEBUG);
-    }
-    void TearDown()
-    {
-        logger_set_level(LOGGER_LEVEL_NONE);
-        LOGGER_CLOSE();
-    }
-
-  public:
-    struct manager mgr_;
-};
+struct manager mgr_;
 
 void message_create(std::vector<struct c3qo_zmq_part> &msg, const char *topic, const char *payload)
 {
@@ -52,7 +37,7 @@ void message_destroy(std::vector<struct c3qo_zmq_part> &msg)
 //
 // @brief Verify data transmission between client and server
 //
-TEST_F(tu_zmq_pair, data)
+static void tu_zmq_pair_data()
 {
     struct zmq_pair client(&mgr_);
     struct zmq_pair server(&mgr_);
@@ -72,8 +57,8 @@ TEST_F(tu_zmq_pair, data)
     server.start_();
     client.start_();
 
-    EXPECT_EQ(server.rx_pkt_, 0lu);
-    EXPECT_EQ(client.rx_pkt_, 0lu);
+    ASSERT(server.rx_pkt_ == 0lu);
+    ASSERT(client.rx_pkt_ == 0lu);
 
     // Send some data between both pairs
     // Some messages are lost because subscription can take some time
@@ -90,8 +75,8 @@ TEST_F(tu_zmq_pair, data)
     }
 
     // At least one message should be received
-    EXPECT_GT(client.rx_pkt_, 0lu);
-    EXPECT_GT(server.rx_pkt_, 0lu);
+    ASSERT(client.rx_pkt_ > 0lu);
+    ASSERT(server.rx_pkt_ > 0lu);
 
     // Send several of the expected messages
     {
@@ -112,7 +97,7 @@ TEST_F(tu_zmq_pair, data)
 }
 
 // Test error cases
-TEST_F(tu_zmq_pair, error)
+static void tu_zmq_pair_error()
 {
     struct zmq_pair block(&mgr_);
 
@@ -131,4 +116,16 @@ TEST_F(tu_zmq_pair, error)
     block.conf_(const_cast<char *>("type=client addr= "));
 
     block.tx_(nullptr);
+}
+
+int main(int, char **)
+{
+    LOGGER_OPEN("tu_zmq_pair");
+    logger_set_level(LOGGER_LEVEL_DEBUG);
+
+    tu_zmq_pair_data();
+    tu_zmq_pair_error();
+
+    LOGGER_CLOSE();
+    return 0;
 }

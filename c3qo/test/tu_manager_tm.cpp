@@ -19,34 +19,13 @@ struct block_timer : block
     }
 };
 
-// Derive from the manager_tm class
-class tu_manager_tm : public testing::Test
-{
-    void SetUp()
-    {
-        LOGGER_OPEN("tu_manager_tm");
-        logger_set_level(LOGGER_LEVEL_DEBUG);
-    }
-    void TearDown()
-    {
-        // Clear the list
-        block_.zozo_l_asticot_.clear();
-
-        logger_set_level(LOGGER_LEVEL_NONE);
-        LOGGER_CLOSE();
-    }
-
-public:
-    struct manager mgr_;
-    struct block_timer block_;
-
-    tu_manager_tm() : block_(&mgr_) {}
-};
+struct manager mgr_;
+struct block_timer block_(&mgr_);
 
 //
 // @brief Timer expiration
 //
-TEST_F(tu_manager_tm, expiration)
+static void tu_manager_tm_expiration()
 {
     struct timer t;
     char dummy[8] = "dummy";
@@ -57,20 +36,21 @@ TEST_F(tu_manager_tm, expiration)
     t.arg = dummy;
     t.time.tv_sec = 0;
     t.time.tv_nsec = 1 * 1000 * 1000;
-    EXPECT_EQ(mgr_.timer_add(t), true);
+    ASSERT(mgr_.timer_add(t) == true);
 
     // Verify timer expiration
     // We can't verify it doesn't expire earlier
     // because it's not a real-time system
     usleep(1 * 1000);
     mgr_.timer_check_exp();
-    EXPECT_EQ(block_.zozo_l_asticot_.size(), 1u);
+    ASSERT(block_.zozo_l_asticot_.size() == 1u);
+    block_.zozo_l_asticot_.clear();
 }
 
 //
 // @brief Timer expiration order
 //
-TEST_F(tu_manager_tm, order)
+static void tu_manager_tm_order()
 {
     struct timer t_0;
     struct timer t_1;
@@ -98,17 +78,18 @@ TEST_F(tu_manager_tm, order)
     t_2.arg = arg[2];
     t_2.time.tv_sec = 0;
     t_2.time.tv_nsec = 3 * 1000 * 1000;
-    EXPECT_EQ(mgr_.timer_add(t_2), true);
-    EXPECT_EQ(mgr_.timer_add(t_0), true);
-    EXPECT_EQ(mgr_.timer_add(t_1), true);
+    ASSERT(mgr_.timer_add(t_2) == true);
+    ASSERT(mgr_.timer_add(t_0) == true);
+    ASSERT(mgr_.timer_add(t_1) == true);
 
     // Verify the order of expiration
     usleep(3 * 1000);
     mgr_.timer_check_exp();
-    ASSERT_EQ(block_.zozo_l_asticot_.size(), 3lu);
-    EXPECT_EQ(block_.zozo_l_asticot_[0], std::string(arg[0]));
-    EXPECT_EQ(block_.zozo_l_asticot_[1], std::string(arg[1]));
-    EXPECT_EQ(block_.zozo_l_asticot_[2], std::string(arg[2]));
+    ASSERT(block_.zozo_l_asticot_.size() == 3lu);
+    ASSERT(block_.zozo_l_asticot_[0] == std::string(arg[0]));
+    ASSERT(block_.zozo_l_asticot_[1] == std::string(arg[1]));
+    ASSERT(block_.zozo_l_asticot_[2] == std::string(arg[2]));
+    block_.zozo_l_asticot_.clear();
 
     // Check struct timer operator<
     {
@@ -120,31 +101,31 @@ TEST_F(tu_manager_tm, order)
         a.time.tv_nsec = 0;
         b.time.tv_sec = 1;
         b.time.tv_nsec = 0;
-        EXPECT_TRUE(a < b);
-        EXPECT_FALSE(b < a);
+        ASSERT(operator<(a, b) == true);
+        ASSERT(operator<(b, a) == false);
 
         // Compare sec then nsec
         a.time.tv_sec = 1;
         a.time.tv_nsec = 0;
         b.time.tv_sec = 1;
         b.time.tv_nsec = 1;
-        EXPECT_TRUE(a < b);
-        EXPECT_FALSE(b < a);
+        ASSERT(operator<(a, b) == true);
+        ASSERT(operator<(b, a) == false);
 
         // Compare sec then nsec
         a.time.tv_sec = 1;
         a.time.tv_nsec = 0;
         b.time.tv_sec = 1;
         b.time.tv_nsec = 0;
-        EXPECT_FALSE(a < b);
-        EXPECT_FALSE(b < a);
+        ASSERT(operator<(a, b) == false);
+        ASSERT(operator<(b, a) == false);
     }
 }
 
 //
 // @brief Timer identification
 //
-TEST_F(tu_manager_tm, id)
+static void tu_manager_tm_id()
 {
     struct timer t;
     char arg[] = "expected";
@@ -157,22 +138,23 @@ TEST_F(tu_manager_tm, id)
     t.time.tv_nsec = 1 * 1000 * 1000;
 
     t.arg = dummy;
-    EXPECT_EQ(mgr_.timer_add(t), true);
+    ASSERT(mgr_.timer_add(t) == true);
     t.arg = arg;
-    EXPECT_EQ(mgr_.timer_add(t), true);
+    ASSERT(mgr_.timer_add(t) == true);
 
     // Verify only the 1ms is kept and expired
     usleep(1 * 1000);
     mgr_.timer_check_exp();
-    ASSERT_GT(block_.zozo_l_asticot_.size(), 0u);
-    EXPECT_EQ(block_.zozo_l_asticot_.size(), 1u);
-    EXPECT_EQ(block_.zozo_l_asticot_[0], std::string(arg));
+    ASSERT(block_.zozo_l_asticot_.size() > 0u);
+    ASSERT(block_.zozo_l_asticot_.size() == 1u);
+    ASSERT(block_.zozo_l_asticot_[0] == std::string(arg));
+    block_.zozo_l_asticot_.clear();
 }
 
 //
 // @brief Timer removal
 //
-TEST_F(tu_manager_tm, del)
+static void tu_manager_tm_del()
 {
     struct timer t;
     char dummy[8] = "dummy";
@@ -183,7 +165,7 @@ TEST_F(tu_manager_tm, del)
     t.arg = dummy;
     t.time.tv_sec = 0;
     t.time.tv_nsec = 1 * 1000 * 1000;
-    EXPECT_EQ(mgr_.timer_add(t), true);
+    ASSERT(mgr_.timer_add(t) == true);
 
     // Remove the timer
     mgr_.timer_del(t);
@@ -191,18 +173,33 @@ TEST_F(tu_manager_tm, del)
     // Verify that it does not expire
     usleep(1 * 1000);
     mgr_.timer_check_exp();
-    EXPECT_EQ(block_.zozo_l_asticot_.size(), 0u);
+    ASSERT(block_.zozo_l_asticot_.size() == 0u);
 }
 
 //
 // @brief Timer error conditions
 //
-TEST_F(tu_manager_tm, error)
+static void tu_manager_tm_error()
 {
     // Hide logs as errors are normal
     logger_set_level(LOGGER_LEVEL_NONE);
 
     struct timer t;
     t.bk = nullptr;
-    EXPECT_EQ(mgr_.timer_add(t), false);
+    ASSERT(mgr_.timer_add(t) == false);
+}
+
+int main(int, char **)
+{
+    LOGGER_OPEN("tu_manager_tm");
+    logger_set_level(LOGGER_LEVEL_DEBUG);
+
+    tu_manager_tm_del();
+    tu_manager_tm_error();
+    tu_manager_tm_expiration();
+    tu_manager_tm_id();
+    tu_manager_tm_order();
+
+    LOGGER_CLOSE();
+    return 0;
 }

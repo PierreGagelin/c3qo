@@ -8,31 +8,12 @@
 #include "block/hello.hpp"
 #include "c3qo/tu.hpp"
 
-class tu_hello : public testing::Test
-{
-    void SetUp();
-    void TearDown();
-
-  public:
-    struct manager mgr_;
-};
-
-void tu_hello::SetUp()
-{
-    LOGGER_OPEN("tu_hello");
-    logger_set_level(LOGGER_LEVEL_DEBUG);
-}
-
-void tu_hello::TearDown()
-{
-    logger_set_level(LOGGER_LEVEL_NONE);
-    LOGGER_CLOSE();
-}
+struct manager mgr_;
 
 //
 // @brief Basic usage of block hello
 //
-TEST_F(tu_hello, hello)
+static void tu_hello_hello()
 {
     struct hello block(&mgr_);
     char conf[] = "hello from TU";
@@ -44,18 +25,18 @@ TEST_F(tu_hello, hello)
     // Verify binding (block hello only increment port output)
     for (int i = 0; i < 8; i++)
     {
-        EXPECT_EQ(block.rx_(nullptr), i);
+        ASSERT(block.rx_(nullptr) == i);
     }
     for (int i = 0; i < 8; i++)
     {
-        EXPECT_EQ(block.tx_(nullptr), i);
+        ASSERT(block.tx_(nullptr) == i);
     }
 
     // Do not forward notification
-    EXPECT_EQ(block.ctrl_(nullptr), 0);
+    ASSERT(block.ctrl_(nullptr) == 0);
 
     // Block should count 16 data
-    EXPECT_EQ(block.count_, 16);
+    ASSERT(block.count_ == 16);
 
     // Stop block
     block.stop_();
@@ -64,7 +45,7 @@ TEST_F(tu_hello, hello)
 //
 // @brief Edge cases
 //
-TEST_F(tu_hello, error)
+static void tu_hello_error()
 {
     struct hello block(&mgr_);
 
@@ -73,4 +54,16 @@ TEST_F(tu_hello, error)
 
     // Configure without a configuration
     block.conf_(nullptr);
+}
+
+int main(int, char **)
+{
+    LOGGER_OPEN("tu_hello");
+    logger_set_level(LOGGER_LEVEL_DEBUG);
+
+    tu_hello_hello();
+    tu_hello_error();
+
+    LOGGER_CLOSE();
+    return 0;
 }

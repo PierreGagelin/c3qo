@@ -4,7 +4,10 @@
 // Project headers
 #include "c3qo/manager.hpp"
 
-// Gtest library
-#include "gtest/gtest.h"
+// C headers
+extern "C"
+{
+#include <unistd.h>
+}
 
 #endif // TU_HPP

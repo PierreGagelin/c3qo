@@ -33,15 +33,7 @@ done
 # do
 #     INCLUDES_OPT="$INCLUDES_OPT -I $(dirname $include)"
 # done
-# ## External project gtest header
-# INCLUDES=$(find ../build -name gtest.h | grep gtest/gtest.h)
-# for include in $INCLUDES
-# do
-#     # Go two folders up
-#     include=$(dirname $include)
-#     include=$(dirname $include)
-#     INCLUDES_OPT="$INCLUDES_OPT -I $include"
-# done
+#
 
 cppcheck --enable=all $INCLUDES_OPT . 2> $FILE_OUTPUT_REPORT
 cppcheck --enable=all $INCLUDES_OPT --check-config . 2> $FILE_OUTPUT_CONFIG

@@ -10,32 +10,15 @@
 struct block_derived : block
 {
     explicit block_derived(struct manager *mgr) : block(mgr) {}
-    ~block_derived() {}
+    virtual ~block_derived() override final {}
 };
 
-BLOCK_REGISTER(block_derived);
-
-class tu_manager_bk : public testing::Test
-{
-    void SetUp()
-    {
-        LOGGER_OPEN("tu_manager_bk");
-        logger_set_level(LOGGER_LEVEL_DEBUG);
-    }
-    void TearDown()
-    {
-        logger_set_level(LOGGER_LEVEL_NONE);
-        LOGGER_CLOSE();
-    }
-
-  public:
-    struct manager mgr_;
-};
+struct manager mgr_;
 
 //
 // @brief Test creation and use of default block
 //
-TEST_F(tu_manager_bk, block)
+static void tu_manager_bk_block()
 {
     struct block_derived bk(&mgr_);
 
@@ -44,9 +27,9 @@ TEST_F(tu_manager_bk, block)
     bk.start_();
     bk.stop_();
 
-    EXPECT_EQ(bk.rx_(nullptr), 0);
-    EXPECT_EQ(bk.tx_(nullptr), 0);
-    EXPECT_EQ(bk.ctrl_(nullptr), 0);
+    ASSERT(bk.rx_(nullptr) == 0);
+    ASSERT(bk.tx_(nullptr) == 0);
+    ASSERT(bk.ctrl_(nullptr) == 0);
 
     struct timer t;
     bk.on_timer_(t);
@@ -60,7 +43,7 @@ TEST_F(tu_manager_bk, block)
 //
 // For this test, we need to use the statically defined manager of block
 //
-TEST_F(tu_manager_bk, flow)
+static void tu_manager_bk_flow()
 {
     struct hello *bk_1;
     struct hello *bk_2;
@@ -69,8 +52,8 @@ TEST_F(tu_manager_bk, flow)
     // Add, initialize and start 2 blocks
     for (int i = 1; i < 3; i++)
     {
-        EXPECT_EQ(mgr_.block_add(i, "hello"), true);
-        EXPECT_EQ(mgr_.block_start(i), true);
+        ASSERT(mgr_.block_add(i, "hello") == true);
+        ASSERT(mgr_.block_start(i) == true);
     }
 
     // Bind:
@@ -78,26 +61,26 @@ TEST_F(tu_manager_bk, flow)
     //   - block 2 to block 0 (trash)
     for (int i = 0; i < 8; i++)
     {
-        EXPECT_EQ(mgr_.block_bind(1, i, 2), true);
-        EXPECT_EQ(mgr_.block_bind(2, i, 0), true);
+        ASSERT(mgr_.block_bind(1, i, 2) == true);
+        ASSERT(mgr_.block_bind(2, i, 0) == true);
     }
 
     // Retrieve block 1 and block 2
     bk_1 = static_cast<struct hello *>(mgr_.block_get(1));
     bk_2 = static_cast<struct hello *>(mgr_.block_get(2));
-    ASSERT_NE(bk_1, nullptr);
-    ASSERT_NE(bk_2, nullptr);
+    ASSERT(bk_1 != nullptr);
+    ASSERT(bk_2 != nullptr);
 
     // No data should have gone through blocks
-    EXPECT_EQ(bk_1->count_, 0);
-    EXPECT_EQ(bk_2->count_, 0);
+    ASSERT(bk_1->count_ == 0);
+    ASSERT(bk_2->count_ == 0);
 
     // Notify the block to generate a TX data flow: it shall return 0
-    EXPECT_EQ(bk_1->ctrl_(notif), 0);
+    ASSERT(bk_1->ctrl_(notif) == 0);
 
     // A buffer should have crossed block 2
-    EXPECT_EQ(bk_1->count_, 0);
-    EXPECT_EQ(bk_2->count_, 1);
+    ASSERT(bk_1->count_ == 0);
+    ASSERT(bk_2->count_ == 1);
 
     // Clear blocks
     mgr_.block_clear();
@@ -106,7 +89,7 @@ TEST_F(tu_manager_bk, flow)
 //
 // @brief String version of the block enumerates
 //
-TEST_F(tu_manager_bk, strings)
+static void tu_manager_bk_strings()
 {
     for (int i = 0; i < 10; i++)
     {
@@ -114,4 +97,17 @@ TEST_F(tu_manager_bk, strings)
         bk_state_to_string(static_cast<enum bk_state>(i));
         flow_type_to_string(static_cast<enum flow_type>(i));
     }
+}
+
+int main(int, char **)
+{
+    LOGGER_OPEN("tu_manager_bk");
+    logger_set_level(LOGGER_LEVEL_DEBUG);
+
+    tu_manager_bk_block();
+    tu_manager_bk_flow();
+    tu_manager_bk_strings();
+
+    LOGGER_CLOSE();
+    return 0;
 }

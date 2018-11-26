@@ -59,7 +59,7 @@ if __name__ == "__main__":
     # Exception shall be raised
     try:
         instance.send("toto", "dummy")
-        assert(False)
+        ASSERT(False);
     except:
         pass
 

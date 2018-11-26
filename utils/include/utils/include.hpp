@@ -15,7 +15,7 @@ extern "C"
 #include <getopt.h>
 }
 
-#define ASSERT(condition)         \
+#define ASSERT(condition);         \
     do                            \
     {                             \
         if ((condition) == false) \

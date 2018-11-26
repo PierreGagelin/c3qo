@@ -10,31 +10,12 @@
 #include "block/zmq_pair.hpp"
 #include "c3qo/tu.hpp"
 
-class tu_trans_pb : public testing::Test
-{
-    void SetUp();
-    void TearDown();
-
-  public:
-    struct manager mgr_;
-};
-
-void tu_trans_pb::SetUp()
-{
-    LOGGER_OPEN("tu_trans_pb");
-    logger_set_level(LOGGER_LEVEL_DEBUG);
-}
-
-void tu_trans_pb::TearDown()
-{
-    logger_set_level(LOGGER_LEVEL_NONE);
-    LOGGER_CLOSE();
-}
+struct manager mgr_;
 
 //
 // @brief Test serialization of hello message
 //
-TEST_F(tu_trans_pb, hello)
+static void tu_trans_pb_hello()
 {
     struct trans_pb block(&mgr_);
     struct trans_pb_notif notif;
@@ -46,13 +27,13 @@ TEST_F(tu_trans_pb, hello)
     notif.type = BLOCK_HELLO;
     notif.context.hello = &hello;
 
-    EXPECT_EQ(block.ctrl_(&notif), 0);
+    ASSERT(block.ctrl_(&notif) == 0);
 }
 
 //
 // @brief Test serialization of zmq_pair message
 //
-TEST_F(tu_trans_pb, zmq_pair)
+static void tu_trans_pb_zmq_pair()
 {
     struct trans_pb block(&mgr_);
     struct trans_pb_notif notif;
@@ -64,13 +45,13 @@ TEST_F(tu_trans_pb, zmq_pair)
     notif.type = BLOCK_ZMQ_PAIR;
     notif.context.zmq_pair = &zmq_pair;
 
-    EXPECT_EQ(block.ctrl_(&notif), 0);
+    ASSERT(block.ctrl_(&notif) == 0);
 }
 
 //
 // @brief Test errors
 //
-TEST_F(tu_trans_pb, error)
+static void tu_trans_pb_error()
 {
     struct trans_pb block(&mgr_);
     struct trans_pb_notif notif;
@@ -81,9 +62,22 @@ TEST_F(tu_trans_pb, error)
     block.id_ = 1;
 
     // Bad arguments
-    EXPECT_EQ(block.ctrl_(nullptr), 0);
+    ASSERT(block.ctrl_(nullptr) == 0);
 
     // Bad notif type
     notif.type = static_cast<enum bk_type>(42);
-    EXPECT_EQ(block.ctrl_(&notif), 0);
+    ASSERT(block.ctrl_(&notif) == 0);
+}
+
+int main(int, char **)
+{
+    LOGGER_OPEN("tu_trans_pb");
+    logger_set_level(LOGGER_LEVEL_DEBUG);
+
+    tu_trans_pb_error();
+    tu_trans_pb_hello();
+    tu_trans_pb_zmq_pair();
+
+    LOGGER_CLOSE();
+    return 0;
 }

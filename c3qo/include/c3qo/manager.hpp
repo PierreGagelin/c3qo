@@ -73,7 +73,7 @@ struct manager
     std::forward_list<struct timer> tm_list_;
 
   public:
-    bool timer_add(struct timer tm);
+    bool timer_add(const struct timer &tm);
     void timer_del(const struct timer &tm);
 
   public:

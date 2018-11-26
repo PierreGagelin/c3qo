@@ -134,8 +134,6 @@ function (c3qo_add_test target_name target_sources)
 
     c3qo_target_link_flags(${target_name})
     target_link_libraries(${target_name} logger)
-    target_link_libraries(${target_name} gtest)
-    target_link_libraries(${target_name} gtest_main)
 
     add_test(NAME ${target_name} COMMAND ${target_name})
 endfunction (c3qo_add_test)
