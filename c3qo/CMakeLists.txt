@@ -22,7 +22,6 @@ target_link_libraries(manager logger)
 c3qo_add_executable(c3qo src/main.cpp)
 target_link_libraries(c3qo manager)
 c3qo_link_block(c3qo hello)
-c3qo_link_block(c3qo project_euler)
 c3qo_link_block(c3qo trans_pb)
 c3qo_link_block(c3qo zmq_pair)
 

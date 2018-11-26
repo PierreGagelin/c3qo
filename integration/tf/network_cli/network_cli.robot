@@ -7,8 +7,6 @@ Check Command Raw
     Server Run
     ncli.send    raw    dummy -p "1 10 trans_pb"
     ncli.send    raw    dummy -p "5 10"
-    ncli.send    raw    dummy -p "1 11 project_euler"
-    ncli.send    raw    dummy -p "5 11"
     Builtin.Sleep    1s
     Server Stop
 
