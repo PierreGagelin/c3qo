@@ -85,7 +85,7 @@ err:
 }
 
 //
-// @brief Stop a block
+// @brief Start a block
 //
 bool manager::block_start(int id)
 {
@@ -151,6 +151,9 @@ bool manager::block_stop(int id)
 //
 bool manager::block_del(int id)
 {
+    void (*destructor)(struct block *);
+    void *handle;
+
     const auto &it = bk_map_.find(id);
     if (it == bk_map_.end())
     {
@@ -168,11 +171,31 @@ bool manager::block_del(int id)
 
     LOGGER_INFO("Delete block [bk_id=%d ; bk_type=%s]", it->second->id_, it->second->type_.c_str());
 
-    delete it->second;
+    handle = dlopen(nullptr, RTLD_LAZY);
+    if (handle == nullptr)
+    {
+        LOGGER_ERR("Failed to delete block: dlopen failed: %s [bk_id=%d ; bk_type=%s]",
+                   dlerror(), id, it->second->type_.c_str());
+        return false;
+    }
+
+    std::string dtor_name = std::string(it->second->type_) + "_destroy";
+    destructor = reinterpret_cast<void (*)(struct block *)>(dlsym(handle, dtor_name.c_str()));
+    if (destructor == nullptr)
+    {
+        LOGGER_ERR("Failed to add block: couldn't load destructor [bk_id=%d ; bk_type=%s ; dtor_symbol=%s]",
+                   id, it->second->type_.c_str(), dtor_name.c_str());
+        goto err;
+    }
+    destructor(it->second);
 
     bk_map_.erase(it);
 
+    dlclose(handle);
     return true;
+err:
+    dlclose(handle);
+    return false;
 }
 
 //

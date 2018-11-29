@@ -16,6 +16,10 @@
         {                                                 \
             return new struct name(mgr_);                 \
         }                                                 \
+        void name##_destroy(struct block *bk)             \
+        {                                                 \
+            delete reinterpret_cast<struct name *>(bk);   \
+        }                                                 \
     }
 
 //

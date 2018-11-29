@@ -13,12 +13,23 @@ struct block_derived : block
     virtual ~block_derived() override final {}
 };
 
+struct block *beautiful_ptr;
+
+// Add a dynamic constructor that "fails"
+extern "C"
+{
+    struct block *derived_block_create(struct manager *)
+    {
+        return beautiful_ptr;
+    }
+}
+
 struct manager mgr_;
 
 //
 // @brief Test creation and use of default block
 //
-static void tu_manager_bk_block()
+static void tu_manager_bk_interface()
 {
     struct block_derived bk(&mgr_);
 
@@ -99,14 +110,68 @@ static void tu_manager_bk_strings()
     }
 }
 
+//
+// @brief Test edge cases
+//
+static void tu_manager_bk_life_cycle()
+{
+    struct hello *bk = new struct hello(&mgr_);
+
+    // Can't add block 0
+    ASSERT(mgr_.block_add(0, "hello") == false);
+
+    // Can't add block with unknown symbol name
+    ASSERT(mgr_.block_add(1, "dummy") == false);
+
+    // Can't add a block if allocation fails
+    beautiful_ptr = nullptr;
+    ASSERT(mgr_.block_add(-1, "derived_block") == false);
+
+    // Can't delete a block if destructor isn't found
+    beautiful_ptr = bk;
+    ASSERT(mgr_.block_add(-1, "derived_block") == true);
+    ASSERT(mgr_.block_del(-1) == false);
+
+    // Delete the block that remains
+    bk->type_ = "hello";
+    ASSERT(mgr_.block_del(-1) == true);
+
+    // Can't add the same ID several times
+    ASSERT(mgr_.block_add(1, "hello") == true);
+    ASSERT(mgr_.block_add(1, "hello") == false);
+
+    // Can't start unknown block
+    ASSERT(mgr_.block_start(2) == false);
+
+    // Can start several times the same block
+    // will actually only be started once
+    ASSERT(mgr_.block_start(1) == true);
+    ASSERT(mgr_.block_start(1) == true);
+
+    // Can't delete a started block (need to stop it first)
+    ASSERT(mgr_.block_del(1) == false);
+
+    // Can't stop unknown block
+    ASSERT(mgr_.block_stop(2) == false);
+
+    // Can stop several times the same block
+    // will actually only be stopped once
+    ASSERT(mgr_.block_stop(1) == true);
+    ASSERT(mgr_.block_stop(1) == true);
+
+    // Can delete a stopped block
+    ASSERT(mgr_.block_del(1) == true);
+}
+
 int main(int, char **)
 {
     LOGGER_OPEN("tu_manager_bk");
     logger_set_level(LOGGER_LEVEL_DEBUG);
 
-    tu_manager_bk_block();
+    tu_manager_bk_interface();
     tu_manager_bk_flow();
     tu_manager_bk_strings();
+    tu_manager_bk_life_cycle();
 
     LOGGER_CLOSE();
     return 0;
