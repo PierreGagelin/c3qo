@@ -23,6 +23,7 @@ set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Wshadow)
 
 # C compilations flags
 set(CMAKE_C_STANDARD 11)
+
 set(COMPILE_FLAGS_C)
 set(COMPILE_FLAGS_C ${COMPILE_FLAGS_C} -Wall)
 set(COMPILE_FLAGS_C ${COMPILE_FLAGS_C} -Wextra)
@@ -35,8 +36,8 @@ function (c3qo_target_compile_flags t_name)
 
     if (${C3QO_COVERAGE})
         target_compile_options(${t_name} PRIVATE "--coverage")
-    endif ()
-endfunction (c3qo_target_compile_flags)
+    endif()
+endfunction()
 
 #
 # Add link flags
@@ -51,8 +52,8 @@ function (c3qo_target_link_flags t_name)
     # Add coverage link flag
     if (${C3QO_COVERAGE})
         set_property(TARGET ${t_name} APPEND_STRING PROPERTY LINK_FLAGS " --coverage")
-    endif ()
-endfunction (c3qo_target_link_flags)
+    endif()
+endfunction()
 
 #
 # Add a library
@@ -63,7 +64,7 @@ function (c3qo_add_library target_name target_sources)
     target_include_directories(${target_name} PUBLIC ${CMAKE_SOURCE_DIR}/utils/include/)
     c3qo_target_compile_flags(${target_name})
     c3qo_target_link_flags(${target_name})
-endfunction (c3qo_add_library)
+endfunction()
 
 #
 # Add a block
@@ -72,7 +73,7 @@ function (c3qo_add_block target_name target_sources)
     c3qo_add_library(${target_name} "${target_sources}")
 
     target_link_libraries(${target_name} manager)
-endfunction (c3qo_add_block)
+endfunction()
 
 #
 # Link against a block
@@ -80,7 +81,7 @@ endfunction (c3qo_add_block)
 #
 function (c3qo_link_block target_name block_name)
     target_link_libraries(${target_name} -Wl,--whole-archive ${block_name} -Wl,--no-whole-archive)
-endfunction (c3qo_link_block)
+endfunction()
 
 #
 # Add an executable
@@ -94,7 +95,7 @@ function (c3qo_add_executable target_name target_sources)
     target_link_libraries(${target_name} logger)
 
     install(TARGETS ${target_name} DESTINATION bin)
-endfunction (c3qo_add_executable)
+endfunction()
 
 #
 # Add a test unit
@@ -110,7 +111,7 @@ function (c3qo_add_test target_name target_sources)
     target_link_libraries(${target_name} logger)
 
     add_test(NAME ${target_name} COMMAND ${target_name})
-endfunction (c3qo_add_test)
+endfunction()
 
 #
 # Add a protobuf-c library

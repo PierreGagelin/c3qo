@@ -16,14 +16,14 @@ set(CMAKE_C_FLAGS_RELEASE -O2)
 if (${C3QO_COVERAGE})
     # Force the build type to Debug
     set(CMAKE_BUILD_TYPE Debug)
-endif ()
+endif()
 
 #
 # Enable logger
 #
 if (${C3QO_LOG})
     add_definitions(-DC3QO_LOG)
-endif ()
+endif()
 
 # Configure memory checking
 find_program(MEMORYCHECK_COMMAND valgrind)

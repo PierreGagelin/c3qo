@@ -9,4 +9,4 @@ if (${C3QO_TEST})
     # Build test unit
     c3qo_add_test(tu_hello test/tu_hello.cpp)
     c3qo_link_block(tu_hello hello)
-endif ()
+endif()
