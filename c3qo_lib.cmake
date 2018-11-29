@@ -1,20 +1,5 @@
 
 
-# Include directories for blocks
-set(BLOCK_INCLUDE_DIR)
-set(BLOCK_INCLUDE_DIR ${BLOCK_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/block/hello/include)
-set(BLOCK_INCLUDE_DIR ${BLOCK_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/block/socket_zmq/include)
-set(BLOCK_INCLUDE_DIR ${BLOCK_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/block/trans_pb/include)
-
-# Include directories for c3qo engine
-set(C3QO_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/c3qo/include)
-
-# Include directories for utils
-set(UTILS_INCLUDE_DIR)
-set(UTILS_INCLUDE_DIR ${UTILS_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/utils/include)
-set(UTILS_INCLUDE_DIR ${UTILS_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/utils/logger/include)
-set(UTILS_INCLUDE_DIR ${UTILS_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/utils/socket/include)
-
 # Include directories for test units
 set(TU_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/c3qo/test/include)
 
@@ -41,15 +26,6 @@ set(CMAKE_C_STANDARD 11)
 set(COMPILE_FLAGS_C)
 set(COMPILE_FLAGS_C ${COMPILE_FLAGS_C} -Wall)
 set(COMPILE_FLAGS_C ${COMPILE_FLAGS_C} -Wextra)
-
-#
-# Add include directories
-#
-function (c3qo_target_include t_name)
-    target_include_directories(${t_name} PRIVATE ${BLOCK_INCLUDE_DIR})
-    target_include_directories(${t_name} PRIVATE ${C3QO_INCLUDE_DIR})
-    target_include_directories(${t_name} PRIVATE ${UTILS_INCLUDE_DIR})
-endfunction (c3qo_target_include)
 
 #
 # Add compilation flags
@@ -84,7 +60,7 @@ endfunction (c3qo_target_link_flags)
 function (c3qo_add_library target_name target_sources)
     add_library(${target_name} STATIC ${target_sources})
 
-    c3qo_target_include(${target_name})
+    target_include_directories(${target_name} PUBLIC ${CMAKE_SOURCE_DIR}/utils/include/)
     c3qo_target_compile_flags(${target_name})
     c3qo_target_link_flags(${target_name})
 endfunction (c3qo_add_library)
@@ -112,7 +88,6 @@ endfunction (c3qo_link_block)
 function (c3qo_add_executable target_name target_sources)
     add_executable(${target_name} ${target_sources})
 
-    c3qo_target_include(${target_name})
     c3qo_target_compile_flags(${target_name})
     c3qo_target_link_flags(${target_name})
 
@@ -127,7 +102,6 @@ endfunction (c3qo_add_executable)
 function (c3qo_add_test target_name target_sources)
     add_executable(${target_name} ${target_sources})
 
-    c3qo_target_include(${target_name})
     target_include_directories(${target_name} PRIVATE ${TU_INCLUDE_DIR})
 
     target_compile_options(${target_name} PRIVATE ${COMPILE_FLAGS_COMMON})

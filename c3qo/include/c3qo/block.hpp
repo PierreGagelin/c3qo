@@ -2,7 +2,6 @@
 #define C3QO_BLOCK_HPP
 
 // Project headers
-#include "utils/include.hpp"
 #include "utils/logger.hpp"
 
 //

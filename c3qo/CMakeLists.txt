@@ -12,10 +12,11 @@ set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_fd.cpp)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_tm.cpp)
 
 c3qo_add_library(manager "${SOURCES_MANAGER}")
-c3qo_target_include(manager)
+target_include_directories(manager PUBLIC include/)
 target_link_libraries(manager dl)
 target_link_libraries(manager pb_config)
 target_link_libraries(manager logger)
+target_link_libraries(manager socket)
 
 
 # Build c3qo main executable
