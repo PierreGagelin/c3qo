@@ -120,7 +120,7 @@ void zmq_pair::conf_(char *conf)
         ret = sscanf(pos, NEEDLE_TYPE "%31s", type);
         if (ret == EOF)
         {
-            LOGGER_ERR("Failed to call sscanf: %s [str=%s ; type=%s ; errno=%d]", strerror(errno), pos, type, errno);
+            LOGGER_ERR("Failed to call sscanf: %s [str=%s ; errno=%d]", strerror(errno), pos, errno);
             return;
         }
         else if (ret != 1)

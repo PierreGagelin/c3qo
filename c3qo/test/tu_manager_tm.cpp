@@ -58,32 +58,34 @@ static void tu_manager_tm_order()
     char arg[3][8] = {"timer0", "timer1", "timer2"};
 
     // Register three timers:
-    //   - 1ms
-    //   - 2ms
-    //   - 3ms
+    //   - 10ms
+    //   - 20ms
+    //   - 30ms
     // Insert them in the wrong order
-    // Hope it takes less than 1ms to register
+    //
+    // Hope it takes less than 10ms to register
+    // (can be wrong with valgrind)
     t_0.bk = &block_;
     t_0.tid = 0;
     t_0.arg = arg[0];
     t_0.time.tv_sec = 0;
-    t_0.time.tv_nsec = 1 * 1000 * 1000;
+    t_0.time.tv_nsec = 10 * 1000 * 1000;
     t_1.bk = &block_;
     t_1.tid = 1;
     t_1.arg = arg[1];
     t_1.time.tv_sec = 0;
-    t_1.time.tv_nsec = 2 * 1000 * 1000;
+    t_1.time.tv_nsec = 20 * 1000 * 1000;
     t_2.bk = &block_;
     t_2.tid = 2;
     t_2.arg = arg[2];
     t_2.time.tv_sec = 0;
-    t_2.time.tv_nsec = 3 * 1000 * 1000;
+    t_2.time.tv_nsec = 30 * 1000 * 1000;
     ASSERT(mgr_.timer_add(t_2) == true);
     ASSERT(mgr_.timer_add(t_0) == true);
     ASSERT(mgr_.timer_add(t_1) == true);
 
     // Verify the order of expiration
-    usleep(3 * 1000);
+    usleep(30 * 1000);
     mgr_.timer_check_exp();
     ASSERT(block_.zozo_l_asticot_.size() == 3lu);
     ASSERT(block_.zozo_l_asticot_[0] == std::string(arg[0]));
@@ -148,6 +150,7 @@ static void tu_manager_tm_id()
     ASSERT(block_.zozo_l_asticot_.size() > 0u);
     ASSERT(block_.zozo_l_asticot_.size() == 1u);
     ASSERT(block_.zozo_l_asticot_[0] == std::string(arg));
+
     block_.zozo_l_asticot_.clear();
 }
 
@@ -182,11 +185,13 @@ static void tu_manager_tm_del()
 static void tu_manager_tm_error()
 {
     // Hide logs as errors are normal
-    logger_set_level(LOGGER_LEVEL_NONE);
+    logger_set_level(LOGGER_LEVEL_ERR);
 
     struct timer t;
     t.bk = nullptr;
     ASSERT(mgr_.timer_add(t) == false);
+
+    logger_set_level(LOGGER_LEVEL_DEBUG);
 }
 
 int main(int, char **)
