@@ -1,7 +1,7 @@
 
 
 # Include directories for test units
-set(TU_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/c3qo/test/include)
+set(TU_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/engine/test/include)
 
 # Compilation flags
 set(CMAKE_CXX_STANDARD 11)

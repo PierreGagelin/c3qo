@@ -1,8 +1,8 @@
-#ifndef C3QO_MANAGER_HPP
-#define C3QO_MANAGER_HPP
+#ifndef MANAGER_HPP
+#define MANAGER_HPP
 
 // Project headers
-#include "c3qo/block.hpp"
+#include "engine/block.hpp"
 #include "utils/logger.hpp"
 #include "utils/socket.hpp"
 
@@ -100,4 +100,4 @@ struct manager
     int fd_poll();
 };
 
-#endif // C3QO_MANAGER_HPP
+#endif // MANAGER_HPP

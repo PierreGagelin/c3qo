@@ -48,7 +48,6 @@ function c3qo_generate_path()
     C3QO_DIR_INT=$(get_abs_path $C3QO_DIR_SOURCE/integration)
     C3QO_DIR_BUILD=$(get_abs_path $C3QO_DIR_SOURCE/../build/c3qo)
     C3QO_DIR_LCOV=$(get_abs_path $C3QO_DIR_BUILD/lcov)
-    C3QO_DIR_C3QO=$(get_abs_path $C3QO_DIR_BUILD/c3qo)
 }
 
 # Name of the build command

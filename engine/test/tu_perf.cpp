@@ -2,11 +2,11 @@
 // @brief Test file for the block manager
 //
 
-#define LOGGER_TAG "[TU.c3qo.perf]"
+#define LOGGER_TAG "[TU.perf]"
 
 // Project headers
 #include "block/hello.hpp"
-#include "c3qo/tu.hpp"
+#include "engine/tu.hpp"
 
 struct manager mgr_;
 

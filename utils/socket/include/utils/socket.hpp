@@ -1,5 +1,5 @@
-#ifndef C3QO_SOCKET_HPP
-#define C3QO_SOCKET_HPP
+#ifndef SOCKET_HPP
+#define SOCKET_HPP
 
 // Project headers
 #include "utils/include.hpp"
@@ -23,4 +23,4 @@ void socket_zmq_read(void *socket, std::vector<struct c3qo_zmq_part> &msg, int f
 bool socket_zmq_write(void *socket, std::vector<struct c3qo_zmq_part> &msg, int flags = ZMQ_DONTWAIT);
 int socket_zmq_get_event(void *monitor);
 
-#endif // C3QO_SOCKET_HPP
+#endif // SOCKET_HPP

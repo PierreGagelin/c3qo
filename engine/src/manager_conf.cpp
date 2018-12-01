@@ -3,7 +3,7 @@
 #define LOGGER_TAG "[engine.conf]"
 
 // Project headers
-#include "c3qo/manager.hpp"
+#include "engine/manager.hpp"
 
 // Generated protobuf command
 #include "conf.pb-c.h"

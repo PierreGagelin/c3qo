@@ -1,9 +1,9 @@
 
 
-#define LOGGER_TAG "[app.c3qo]"
+#define LOGGER_TAG "[app.main]"
 
 // Project headers
-#include "c3qo/manager.hpp"
+#include "engine/manager.hpp"
 
 // C headers
 extern "C"

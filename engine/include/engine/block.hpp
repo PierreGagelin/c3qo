@@ -1,5 +1,5 @@
-#ifndef C3QO_BLOCK_HPP
-#define C3QO_BLOCK_HPP
+#ifndef BLOCK_HPP
+#define BLOCK_HPP
 
 // Project headers
 #include "utils/logger.hpp"
@@ -142,4 +142,4 @@ struct block
     void process_flow_(int port, void *data, enum flow_type type);
 };
 
-#endif // C3QO_BLOCK_HPP
+#endif // BLOCK_HPP

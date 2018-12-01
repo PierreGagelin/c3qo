@@ -2,7 +2,7 @@
 #define BLOCK_PUB_SUB_HPP
 
 // Project headers
-#include "c3qo/block.hpp"
+#include "engine/block.hpp"
 
 // TODO: only used for protobuf stats POC, need to be updated
 //       look for hello, zmq_pair and trans_pb blocks

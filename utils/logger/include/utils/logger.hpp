@@ -1,5 +1,5 @@
-#ifndef C3QO_LOGGER_HPP
-#define C3QO_LOGGER_HPP
+#ifndef LOGGER_HPP
+#define LOGGER_HPP
 
 // Project headers
 #include "utils/include.hpp"
@@ -126,4 +126,4 @@ extern enum logger_level logger_level;
 
 #endif
 
-#endif // C3QO_LOGGER_HPP
+#endif // LOGGER_HPP

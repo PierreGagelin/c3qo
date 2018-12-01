@@ -6,7 +6,7 @@
 #include "block/hello.hpp"
 #include "block/trans_pb.hpp"
 #include "block/zmq_pair.hpp"
-#include "c3qo/manager.hpp"
+#include "engine/manager.hpp"
 
 // Needle to look for in configuration
 #define NEEDLE_TYPE "type=" // either "server" or "client"
