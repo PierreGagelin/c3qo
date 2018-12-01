@@ -36,8 +36,9 @@ include(CTest)
 # Library to define libraries, executables, and tests according to the project
 include(c3qo_lib.cmake)
 
-add_subdirectory(engine)
+add_subdirectory(app)
 add_subdirectory(block)
+add_subdirectory(engine)
 add_subdirectory(utils)
 
 
