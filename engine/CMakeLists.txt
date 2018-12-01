@@ -27,7 +27,7 @@ if (${C3QO_TEST})
     # Build TU for manager_conf
     c3qo_add_test(tu_manager_conf test/tu_manager_conf.cpp)
     target_link_libraries(tu_manager_conf manager)
-    c3qo_link_block(tu_manager_conf hello)
+    c3qo_link_block(tu_manager_conf trans_pb)
 
     # Build TU for manager_fd
     c3qo_add_test(tu_manager_fd test/tu_manager_fd.cpp)

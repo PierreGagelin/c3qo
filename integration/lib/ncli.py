@@ -25,7 +25,7 @@ class ncli(object):
         - cmd_arg: Argument to give for the command
 
         """
-        cmd_type_list = ["raw", "proto"]
+        cmd_type_list = ["proto"]
         cmd_type = str(cmd_type)
         cmd_arg = str(cmd_arg)
         cmd_arg = cmd_arg.replace('"', '\\"')

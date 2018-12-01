@@ -148,46 +148,6 @@ static bool ncli_conf_proto(int argc, char **argv, std::vector<struct c3qo_zmq_p
     return true;
 }
 
-//
-// @brief Fills a ZMQ message to send a raw configuration line
-//
-static bool ncli_conf_raw(int argc, char **argv, std::vector<struct c3qo_zmq_part> &msg)
-{
-    const char options[] = "p:";
-    const char *payload = "1 1 1";
-
-    // Get CLI options
-    optind = 1; // reset getopt
-    for (int opt = getopt(argc, argv, options); opt != -1; opt = getopt(argc, argv, options))
-    {
-        switch (opt)
-        {
-        case 'p':
-            LOGGER_DEBUG("CLI payload to send [payload=%s]", optarg);
-            payload = optarg;
-            break;
-
-        default:
-            LOGGER_ERR("Unknown CLI option [opt=%c]", static_cast<char>(opt));
-            return false;
-        }
-    }
-
-    // Fill ZMQ message
-    struct c3qo_zmq_part part;
-    part.data = strdup("CONF.LINE");
-    ASSERT(part.data != nullptr);
-    part.len = sizeof("CONF.LINE");
-    msg.push_back(part);
-
-    part.data = strdup(payload);
-    ASSERT(part.data != nullptr);
-    part.len = strlen(part.data) + 1;
-    msg.push_back(part);
-
-    return true;
-}
-
 int main(int argc, char **argv)
 {
     const char options[] = "ha:T:A:";
@@ -244,12 +204,7 @@ int main(int argc, char **argv)
     ASSERT(wordexp(ncli_args, &we, 0) == 0);
 
     std::vector<struct c3qo_zmq_part> msg;
-    if (strcmp(ncli_type, "raw") == 0)
-    {
-        ok = ncli_conf_raw(we.we_wordc, we.we_wordv, msg);
-        ASSERT(ok == true);
-    }
-    else if (strcmp(ncli_type, "proto") == 0)
+    if (strcmp(ncli_type, "proto") == 0)
     {
         ok = ncli_conf_proto(we.we_wordc, we.we_wordv, msg);
         ASSERT(ok == true);

@@ -32,26 +32,17 @@ int main(int argc, char **argv)
 {
     struct manager mgr;
     int opt;
-    char *filename;
 
     LOGGER_OPEN("c3qo");
     logger_set_level(LOGGER_LEVEL_DEBUG);
 
-    filename = nullptr;
-    while ((opt = getopt(argc, argv, "hf:l:")) != -1)
+    while ((opt = getopt(argc, argv, "hl:")) != -1)
     {
         switch (opt)
         {
         case 'h':
             LOGGER_DEBUG("CLI help: lol, help is for the weaks");
             return 0;
-
-        case 'f':
-        {
-            LOGGER_DEBUG("CLI file to load configuration from [path=%s]", optarg);
-            filename = optarg;
-        }
-        break;
 
         case 'l':
         {
@@ -82,12 +73,6 @@ int main(int argc, char **argv)
     char conf[] = "type=server addr=tcp://127.0.0.1:1664";
     mgr.block_conf(-1, conf);
     mgr.block_start(-1);
-
-    // Parse configuration file
-    if (filename != nullptr)
-    {
-        mgr.conf_parse(filename);
-    }
 
     // Register a signal handler
     {

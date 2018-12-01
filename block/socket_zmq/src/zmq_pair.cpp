@@ -57,12 +57,7 @@ void zmq_pair::on_fd_(struct file_desc &fd)
     LOGGER_DEBUG("Message received on ZMQ socket [bk_id=%d ; topic=%s ; payload_size=%zu]", id_, msg[0].data, msg[1].len);
 
     // Action to take upon topic value
-    if (strcmp("CONF.LINE", msg[0].data) == 0)
-    {
-        // Process the configuration line
-        mgr_->conf_parse_line(msg[1].data);
-    }
-    else if (strcmp("CONF.PROTO.CMD", msg[0].data) == 0)
+    if (strcmp("CONF.PROTO.CMD", msg[0].data) == 0)
     {
         mgr_->conf_parse_pb_cmd(reinterpret_cast<uint8_t *>(msg[1].data), msg[1].len);
     }

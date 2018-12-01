@@ -162,7 +162,7 @@ static void tu_manager_tm_del()
     struct timer t;
     char dummy[8] = "dummy";
 
-    // Register several different timers
+    // Register a timer
     t.bk = &block_;
     t.tid = 0;
     t.arg = dummy;
@@ -177,6 +177,8 @@ static void tu_manager_tm_del()
     usleep(1 * 1000);
     mgr_.timer_check_exp();
     ASSERT(block_.zozo_l_asticot_.size() == 0u);
+
+    mgr_.timer_clear();
 }
 
 //
