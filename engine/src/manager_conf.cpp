@@ -261,56 +261,49 @@ size_t manager::conf_get(char *buf, size_t len)
 }
 
 //
-// @brief Convert protobuf command type to block command type
-//
-static enum bk_cmd pbc_cmd_type_to_bk_cmd(PbcCmd__CmdType type)
-{
-    switch (type)
-    {
-    case PBC_CMD__CMD_TYPE__CMD_ADD:
-        return CMD_ADD;
-    case PBC_CMD__CMD_TYPE__CMD_START:
-        return CMD_START;
-    case PBC_CMD__CMD_TYPE__CMD_STOP:
-        return CMD_STOP;
-    case PBC_CMD__CMD_TYPE__CMD_DEL:
-        return CMD_DEL;
-    case PBC_CMD__CMD_TYPE__CMD_CONF:
-        return CMD_CONF;
-    case PBC_CMD__CMD_TYPE__CMD_BIND:
-        return CMD_BIND;
-    default:
-        LOGGER_ERR("Failed to get bk_cmd: unknown pbc_cmd type [type=%d]", type);
-        return CMD_UNKNOWN;
-    }
-}
-
-//
-// @brief Parse and execute a protobuf pbc_cmd message
+// @brief Parse and execute a protobuf command
 //
 bool manager::conf_parse_pb_cmd(const uint8_t *pb_cmd, size_t size)
 {
-    enum bk_cmd command;
-    PbcCmd *cmd;
+    Command *cmd;
+    bool ret;
 
-    cmd = pbc_cmd__unpack(nullptr, size, pb_cmd);
+    cmd = command__unpack(nullptr, size, pb_cmd);
     if (cmd == nullptr)
     {
         LOGGER_ERR("Failed to unpack protobuf command: unknown reason [size=%zu]", size);
         return false;
     }
 
-    command = pbc_cmd_type_to_bk_cmd(cmd->type);
-    if (command == CMD_UNKNOWN)
+    switch (cmd->type_case)
     {
-        // Error already logged
+    case COMMAND__TYPE_ADD:
+        ret = conf_exec_cmd(CMD_ADD, cmd->add->id, cmd->add->type);
+        break;
+    case COMMAND__TYPE_START:
+        ret = conf_exec_cmd(CMD_START, cmd->start->id, nullptr);
+        break;
+    case COMMAND__TYPE_STOP:
+        ret = conf_exec_cmd(CMD_STOP, cmd->stop->id, nullptr);
+        break;
+    case COMMAND__TYPE_DEL:
+        ret = conf_exec_cmd(CMD_DEL, cmd->del->id, nullptr);
+        break;
+    case COMMAND__TYPE_CONF:
+        ret = conf_exec_cmd(CMD_CONF, cmd->conf->id, cmd->conf->conf);
+        break;
+    case COMMAND__TYPE_BIND:
+        ret = block_bind(cmd->bind->id, cmd->bind->port, cmd->bind->dest);
+        break;
+    case COMMAND__TYPE__NOT_SET:
+    default:
+        LOGGER_ERR("Failed to execute protobuf command: unknown command type [type=%d]", cmd->type_case);
         goto err;
     }
-    conf_exec_cmd(command, cmd->block_id, cmd->block_arg);
 
-    pbc_cmd__free_unpacked(cmd, nullptr);
-    return true;
+    command__free_unpacked(cmd, nullptr);
+    return ret;
 err:
-    pbc_cmd__free_unpacked(cmd, nullptr);
+    command__free_unpacked(cmd, nullptr);
     return false;
 }

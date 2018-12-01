@@ -17,7 +17,7 @@ class ncli(object):
     Class responsible to send network CLI commands
     """
 
-    def send(self, cmd_type, cmd_arg):
+    def send(self, cmd_type, cmd_arg, addr = None):
         """
         Add an instance of c3qo
 
@@ -36,6 +36,8 @@ class ncli(object):
 
         command = list()
         command += ["/tmp/c3qo-0.0.7-local/bin/ncli"]
+        if addr is not None:
+            command += ["-a", addr]
         command += ["-T", cmd_type]
         command += ["-A", '"' + cmd_arg + '"']
 
@@ -59,7 +61,7 @@ if __name__ == "__main__":
     # Exception shall be raised
     try:
         instance.send("toto", "dummy")
-        ASSERT(False);
+        assert(False)
     except:
         pass
 

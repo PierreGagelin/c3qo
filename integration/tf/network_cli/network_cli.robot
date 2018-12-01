@@ -5,7 +5,7 @@ Library    ../../lib/ncli.py
 *** Test Cases ***
 Check Command Raw
     Server Run
-    ncli.send    raw    dummy -p "1 10 trans_pb"
+    ncli.send    raw    dummy -p "1 10 trans_pb"    "tcp://127.0.0.1:1664"
     ncli.send    raw    dummy -p "5 10"
     Builtin.Sleep    1s
     Server Stop
@@ -14,7 +14,7 @@ Check Command Protobuf
     Server Run
     ncli.send    proto    dummy -i 20 -t add -a hello
     ncli.send    proto    dummy -i 20 -t conf -a ZIGOUILLATOR3000
-    ncli.send    proto    dummy -i 20 -t bind -a 2:10
+    ncli.send    proto    dummy -i 20 -t bind -p 2 -d 10
     ncli.send    proto    dummy -i 20 -t start
     ncli.send    proto    dummy -i 20 -t stop
     ncli.send    proto    dummy -i 20 -t del

@@ -30,6 +30,7 @@ $C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -GTb
 echo -e "$COLOR_BLUE\nExecute unit tests\n$COLOR_NO\n"
 $C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -t
 $C3QO_DIR_SOURCE/integration/lib/c3qo.py
+$C3QO_DIR_SOURCE/integration/lib/ncli.py
 
 echo -e "$COLOR_BLUE\nExecute functional tests\n$COLOR_NO\n"
 $C3QO_DIR_SOURCE/$C3QO_CMD_BUILD -p

@@ -14,53 +14,24 @@
 extern int optind;
 extern char *optarg;
 
-// Convert a string to a command type
-static PbcCmd__CmdType string_to_pbc_type(const char *string)
-{
-    if (strcmp(string, "add") == 0)
-    {
-        return PBC_CMD__CMD_TYPE__CMD_ADD;
-    }
-    else if (strcmp(string, "start") == 0)
-    {
-        return PBC_CMD__CMD_TYPE__CMD_START;
-    }
-    else if (strcmp(string, "stop") == 0)
-    {
-        return PBC_CMD__CMD_TYPE__CMD_STOP;
-    }
-    else if (strcmp(string, "del") == 0)
-    {
-        return PBC_CMD__CMD_TYPE__CMD_DEL;
-    }
-    else if (strcmp(string, "conf") == 0)
-    {
-        return PBC_CMD__CMD_TYPE__CMD_CONF;
-    }
-    else if (strcmp(string, "bind") == 0)
-    {
-        return PBC_CMD__CMD_TYPE__CMD_BIND;
-    }
-    else
-    {
-        return static_cast<PbcCmd__CmdType>(-1);
-    }
-}
-
 //
 // @brief Fills a ZMQ message to send a raw configuration line
 //
 static bool ncli_conf_proto(int argc, char **argv, std::vector<struct c3qo_zmq_part> &msg)
 {
-    const char options[] = "a:i:t:";
+    const char options[] = "a:d:i:p:t:";
     char *block_arg;
     int32_t block_id;
-    PbcCmd__CmdType cmd_type;
+    int32_t port;
+    int32_t dest;
+    const char *type;
 
     // Default parameters
     block_arg = nullptr;
     block_id = 1;
-    cmd_type = PBC_CMD__CMD_TYPE__CMD_ADD;
+    port = 1;
+    dest = 1;
+    type = "unknown";
 
     optind = 1; // reset getopt
     for (int opt = getopt(argc, argv, options); opt != -1; opt = getopt(argc, argv, options))
@@ -72,14 +43,24 @@ static bool ncli_conf_proto(int argc, char **argv, std::vector<struct c3qo_zmq_p
             block_arg = optarg;
             break;
 
+        case 'd':
+            LOGGER_DEBUG("CLI: PROTO [dest=%s]", optarg);
+            dest = static_cast<int32_t>(atoi(optarg));
+            break;
+
         case 'i':
             LOGGER_DEBUG("CLI: PROTO [block_id=%s]", optarg);
             block_id = static_cast<int32_t>(atoi(optarg));
             break;
 
+        case 'p':
+            LOGGER_DEBUG("CLI: PROTO [port=%s]", optarg);
+            port = static_cast<int32_t>(atoi(optarg));
+            break;
+
         case 't':
             LOGGER_DEBUG("CLI: PROTO [cmd_type=%s]", optarg);
-            cmd_type = string_to_pbc_type(optarg);
+            type = optarg;
             break;
 
         default:
@@ -89,16 +70,69 @@ static bool ncli_conf_proto(int argc, char **argv, std::vector<struct c3qo_zmq_p
     }
 
     // Prepare a protobuf message
-    PbcCmd cmd;
-    pbc_cmd__init(&cmd);
-    cmd.type = cmd_type;
-    cmd.has_block_id = 1;
-    cmd.block_id = block_id;
-    cmd.block_arg = block_arg;
+    Command cmd;
+    BlockAdd add;
+    BlockStart start;
+    BlockStop stop;
+    BlockDel del;
+    BlockConf conf;
+    BlockBind bind;
+    command__init(&cmd);
 
-    size_t size = pbc_cmd__get_packed_size(&cmd);
+    if (strcmp(type, "add") == 0)
+    {
+        cmd.type_case = COMMAND__TYPE_ADD;
+        block_add__init(&add);
+        cmd.add = &add;
+        cmd.add->id = block_id;
+        cmd.add->type = block_arg;
+    }
+    else if (strcmp(type, "start") == 0)
+    {
+        cmd.type_case = COMMAND__TYPE_START;
+        block_start__init(&start);
+        cmd.start = &start;
+        cmd.start->id = block_id;
+    }
+    else if (strcmp(type, "stop") == 0)
+    {
+        cmd.type_case = COMMAND__TYPE_STOP;
+        block_stop__init(&stop);
+        cmd.stop = &stop;
+        cmd.stop->id = block_id;
+    }
+    else if (strcmp(type, "del") == 0)
+    {
+        cmd.type_case = COMMAND__TYPE_DEL;
+        block_del__init(&del);
+        cmd.del = &del;
+        cmd.del->id = block_id;
+    }
+    else if (strcmp(type, "conf") == 0)
+    {
+        cmd.type_case = COMMAND__TYPE_CONF;
+        block_conf__init(&conf);
+        cmd.conf = &conf;
+        cmd.conf->id = block_id;
+        cmd.conf->conf = block_arg;
+    }
+    else if (strcmp(type, "bind") == 0)
+    {
+        cmd.type_case = COMMAND__TYPE_BIND;
+        block_bind__init(&bind);
+        cmd.bind = &bind;
+        cmd.bind->id = block_id;
+        cmd.bind->port = port;
+        cmd.bind->dest = dest;
+    }
+    else
+    {
+        cmd.type_case = COMMAND__TYPE__NOT_SET;
+    }
+
+    size_t size = command__get_packed_size(&cmd);
     uint8_t *buffer = new uint8_t[size];
-    pbc_cmd__pack(&cmd, buffer);
+    command__pack(&cmd, buffer);
 
     // Fill ZMQ message
     struct c3qo_zmq_part part;
@@ -175,10 +209,6 @@ int main(int argc, char **argv)
     {
         switch (opt)
         {
-        case 'h':
-            LOGGER_DEBUG("CLI help: lol, help is for the weaks");
-            return 0;
-
         case 'a':
             LOGGER_DEBUG("CLI connection address for the : %s", optarg);
             addr = optarg;

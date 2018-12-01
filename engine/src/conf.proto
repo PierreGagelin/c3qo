@@ -1,17 +1,50 @@
-syntax = "proto2";
 
-message pbc_cmd
+
+syntax = "proto3";
+
+message BlockAdd
 {
-    enum cmd_type
+    int32 id = 1;
+    string type = 2;
+}
+
+message BlockStart
+{
+    int32 id = 1;
+}
+
+message BlockStop
+{
+    int32 id = 1;
+}
+
+message BlockDel
+{
+    int32 id = 1;
+}
+
+message BlockConf
+{
+    int32 id = 1;
+    string conf = 2;
+}
+
+message BlockBind
+{
+    int32 id = 1;
+    int32 port = 2;
+    int32 dest = 3;
+}
+
+message Command
+{
+    oneof type
     {
-        CMD_ADD = 1;
-        CMD_START = 2;
-        CMD_STOP = 3;
-        CMD_DEL = 4;
-        CMD_CONF = 5;
-        CMD_BIND = 6;
+        BlockAdd add = 1;
+        BlockStart start = 2;
+        BlockStop stop = 3;
+        BlockDel del = 4;
+        BlockConf conf = 5;
+        BlockBind bind = 6;
     }
-    required cmd_type type = 1;
-    optional int32 block_id = 2;
-    optional string block_arg = 3;
 }
