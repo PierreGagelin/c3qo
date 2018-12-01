@@ -10,6 +10,8 @@
 // Project headers
 #include "engine/manager.hpp"
 
+#define NSEC_MAX (1000 * 1000 * 1000) // Maximum number of nsec + 1
+
 //
 // @brief Add or replace an entry in the timer list
 //

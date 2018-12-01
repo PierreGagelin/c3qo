@@ -11,8 +11,8 @@ extern "C"
 }
 
 // Open and close connection to syslog
-#define LOGGER_OPEN(name) openlog(name, 0, 0);
-#define LOGGER_CLOSE() closelog();
+#define LOGGER_OPEN(name) openlog(name, 0, 0)
+#define LOGGER_CLOSE() closelog()
 
 // Differents levels of log
 enum logger_level
@@ -34,17 +34,32 @@ void logger_set_level(enum logger_level l);
 
 //
 // MAN SYSLOG :
-//   - LOG_EMERG   : system is unusable
-//   - LOG_ALERT   : action must be taken immediately
-//   - LOG_CRIT    : critical conditions
-//   - LOG_ERR     : error conditions
-//   - LOG_WARNING : warning conditions
-//   - LOG_NOTICE  : normal, but significant, condition
-//   - LOG_INFO    : informational message
-//   - LOG_DEBUG   : debug-level message
+// - LOG_EMERG   : system is unusable
+// - LOG_ALERT   : action must be taken immediately
+// - LOG_CRIT    : critical conditions
+// - LOG_ERR     : error conditions
+// - LOG_WARNING : warning conditions
+// - LOG_NOTICE  : normal, but significant, condition
+// - LOG_INFO    : informational message
+// - LOG_DEBUG   : debug-level message
 //
 
 #ifdef C3QO_LOG
+
+#define LOGGER_TRACE(level, msg, ...)                 \
+    syslog(level, LOGGER_TAG " " msg, ##__VA_ARGS__); \
+    printf("[%s]" LOGGER_TAG " " msg "\n", get_logger_level(static_cast<enum logger_level>(level + 1)), ##__VA_ARGS__);
+
+#else
+
+// Code will be removed if unused and without a warning
+#define LOGGER_TRACE(level, msg, ...)                     \
+    if (false == true)                                    \
+    {                                                     \
+        syslog(level, LOGGER_TAG " " msg, ##__VA_ARGS__); \
+    }
+
+#endif // C3QO_LOG
 
 // Current level of log. Only log with lower level will be displayed
 extern enum logger_level logger_level;
@@ -52,10 +67,6 @@ extern enum logger_level logger_level;
 #ifndef LOGGER_TAG
 #define LOGGER_TAG ""
 #endif
-
-#define LOGGER_TRACE(level, msg, ...)                 \
-    syslog(level, LOGGER_TAG " " msg, ##__VA_ARGS__); \
-    printf("[%s]" LOGGER_TAG " " msg "\n", get_logger_level(static_cast<enum logger_level>(level + 1)), ##__VA_ARGS__);
 
 // Format a log entry with function name, line and level
 #define LOGGER_EMERG(msg, ...)                                                      \
@@ -99,31 +110,14 @@ extern enum logger_level logger_level;
         LOGGER_TRACE(LOG_DEBUG, msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
     }
 
-#else
-
-// C++ headers
-#include <tuple>
-
-//
-// @brief Trick:
-//          - removes call to log facility
-//          - free space used by msg as it's useless (=8KB at the moment)
-//          - does not trigger compilation -Werror (mainly unused variables)
-//
-
-#define LOGGER_TRACE(msg, ...) \
-    (void)msg;                 \
-    (void)std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value;
-
-#define LOGGER_EMERG(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
-#define LOGGER_ALERT(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
-#define LOGGER_CRIT(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
-#define LOGGER_ERR(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
-#define LOGGER_WARNING(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
-#define LOGGER_NOTICE(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
-#define LOGGER_INFO(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
-#define LOGGER_DEBUG(msg, ...) LOGGER_TRACE(msg, ##__VA_ARGS__)
-
-#endif
+#define ASSERT(condition)                                           \
+    do                                                              \
+    {                                                               \
+        if ((condition) == false)                                   \
+        {                                                           \
+            LOGGER_CRIT("Failed to assert condition: " #condition); \
+            exit(1);                                                \
+        }                                                           \
+    } while (false)
 
 #endif // LOGGER_HPP
