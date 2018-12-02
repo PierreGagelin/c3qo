@@ -8,6 +8,8 @@ project(c3qo)
 # Generate a JSON file with compilation commands (used with Visual Studio Code)
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
+set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
+
 #
 # GCOV
 #
