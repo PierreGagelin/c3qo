@@ -5,24 +5,6 @@
 #include "utils/logger.hpp"
 
 //
-// Macro to "register" a block
-// Gives access to a constructor
-// Destructor is handled by virtual inheritance
-//
-#define BLOCK_REGISTER(name)                              \
-    extern "C"                                            \
-    {                                                     \
-        struct block *name##_create(struct manager *mgr_) \
-        {                                                 \
-            return new struct name(mgr_);                 \
-        }                                                 \
-        void name##_destroy(struct block *bk)             \
-        {                                                 \
-            delete reinterpret_cast<struct name *>(bk);   \
-        }                                                 \
-    }
-
-//
 // @enum bk_cmd
 //
 // @brief Commands to manage a block
@@ -140,6 +122,13 @@ struct block
     void process_tx_(int port, void *data);
     void process_notif_(int port, void *notif);
     void process_flow_(int port, void *data, enum flow_type type);
+};
+
+// Factory to create and destroy blocks
+struct block_factory
+{
+    virtual struct block *constructor(struct manager *) = 0;
+    virtual void destructor(struct block *) = 0;
 };
 
 #endif // BLOCK_HPP

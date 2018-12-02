@@ -8,6 +8,7 @@
 #include "block/hello.hpp"
 #include "engine/tu.hpp"
 
+struct hello_factory factory;
 struct manager mgr_;
 
 //
@@ -75,6 +76,8 @@ int main(int, char **)
 {
     LOGGER_OPEN("tu_perf");
     logger_set_level(LOGGER_LEVEL_DEBUG);
+
+    mgr_.block_factory_register("hello", &factory);
 
     tu_perf_commutation();
 

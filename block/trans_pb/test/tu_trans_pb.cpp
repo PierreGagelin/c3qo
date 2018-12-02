@@ -14,8 +14,12 @@ struct tu_trans_pb
 {
     struct manager mgr_;
     struct trans_pb block_;
+    struct trans_pb_factory block_factory_;
 
-    tu_trans_pb() : block_(&mgr_) {}
+    tu_trans_pb() : block_(&mgr_)
+    {
+        mgr_.block_factory_register("trans_pb", &block_factory_);
+    }
 
     bool proto_cmd_send(Command__TypeCase type, int block_id, const char *arg, int port = 0, int dest = 0)
     {

@@ -14,4 +14,10 @@ struct trans_pb : block
     void parse_command(const uint8_t *data, size_t size);
 };
 
+struct trans_pb_factory : block_factory
+{
+    virtual struct block *constructor(struct manager *mgr) override final;
+    virtual void destructor(struct block *bk) override final;
+};
+
 #endif // TRANS_PB_HPP

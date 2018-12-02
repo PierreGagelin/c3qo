@@ -5,6 +5,10 @@
 // Project headers
 #include "block/hello.hpp"
 
+//
+// Implementation of the block interface
+//
+
 hello::hello(struct manager *mgr) : block(mgr), name_("unknown"), count_(0) {}
 hello::~hello() {}
 
@@ -65,4 +69,16 @@ int hello::ctrl_(void *vnotif)
     return 0;
 }
 
-BLOCK_REGISTER(hello);
+//
+// Implementation of the factory interface
+//
+
+struct block *hello_factory::constructor(struct manager *mgr)
+{
+    return new struct hello(mgr);
+}
+
+void hello_factory::destructor(struct block *bk)
+{
+    delete static_cast<struct hello *>(bk);
+}

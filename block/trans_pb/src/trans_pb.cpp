@@ -92,4 +92,16 @@ int trans_pb::rx_(void *vdata)
     return 0;
 }
 
-BLOCK_REGISTER(trans_pb);
+//
+// Implementation of the factory interface
+//
+
+struct block *trans_pb_factory::constructor(struct manager *mgr)
+{
+    return new struct trans_pb(mgr);
+}
+
+void trans_pb_factory::destructor(struct block *bk)
+{
+    delete static_cast<struct trans_pb *>(bk);
+}

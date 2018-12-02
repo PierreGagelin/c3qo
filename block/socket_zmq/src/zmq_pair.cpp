@@ -177,4 +177,16 @@ int zmq_pair::tx_(void *vdata)
     return 0;
 }
 
-BLOCK_REGISTER(zmq_pair);
+//
+// Implementation of the factory interface
+//
+
+struct block *zmq_pair_factory::constructor(struct manager *mgr)
+{
+    return new struct zmq_pair(mgr);
+}
+
+void zmq_pair_factory::destructor(struct block *bk)
+{
+    delete static_cast<struct zmq_pair *>(bk);
+}

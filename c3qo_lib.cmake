@@ -76,14 +76,6 @@ function (c3qo_add_block target_name target_sources)
 endfunction()
 
 #
-# Link against a block
-# In case it's a STATIC library, it forces to pull translation units  (for constructor and destructor)
-#
-function (c3qo_link_block target_name block_name)
-    target_link_libraries(${target_name} -Wl,--whole-archive ${block_name} -Wl,--no-whole-archive)
-endfunction()
-
-#
 # Add an executable
 #
 function (c3qo_add_executable target_name target_sources)

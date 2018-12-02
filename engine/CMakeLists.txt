@@ -9,7 +9,6 @@ set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_tm.cpp)
 
 c3qo_add_library(manager "${SOURCES_MANAGER}")
 target_include_directories(manager PUBLIC include/)
-target_link_libraries(manager dl)
 target_link_libraries(manager logger)
 target_link_libraries(manager socket)
 
@@ -17,7 +16,7 @@ if (${C3QO_TEST})
     # Build TU for manager_bk
     c3qo_add_test(tu_manager_bk test/tu_manager_bk.cpp)
     target_link_libraries(tu_manager_bk manager)
-    c3qo_link_block(tu_manager_bk hello)
+    target_link_libraries(tu_manager_bk hello)
 
     # Build TU for manager_fd
     c3qo_add_test(tu_manager_fd test/tu_manager_fd.cpp)
@@ -30,5 +29,5 @@ if (${C3QO_TEST})
     # Build TU for performances
     c3qo_add_test(tu_perf test/tu_perf.cpp)
     target_link_libraries(tu_perf manager)
-    c3qo_link_block(tu_perf hello)
+    target_link_libraries(tu_perf hello)
 endif()

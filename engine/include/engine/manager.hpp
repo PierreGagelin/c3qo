@@ -28,6 +28,7 @@ struct manager
     //
     // Blocks management
     //
+    std::unordered_map<std::string, struct block_factory *> bk_factory_;
     std::unordered_map<int, struct block *> bk_map_;
 
     bool block_add(int id, const char *type);
@@ -36,8 +37,13 @@ struct manager
     bool block_del(int id);
     bool block_conf(int id, char *conf);
     bool block_bind(int id, int port, int bk_id);
+
     struct block *block_get(int id);
     void block_clear();
+
+    void block_factory_register(const char *type, struct block_factory *factory);
+    void block_factory_unregister(const char *type);
+    void block_factory_clear();
 
     //
     // Timers management

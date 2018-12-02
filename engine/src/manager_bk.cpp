@@ -5,12 +5,6 @@
 // Project headers
 #include "engine/manager.hpp"
 
-// C headers
-extern "C"
-{
-#include <dlfcn.h>
-}
-
 //
 // @brief Constructor and destructor
 //
@@ -21,6 +15,7 @@ manager::manager()
 manager::~manager()
 {
     block_clear();
+    block_factory_clear();
 }
 
 //
@@ -31,8 +26,6 @@ manager::~manager()
 //
 bool manager::block_add(int id, const char *type)
 {
-    struct block *(*constructor)(struct manager *);
-    void *handle;
     struct block *bk;
 
     // Check input
@@ -47,41 +40,31 @@ bool manager::block_add(int id, const char *type)
         return false;
     }
 
-    handle = dlopen(nullptr, RTLD_LAZY);
-    if (handle == nullptr)
+    // Get the factory
+    const auto &factory = bk_factory_.find(type);
+    if (factory == bk_factory_.cend())
     {
-        LOGGER_ERR("Failed to add block: dlopen failed: %s [bk_id=%d ; bk_type=%s]", dlerror(), id, type);
+        LOGGER_ERR("Failed to add block: no factory found [type=%s]", type);
         return false;
     }
 
-    std::string ctor_name = std::string(type) + "_create";
-    constructor = reinterpret_cast<struct block *(*)(struct manager *)>(dlsym(handle, ctor_name.c_str()));
-    if (constructor == nullptr)
-    {
-        LOGGER_ERR("Failed to add block: couldn't load constructor [bk_id=%d ; bk_type=%s ; ctor_symbol=%s]",
-                   id, type, ctor_name.c_str());
-        goto err;
-    }
-    bk = constructor(this);
+    LOGGER_INFO("Add block [bk_id=%d ; bk_type=%s]", id, type);
+
+    // Build a block
+    bk = factory->second->constructor(this);
     if (bk == nullptr)
     {
-        LOGGER_ERR("Failed to add block: construction failed [ctor_name=%s]", ctor_name.c_str());
-        goto err;
+        LOGGER_ERR("Failed to add block: construction failed [type=%s]", type);
+        return false;
     }
 
     bk->id_ = id;
     bk->type_ = type;
     bk->state_ = STATE_STOP;
 
-    LOGGER_INFO("Add block [bk_id=%d ; bk_type=%s]", bk->id_, bk->type_.c_str());
-
     bk_map_.insert({id, bk});
 
-    dlclose(handle);
     return true;
-err:
-    dlclose(handle);
-    return false;
 }
 
 //
@@ -89,27 +72,27 @@ err:
 //
 bool manager::block_start(int id)
 {
-    // Find the block concerned by the command
-    const auto &it = bk_map_.find(id);
-    if (it == bk_map_.end())
+    struct block *bk;
+
+    bk = block_get(id);
+    if (bk == nullptr)
     {
         LOGGER_WARNING("Cannot start block: unknown block ID [bk_id=%d]", id);
         return false;
     }
 
     // Verify block state
-    if (it->second->state_ == STATE_START)
+    if (bk->state_ == STATE_START)
     {
         // Nothing to do
         return true;
     }
 
     LOGGER_INFO("Start block [bk_id=%d ; bk_type=%s ; bk_state=%s]",
-                it->second->id_, it->second->type_.c_str(), bk_state_to_string(STATE_START));
+                bk->id_, bk->type_.c_str(), bk_state_to_string(STATE_START));
 
-    it->second->state_ = STATE_START;
-
-    it->second->start_();
+    bk->state_ = STATE_START;
+    bk->start_();
 
     return true;
 }
@@ -119,27 +102,28 @@ bool manager::block_start(int id)
 //
 bool manager::block_stop(int id)
 {
-    // Find the block concerned by the command
-    const auto &it = bk_map_.find(id);
-    if (it == bk_map_.end())
+    struct block *bk;
+
+    bk = block_get(id);
+    if (bk == nullptr)
     {
         LOGGER_WARNING("Cannot stop block: unknown block ID [bk_id=%d]", id);
         return false;
     }
 
     // Verify block state
-    if (it->second->state_ == STATE_STOP)
+    if (bk->state_ == STATE_STOP)
     {
         // Nothing to do
         return true;
     }
 
     LOGGER_INFO("Stop block [bk_id=%d ; bk_type=%s ; bk_state=%s]",
-                id, it->second->type_.c_str(), bk_state_to_string(STATE_STOP));
+                id, bk->type_.c_str(), bk_state_to_string(STATE_STOP));
 
-    it->second->state_ = STATE_STOP;
+    bk->state_ = STATE_STOP;
 
-    it->second->stop_();
+    bk->stop_();
 
     return true;
 }
@@ -151,51 +135,36 @@ bool manager::block_stop(int id)
 //
 bool manager::block_del(int id)
 {
-    void (*destructor)(struct block *);
-    void *handle;
+    struct block *bk;
 
-    const auto &it = bk_map_.find(id);
-    if (it == bk_map_.end())
+    bk = block_get(id);
+    if (bk == nullptr)
     {
         LOGGER_WARNING("Cannot delete block: unknown block ID [bk_id=%d]", id);
         return false;
     }
 
     // Verify block state
-    if (it->second->state_ != STATE_STOP)
+    if (bk->state_ != STATE_STOP)
     {
         LOGGER_WARNING("Cannot delete block: block not stopped [bk_id=%d ; bk_state=%s]",
-                       id, bk_state_to_string(it->second->state_));
+                       bk->id_, bk_state_to_string(bk->state_));
         return false;
     }
 
-    LOGGER_INFO("Delete block [bk_id=%d ; bk_type=%s]", it->second->id_, it->second->type_.c_str());
+    LOGGER_INFO("Delete block [bk_id=%d ; bk_type=%s]", bk->id_, bk->type_.c_str());
 
-    handle = dlopen(nullptr, RTLD_LAZY);
-    if (handle == nullptr)
+    const auto &factory = bk_factory_.find(bk->type_);
+    if (factory == bk_factory_.cend())
     {
-        LOGGER_ERR("Failed to delete block: dlopen failed: %s [bk_id=%d ; bk_type=%s]",
-                   dlerror(), id, it->second->type_.c_str());
+        LOGGER_ERR("Failed to delete block: no factory found [type=%s]", bk->type_.c_str());
         return false;
     }
 
-    std::string dtor_name = std::string(it->second->type_) + "_destroy";
-    destructor = reinterpret_cast<void (*)(struct block *)>(dlsym(handle, dtor_name.c_str()));
-    if (destructor == nullptr)
-    {
-        LOGGER_ERR("Failed to add block: couldn't load destructor [bk_id=%d ; bk_type=%s ; dtor_symbol=%s]",
-                   id, it->second->type_.c_str(), dtor_name.c_str());
-        goto err;
-    }
-    destructor(it->second);
+    factory->second->destructor(bk);
+    bk_map_.erase(id);
 
-    bk_map_.erase(it);
-
-    dlclose(handle);
     return true;
-err:
-    dlclose(handle);
-    return false;
 }
 
 //
@@ -203,17 +172,18 @@ err:
 //
 bool manager::block_conf(int id, char *conf)
 {
-    // Find the block concerned by the command
-    const auto &it = bk_map_.find(id);
-    if (it == bk_map_.end())
+    struct block *bk;
+
+    bk = block_get(id);
+    if (bk == nullptr)
     {
         LOGGER_WARNING("Cannot configure block: unknown block ID [bk_id=%d]", id);
         return false;
     }
 
-    LOGGER_INFO("Configure block [bk_id=%d ; bk_type=%s ; conf=%s]", id, it->second->type_.c_str(), conf);
+    LOGGER_INFO("Configure block [bk_id=%d ; bk_type=%s ; conf=%s]", id, bk->type_.c_str(), conf);
 
-    it->second->conf_(conf);
+    bk->conf_(conf);
 
     return true;
 }
@@ -262,7 +232,6 @@ struct block *manager::block_get(int id)
     {
         return nullptr;
     }
-
     return it->second;
 }
 
@@ -277,4 +246,22 @@ void manager::block_clear()
         block_stop(it->first);
         block_del(it->first);
     }
+}
+
+void manager::block_factory_register(const char *type, struct block_factory *factory)
+{
+    bk_factory_.insert({type, factory});
+}
+
+void manager::block_factory_unregister(const char *type)
+{
+    bk_factory_.erase(type);
+}
+
+//
+// @brief Clear the block factory
+//
+void manager::block_factory_clear()
+{
+    bk_factory_.clear();
 }

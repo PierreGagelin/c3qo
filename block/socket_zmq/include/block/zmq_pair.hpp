@@ -30,4 +30,10 @@ struct zmq_pair : block
     virtual void on_fd_(struct file_desc &fd) override final;
 };
 
+struct zmq_pair_factory : block_factory
+{
+    virtual struct block *constructor(struct manager *mgr) override final;
+    virtual void destructor(struct block *bk) override final;
+};
+
 #endif // ZMQ_PAIR_HPP

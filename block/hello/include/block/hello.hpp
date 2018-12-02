@@ -1,5 +1,5 @@
-#ifndef BLOCK_HELLO_HPP
-#define BLOCK_HELLO_HPP
+#ifndef HELLO_HPP
+#define HELLO_HPP
 
 // Project headers
 #include "engine/block.hpp"
@@ -21,4 +21,10 @@ struct hello : block
     virtual int ctrl_(void *vnotif) override final;
 };
 
-#endif // BLOCK_HELLO_HPP
+struct hello_factory : block_factory
+{
+    virtual struct block *constructor(struct manager *mgr) override final;
+    virtual void destructor(struct block *bk) override final;
+};
+
+#endif // HELLO_HPP
