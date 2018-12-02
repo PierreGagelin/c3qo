@@ -1,20 +1,15 @@
 
 
-# Generate configuration interface
-c3qo_add_library_protobuf_c(pb_config src conf)
-
 # Build manager library
 set(SOURCES_MANAGER)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/block.cpp)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_bk.cpp)
-set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_conf.cpp)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_fd.cpp)
 set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_tm.cpp)
 
 c3qo_add_library(manager "${SOURCES_MANAGER}")
 target_include_directories(manager PUBLIC include/)
 target_link_libraries(manager dl)
-target_link_libraries(manager pb_config)
 target_link_libraries(manager logger)
 target_link_libraries(manager socket)
 
@@ -23,11 +18,6 @@ if (${C3QO_TEST})
     c3qo_add_test(tu_manager_bk test/tu_manager_bk.cpp)
     target_link_libraries(tu_manager_bk manager)
     c3qo_link_block(tu_manager_bk hello)
-
-    # Build TU for manager_conf
-    c3qo_add_test(tu_manager_conf test/tu_manager_conf.cpp)
-    target_link_libraries(tu_manager_conf manager)
-    c3qo_link_block(tu_manager_conf trans_pb)
 
     # Build TU for manager_fd
     c3qo_add_test(tu_manager_fd test/tu_manager_fd.cpp)

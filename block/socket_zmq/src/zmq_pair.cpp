@@ -3,8 +3,6 @@
 #define LOGGER_TAG "[block.zmq_pair]"
 
 // Project headers
-#include "block/hello.hpp"
-#include "block/trans_pb.hpp"
 #include "block/zmq_pair.hpp"
 #include "engine/manager.hpp"
 
@@ -45,51 +43,22 @@ void zmq_pair::on_fd_(struct file_desc &fd)
         return;
     }
 
-    // Get a topic and payload
+    // Read a possibly multi-part message
     socket_zmq_read(zmq_sock_.socket, msg);
-    if (msg.size() != 2u)
-    {
-        LOGGER_ERR("Failed to receive ZMQ message: expected 2 parts [actual=%zu]", msg.size());
-        goto end;
-    }
     ++rx_pkt_;
 
-    LOGGER_DEBUG("Message received on ZMQ socket [bk_id=%d ; topic=%s ; payload_size=%zu]", id_, msg[0].data, msg[1].len);
+    LOGGER_DEBUG("Message received on ZMQ socket [bk_id=%d ; parts_count=%zu]", id_, msg.size());
 
-    // Action to take upon topic value
-    if (strcmp("CONF.PROTO.CMD", msg[0].data) == 0)
-    {
-        mgr_->conf_parse_pb_cmd(reinterpret_cast<uint8_t *>(msg[1].data), msg[1].len);
-    }
-    else if (strcmp("STATS", msg[0].data) == 0)
-    {
-        struct trans_pb_notif notif;
+    // Send it in reception chain
+    process_rx_(0, &msg);
 
-        if (strcmp("HELLO", msg[1].data) == 0)
-        {
-            struct hello_ctx ctx_hello;
-
-            ctx_hello.bk_id = 12;
-
-            notif.type = BLOCK_HELLO;
-            notif.context.hello = &ctx_hello;
-
-            process_notif_(1, &notif);
-        }
-    }
-    else
-    {
-        LOGGER_ERR("Failed to decode ZMQ message: unknown topic [topic=%s]", msg[0].data);
-        goto end;
-    }
-
-end:
     c3qo_zmq_msg_del(msg);
 }
 
 void zmq_pair::conf_(char *conf)
 {
-    char *pos;
+    char type[32];
+    char addr[32];
     int ret;
 
     // Verify input
@@ -101,74 +70,35 @@ void zmq_pair::conf_(char *conf)
 
     LOGGER_INFO("Configure block [bk_id=%d ; conf=%s]", id_, conf);
 
-    // Retrieve socket type
+    // Retrieve type and address
+    ret = sscanf(conf, NEEDLE_TYPE "%31s " NEEDLE_ADDR "%31s", type, addr);
+    if (ret == EOF)
     {
-        char type[32];
-
-        pos = strstr(conf, NEEDLE_TYPE);
-        if (pos == nullptr)
-        {
-            LOGGER_ERR("Failed to configure block: type of socket is required [bk_id=%d ; conf=%s]", id_, conf);
-            return;
-        }
-
-        ret = sscanf(pos, NEEDLE_TYPE "%31s", type);
-        if (ret == EOF)
-        {
-            LOGGER_ERR("Failed to call sscanf: %s [str=%s ; errno=%d]", strerror(errno), pos, errno);
-            return;
-        }
-        else if (ret != 1)
-        {
-            LOGGER_ERR("Failed to call sscanf: wrong number of matched element [expected=1 ; actual=%d ; type=%s]", ret, type);
-            return;
-        }
-
-        // Configure the socket to be either a client or a server
-        LOGGER_INFO("Configure socket type [bk_id=%d ; type=%s]", id_, type);
-
-        if (strcmp(type, "client") == 0)
-        {
-            client_ = true;
-        }
-        else if (strcmp(type, "server") == 0)
-        {
-            client_ = false;
-        }
-        else
-        {
-            LOGGER_ERR("Failed to configure socket type: unknown type [bk_id=%d ; type=%s]", id_, type);
-            return;
-        }
+        LOGGER_ERR("Failed to call sscanf: %s [errno=%d ; str=%s]", strerror(errno), errno, conf);
+        return;
+    }
+    else if (ret != 2)
+    {
+        LOGGER_ERR("Failed to call sscanf: wrong number of matched element [expected=2 ; actual=%d]", ret);
+        return;
     }
 
-    // Retrieve socket address
+    if (strcmp(type, "client") == 0)
     {
-        char addr[32];
-
-        pos = strstr(conf, NEEDLE_ADDR);
-        if (pos == nullptr)
-        {
-            LOGGER_ERR("Failed to configure block: address of socket is required [bk_id=%d ; conf=%s]", id_, conf);
-            return;
-        }
-
-        ret = sscanf(pos, NEEDLE_ADDR "%31s", addr);
-        if (ret == EOF)
-        {
-            LOGGER_ERR("Failed to call sscanf: %s [str=%s ; addr=%s ; errno=%d]", strerror(errno), pos, addr, errno);
-            return;
-        }
-        else if (ret != 1)
-        {
-            LOGGER_ERR("Failed to call sscanf: wrong number of matched element [expected=1 ; actual=%d ; addr=%s]", ret, addr);
-            return;
-        }
-
-        addr_ = std::string(addr);
-
-        LOGGER_INFO("Configure socket address [addr=%s]", addr_.c_str());
+        client_ = true;
     }
+    else if (strcmp(type, "server") == 0)
+    {
+        client_ = false;
+    }
+    else
+    {
+        LOGGER_ERR("Failed to configure socket type: unknown type [bk_id=%d ; type=%s]", id_, type);
+        return;
+    }
+    addr_ = std::string(addr);
+
+    LOGGER_INFO("Configured ZMQ socket [type=%s ; addr=%s]", type, addr_.c_str());
 }
 
 //

@@ -5,68 +5,196 @@
 #define LOGGER_TAG "[TU.trans_pb]"
 
 // Project headers
-#include "block/hello.hpp"
 #include "block/trans_pb.hpp"
-#include "block/zmq_pair.hpp"
 #include "engine/tu.hpp"
 
-struct manager mgr_;
+#include "conf.pb-c.h"
 
-//
-// @brief Test serialization of hello message
-//
-static void tu_trans_pb_hello()
+struct tu_trans_pb
 {
-    struct trans_pb block(&mgr_);
-    struct trans_pb_notif notif;
-    struct hello_ctx hello;
+    struct manager mgr_;
+    struct trans_pb block_;
 
-    block.id_ = 1;
+    tu_trans_pb() : block_(&mgr_) {}
 
-    hello.bk_id = 42;
-    notif.type = BLOCK_HELLO;
-    notif.context.hello = &hello;
+    bool proto_cmd_send(Command__TypeCase type, int block_id, const char *arg, int port = 0, int dest = 0)
+    {
+        char *block_arg;
 
-    ASSERT(block.ctrl_(&notif) == 0);
+        block_arg = strdup(arg);
+
+        // Prepare a protobuf message
+        Command cmd;
+        BlockAdd add;
+        BlockStart start;
+        BlockStop stop;
+        BlockDel del;
+        BlockConf conf;
+        BlockBind bind;
+
+        command__init(&cmd);
+
+        switch (type)
+        {
+        case COMMAND__TYPE_ADD:
+            cmd.type_case = COMMAND__TYPE_ADD;
+            block_add__init(&add);
+            cmd.add = &add;
+            cmd.add->id = block_id;
+            cmd.add->type = block_arg;
+            break;
+
+        case COMMAND__TYPE_START:
+            cmd.type_case = COMMAND__TYPE_START;
+            block_start__init(&start);
+            cmd.start = &start;
+            cmd.start->id = block_id;
+            break;
+
+        case COMMAND__TYPE_STOP:
+            cmd.type_case = COMMAND__TYPE_STOP;
+            block_stop__init(&stop);
+            cmd.stop = &stop;
+            cmd.stop->id = block_id;
+            break;
+
+        case COMMAND__TYPE_DEL:
+            cmd.type_case = COMMAND__TYPE_DEL;
+            block_del__init(&del);
+            cmd.del = &del;
+            cmd.del->id = block_id;
+            break;
+
+        case COMMAND__TYPE_CONF:
+            cmd.type_case = COMMAND__TYPE_CONF;
+            block_conf__init(&conf);
+            cmd.conf = &conf;
+            cmd.conf->id = block_id;
+            cmd.conf->conf = block_arg;
+            break;
+
+        case COMMAND__TYPE_BIND:
+            cmd.type_case = COMMAND__TYPE_BIND;
+            block_bind__init(&bind);
+            cmd.bind = &bind;
+            cmd.bind->id = block_id;
+            cmd.bind->port = port;
+            cmd.bind->dest = dest;
+            break;
+
+        case COMMAND__TYPE__NOT_SET:
+        default:
+            cmd.type_case = COMMAND__TYPE__NOT_SET;
+            break;
+        }
+
+        size_t size = command__get_packed_size(&cmd);
+        uint8_t *buffer = new uint8_t[size + 1];
+
+        command__pack(&cmd, buffer);
+        buffer[size] = '\0';
+
+        std::vector<struct c3qo_zmq_part> msg;
+        struct c3qo_zmq_part tmp;
+
+        char *topic = strdup("CONF.PROTO.CMD");
+        tmp.data = topic;
+        tmp.len = sizeof("CONF.PROTO.CMD");
+        msg.push_back(tmp);
+        tmp.data = reinterpret_cast<char *>(buffer);
+        tmp.len = size;
+        msg.push_back(tmp);
+        block_.rx_(&msg);
+
+        free(topic);
+        free(block_arg);
+        delete[] buffer;
+
+        return true;
+    }
+};
+
+//
+// @brief Edge cases
+//
+static void tu_trans_pb_errors()
+{
+    struct tu_trans_pb test;
+
+    // Do not display error messages as we known there will be
+    logger_set_level(LOGGER_LEVEL_CRIT);
+
+    // No message
+    {
+        test.block_.rx_(nullptr);
+    }
+
+    // Message with wrong size
+    {
+        std::vector<struct c3qo_zmq_part> msg;
+        test.block_.rx_(&msg);
+    }
+
+    // Message with unknown topic
+    {
+        std::vector<struct c3qo_zmq_part> msg;
+        struct c3qo_zmq_part tmp;
+
+        tmp.data = strdup("what a nice topic you've got there");
+        tmp.len = strlen(tmp.data);
+        msg.push_back(tmp);
+        msg.push_back(tmp);
+
+        test.block_.rx_(&msg);
+
+        free(tmp.data);
+    }
+
+    // Message with bad protobuf data
+    {
+        std::vector<struct c3qo_zmq_part> msg;
+        struct c3qo_zmq_part tmp;
+
+        tmp.data = strdup("CONF.PROTO.CMD");
+        tmp.len = strlen(tmp.data);
+        msg.push_back(tmp); // topic: OK
+        msg.push_back(tmp); // protobuf data: not OK
+
+        test.block_.rx_(&msg);
+
+        free(tmp.data);
+    }
+
+    // Unknown command type
+    {
+        test.proto_cmd_send(static_cast<Command__TypeCase>(12), 42, "");
+    }
+
+    logger_set_level(LOGGER_LEVEL_DEBUG);
 }
 
-//
-// @brief Test serialization of zmq_pair message
-//
-static void tu_trans_pb_zmq_pair()
+static void tu_trans_pb_pbc_conf()
 {
-    struct trans_pb block(&mgr_);
-    struct trans_pb_notif notif;
-    struct zmq_pair_ctx zmq_pair;
+    struct tu_trans_pb test;
+    struct block *bk;
+    int bk_id = 42;
 
-    block.id_ = 1;
+    // Add a block
+    ASSERT(test.proto_cmd_send(COMMAND__TYPE_ADD, bk_id, "trans_pb"));
+    bk = test.mgr_.block_get(bk_id);
+    ASSERT(bk != nullptr);
 
-    zmq_pair.bk_id = 42;
-    notif.type = BLOCK_ZMQ_PAIR;
-    notif.context.zmq_pair = &zmq_pair;
+    ASSERT(test.proto_cmd_send(COMMAND__TYPE_CONF, bk_id, "my_name_is"));
+    ASSERT(test.proto_cmd_send(COMMAND__TYPE_BIND, bk_id, "", 2, 5));
 
-    ASSERT(block.ctrl_(&notif) == 0);
-}
+    ASSERT(test.proto_cmd_send(COMMAND__TYPE_START, bk_id, ""));
+    ASSERT(bk->state_ == STATE_START);
 
-//
-// @brief Test errors
-//
-static void tu_trans_pb_error()
-{
-    struct trans_pb block(&mgr_);
-    struct trans_pb_notif notif;
+    ASSERT(test.proto_cmd_send(COMMAND__TYPE_STOP, bk_id, ""));
+    ASSERT(bk->state_ == STATE_STOP);
 
-    // Ignore errors as these are nominal
-    logger_set_level(LOGGER_LEVEL_EMERG);
-
-    block.id_ = 1;
-
-    // Bad arguments
-    ASSERT(block.ctrl_(nullptr) == 0);
-
-    // Bad notif type
-    notif.type = static_cast<enum bk_type>(42);
-    ASSERT(block.ctrl_(&notif) == 0);
+    ASSERT(test.proto_cmd_send(COMMAND__TYPE_DEL, bk_id, ""));
+    ASSERT(test.mgr_.block_get(bk_id) == nullptr);
 }
 
 int main(int, char **)
@@ -74,9 +202,8 @@ int main(int, char **)
     LOGGER_OPEN("tu_trans_pb");
     logger_set_level(LOGGER_LEVEL_DEBUG);
 
-    tu_trans_pb_error();
-    tu_trans_pb_hello();
-    tu_trans_pb_zmq_pair();
+    tu_trans_pb_errors();
+    tu_trans_pb_pbc_conf();
 
     LOGGER_CLOSE();
     return 0;

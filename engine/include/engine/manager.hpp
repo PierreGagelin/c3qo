@@ -40,11 +40,6 @@ struct manager
     void block_clear();
 
     //
-    // Configuration management
-    //
-    bool conf_parse_pb_cmd(const uint8_t *pb_cmd, size_t size);
-
-    //
     // Timers management
     //
     std::forward_list<struct timer> tm_list_; // Timers sorted by expiration

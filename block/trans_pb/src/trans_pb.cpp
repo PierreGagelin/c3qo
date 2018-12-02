@@ -3,103 +3,91 @@
 #define LOGGER_TAG "[block.trans_pb]"
 
 // Project headers
-#include "block/hello.hpp"
 #include "block/trans_pb.hpp"
-#include "block/zmq_pair.hpp"
+#include "engine/manager.hpp"
 #include "utils/socket.hpp"
 
-// Protobuf generated header
-#include "block.pb-c.h"
+// Generated protobuf command
+#include "conf.pb-c.h"
 
 trans_pb::trans_pb(struct manager *mgr) : block(mgr) {}
 trans_pb::~trans_pb() {}
 
-static void trans_pb_serialize(std::vector<struct c3qo_zmq_part> &msg_zmq, PbMsgBlock *msg_bk)
+//
+// @brief Parse and execute a protobuf command
+//
+void trans_pb::parse_command(const uint8_t *data, size_t size)
 {
-    struct c3qo_zmq_part part;
-    const char topic[] = "BLOCK.MSG";
+    Command *cmd;
 
-    // Fill the topic (with the '\0')
-    part.len = sizeof(topic);
-    part.data = new char[part.len];
-    memcpy(part.data, topic, part.len);
-    msg_zmq.push_back(part);
-
-    // Fill the data
-    part.len = pb_msg_block__get_packed_size(msg_bk);
-    part.data = new char[part.len];
-    size_t size = pb_msg_block__pack(msg_bk, reinterpret_cast<uint8_t *>(part.data));
-    if (size != part.len)
+    cmd = command__unpack(nullptr, size, data);
+    if (cmd == nullptr)
     {
-        LOGGER_ERR("Failed to serialize block message: unexpected serialized size [expected=%zu ; actual=%zu]",
-                   part.len, size);
+        LOGGER_ERR("Failed to unpack protobuf command: unknown reason [size=%zu]", size);
+        return;
     }
-    msg_zmq.push_back(part);
-}
 
-static void trans_pb_serialize(std::vector<struct c3qo_zmq_part> &msg_zmq, struct hello_ctx *ctx)
-{
-    PbMsgBlock msg_bk;
-    PbMsgHello hello;
-
-    pb_msg_block__init(&msg_bk);
-    pb_msg_hello__init(&hello);
-
-    hello.bk_id = static_cast<int32_t>(ctx->bk_id);
-
-    msg_bk.type = PB_MSG_BLOCK__MSG_TYPE__MSG_HELLO;
-    msg_bk.msg_block_case = PB_MSG_BLOCK__MSG_BLOCK_HELLO;
-    msg_bk.hello = &hello;
-
-    trans_pb_serialize(msg_zmq, &msg_bk);
-}
-
-static void trans_pb_serialize(std::vector<struct c3qo_zmq_part> &msg_zmq, struct zmq_pair_ctx *ctx)
-{
-    PbMsgBlock msg_bk;
-    PbMsgZmqPair zmq_pair;
-
-    pb_msg_block__init(&msg_bk);
-    pb_msg_zmq_pair__init(&zmq_pair);
-
-    zmq_pair.bk_id = static_cast<int32_t>(ctx->bk_id);
-
-    msg_bk.type = PB_MSG_BLOCK__MSG_TYPE__MSG_HELLO;
-    msg_bk.msg_block_case = PB_MSG_BLOCK__MSG_BLOCK_HELLO;
-    msg_bk.zmq_pair = &zmq_pair;
-
-    trans_pb_serialize(msg_zmq, &msg_bk);
-}
-
-int trans_pb::ctrl_(void *vnotif)
-{
-    struct trans_pb_notif *notif;
-    std::vector<struct c3qo_zmq_part> msg;
-
-    if (vnotif == nullptr)
+    switch (cmd->type_case)
     {
-        LOGGER_ERR("trans_pb control failed: nullptr notif");
-        return 0;
-    }
-    notif = static_cast<struct trans_pb_notif *>(vnotif);
+    case COMMAND__TYPE_ADD:
+        mgr_->block_add(cmd->add->id, cmd->add->type);
+        break;
 
-    switch (notif->type)
-    {
-    case BLOCK_HELLO:
-        trans_pb_serialize(msg, notif->context.hello);
+    case COMMAND__TYPE_START:
+        mgr_->block_start(cmd->start->id);
         break;
-    case BLOCK_ZMQ_PAIR:
-        trans_pb_serialize(msg, notif->context.zmq_pair);
+
+    case COMMAND__TYPE_STOP:
+        mgr_->block_stop(cmd->stop->id);
         break;
+
+    case COMMAND__TYPE_DEL:
+        mgr_->block_del(cmd->del->id);
+        break;
+
+    case COMMAND__TYPE_CONF:
+        mgr_->block_conf(cmd->conf->id, cmd->conf->conf);
+        break;
+
+    case COMMAND__TYPE_BIND:
+        mgr_->block_bind(cmd->bind->id, cmd->bind->port, cmd->bind->dest);
+        break;
+
+    case COMMAND__TYPE__NOT_SET:
     default:
-        LOGGER_ERR("trans_pb control failed: Unknown notification type [type=%d]", notif->type);
+        LOGGER_ERR("Failed to execute protobuf command: unknown command type [type=%d]", cmd->type_case);
+        break;
+    }
+
+    command__free_unpacked(cmd, nullptr);
+}
+
+int trans_pb::rx_(void *vdata)
+{
+    if (vdata == nullptr)
+    {
+        LOGGER_ERR("trans_pb RX failed: nullptr data");
         return 0;
     }
 
-    // Sending message to the ZMQ socket
-    process_tx_(1, &msg);
+    std::vector<struct c3qo_zmq_part> &msg = *(static_cast<std::vector<struct c3qo_zmq_part> *>(vdata));
+    if (msg.size() != 2u)
+    {
+        LOGGER_ERR("Failed to decode message: unexpected message parts count [expected=%u ; actual=%zu]",
+                   2u, msg.size());
+        return 0;
+    }
 
-    c3qo_zmq_msg_del(msg);
+    // Action to take upon topic value
+    if (strcmp("CONF.PROTO.CMD", msg[0].data) == 0)
+    {
+        parse_command(reinterpret_cast<uint8_t *>(msg[1].data), msg[1].len);
+    }
+    else
+    {
+        LOGGER_ERR("Failed to decode message: unknown topic [topic=%s]", msg[0].data);
+        return 0;
+    }
 
     return 0;
 }

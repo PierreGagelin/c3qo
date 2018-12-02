@@ -78,20 +78,6 @@ static void tu_zmq_pair_data()
     ASSERT(client.rx_pkt_ > 0lu);
     ASSERT(server.rx_pkt_ > 0lu);
 
-    // Send several of the expected messages
-    {
-        message_create(msg, "STATS", "HELLO");
-        client.tx_(&msg);
-        mgr_.fd_poll();
-        message_destroy(msg);
-
-        message_create(msg, "CONF.LINE", "1 2 3");
-        client.tx_(&msg);
-        mgr_.fd_poll();
-        message_destroy(msg);
-    }
-
-
     client.stop_();
     server.stop_();
 }
@@ -100,6 +86,9 @@ static void tu_zmq_pair_data()
 static void tu_zmq_pair_error()
 {
     struct zmq_pair block(&mgr_);
+
+    // Errors are expected
+    logger_set_level(LOGGER_LEVEL_CRIT);
 
     block.id_ = 1;
 
@@ -112,6 +101,7 @@ static void tu_zmq_pair_error()
     block.conf_(const_cast<char *>("type=banana "));
 
     // Address error
+    block.conf_(const_cast<char *>("type=client no address"));
     block.conf_(const_cast<char *>("type=client addr="));
     block.conf_(const_cast<char *>("type=client addr= "));
 
@@ -128,6 +118,8 @@ static void tu_zmq_pair_error()
     struct file_desc fd;
     fd.socket = nullptr;
     block.on_fd_(fd);
+
+    logger_set_level(LOGGER_LEVEL_DEBUG);
 }
 
 int main(int, char **)
