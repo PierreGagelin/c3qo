@@ -150,10 +150,7 @@ static bool ncli_conf_proto(int argc, char **argv, std::vector<struct c3qo_zmq_p
 
 int main(int argc, char **argv)
 {
-    const char options[] = "ha:T:A:";
-    char *addr;
-    char addr_def[] = "tcp://127.0.0.1:1664";
-    char *ncli_type;
+    const char options[] = "A:";
     char *ncli_args;
     int rc;
     bool ok;
@@ -162,26 +159,14 @@ int main(int argc, char **argv)
     logger_set_level(LOGGER_LEVEL_DEBUG);
 
     // Get CLI options
-    addr = nullptr;
-    ncli_type = nullptr;
     ncli_args = nullptr;
     for (int opt = getopt(argc, argv, options); opt != -1; opt = getopt(argc, argv, options))
     {
         switch (opt)
         {
-        case 'a':
-            LOGGER_DEBUG("CLI connection address for the : %s", optarg);
-            addr = optarg;
-            break;
-
         case 'A':
             LOGGER_DEBUG("CLI arguments for the network CLI : %s", optarg);
             ncli_args = optarg;
-            break;
-
-        case 'T':
-            LOGGER_DEBUG("CLI type of network CLI to execute : %s", optarg);
-            ncli_type = optarg;
             break;
 
         default:
@@ -191,12 +176,6 @@ int main(int argc, char **argv)
     }
 
     // Verify input
-    if (addr == nullptr)
-    {
-        LOGGER_DEBUG("No connection address given by CLI, using default [addr=%s]", addr_def);
-        addr = addr_def;
-    }
-    ASSERT(ncli_type != nullptr);
     ASSERT(ncli_args != nullptr);
 
     // Shell expansion of 'A' option in an array of arguments
@@ -204,15 +183,8 @@ int main(int argc, char **argv)
     ASSERT(wordexp(ncli_args, &we, 0) == 0);
 
     std::vector<struct c3qo_zmq_part> msg;
-    if (strcmp(ncli_type, "proto") == 0)
-    {
-        ok = ncli_conf_proto(we.we_wordc, we.we_wordv, msg);
-        ASSERT(ok == true);
-    }
-    else
-    {
-        ASSERT(true == false);
-    }
+    ok = ncli_conf_proto(we.we_wordc, we.we_wordv, msg);
+    ASSERT(ok == true);
 
     wordfree(&we);
 
@@ -227,18 +199,15 @@ int main(int argc, char **argv)
     void *monitor = zmq_socket(ctx, ZMQ_PAIR);
     ASSERT(monitor != nullptr);
 
-    // Monitor the socket
-    {
-        // Filter to receive only accepted connection event
-        rc = zmq_socket_monitor(client, "inproc://monitor-pair", ZMQ_EVENT_CONNECTED);
-        ASSERT(rc != -1);
+    // Filter to receive only accepted connection event
+    rc = zmq_socket_monitor(client, "inproc://monitor-pair", ZMQ_EVENT_CONNECTED);
+    ASSERT(rc != -1);
 
-        rc = zmq_connect(monitor, "inproc://monitor-pair");
-        ASSERT(rc != -1);
-    }
+    rc = zmq_connect(monitor, "inproc://monitor-pair");
+    ASSERT(rc != -1);
 
     // Connect the socket
-    rc = zmq_connect(client, addr);
+    rc = zmq_connect(client, "tcp://127.0.0.1:1664");
     ASSERT(rc != -1);
 
     // Wait for the client to be connected

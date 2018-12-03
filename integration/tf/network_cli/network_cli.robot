@@ -1,35 +1,46 @@
 *** Settings ***
-Library    ../../lib/c3qo.py
-Library    ../../lib/ncli.py
+Library    Process
 
 *** Test Cases ***
-Check Command Protobuf
-    Server Run
-    ncli.send    proto    dummy -i 20 -t add -a hello    tcp://127.0.0.1:1664
-    ncli.send    proto    dummy -i 20 -t conf -a ZIGOUILLATOR3000
-    ncli.send    proto    dummy -i 20 -t bind -p 2 -d 10
-    ncli.send    proto    dummy -i 20 -t start
-    ncli.send    proto    dummy -i 20 -t stop
-    ncli.send    proto    dummy -i 20 -t del
+Network CLI Errors
+    [Documentation]    Check failure cases
+    #
+    # Wrong main option (anyway, asking for help should be forbidden)
+    #
+    ${result}    Process.Run Process    /tmp/c3qo-0.0.7-local/bin/ncli    -h
+    Builtin.Should Be True    ${result.rc} != ${0}
+    #
+    # Wrong protobuf option
+    #
+    Send Protobuf Command    dummy -w    ${1}
+
+Remote Block Management
+    [Documentation]    Remotely control a block life cycle
+    #
+    # Start the server
+    #
+    ${c3qo}    Process.Start Process    /tmp/c3qo-0.0.7-local/bin/c3qo
+    #
+    # Send the commands to do a life cycle
+    #
+    Send Protobuf Command    dummy -i 20 -t add -a hello
+    Send Protobuf Command    dummy -i 20 -t conf -a ZIGOUILLATOR3000
+    Send Protobuf Command    dummy -i 20 -t bind -p 2 -d 10
+    Send Protobuf Command    dummy -i 20 -t start
+    Send Protobuf Command    dummy -i 20 -t stop
+    Send Protobuf Command    dummy -i 20 -t del
+    #
+    # Send an unknown command
+    #
+    Send Protobuf Command    dummy -i 20 -t wrong_type
+    #
+    # Terminate
+    #
     Builtin.Sleep    1s
-    Server Stop
+    Process.Terminate Process    ${c3qo}
 
 *** Keywords ***
-Server Is Absent
-    ${present}    c3qo.Check Present
-    Builtin.Run Keyword If    ${present} is ${True}    Builtin.FAIL
-
-Server Is Present
-    ${present}    c3qo.Check Present
-    Builtin.Run Keyword If    ${present} is ${False}    Builtin.FAIL
-
-Server Run
-    Builtin.Wait Until Keyword Succeeds    3s    1s    Server Is Absent
-    c3qo.Add    key=server_007
-    c3qo.Run    key=server_007
-    Builtin.Wait Until Keyword Succeeds    3s    1s    Server Is Present
-
-Server Stop
-    Builtin.Wait Until Keyword Succeeds    3s    1s    Server Is Present
-    c3qo.Stop
-    Builtin.Wait Until Keyword Succeeds    3s    1s    Server Is Absent
+Send Protobuf Command
+    [Arguments]    ${command}    ${expected_rc}=${0}
+    ${result}    Process.Run Process    /tmp/c3qo-0.0.7-local/bin/ncli    -A    ${command}
+    Builtin.Should Be True    ${result.rc} == ${expected_rc}
