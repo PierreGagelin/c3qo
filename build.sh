@@ -1,5 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+#
 # Script to build the c3qo project
+#
 
 # No error or undefined variables allowed
 set -eu

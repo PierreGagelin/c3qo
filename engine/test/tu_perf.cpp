@@ -55,7 +55,7 @@ static void tu_perf_commutation()
         bi = mgr_.block_get(1);
         ASSERT(bi != nullptr);
 
-        bi->ctrl_(buf);
+        bi->process_rx_(0, buf);
     }
 
     // Verify that buffers crossed bk_2 to the last block

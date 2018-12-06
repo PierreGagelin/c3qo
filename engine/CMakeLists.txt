@@ -13,10 +13,14 @@ target_link_libraries(manager logger)
 target_link_libraries(manager socket)
 
 if (${C3QO_TEST})
+    # Build TU for block
+    c3qo_add_test(tu_block test/tu_block.cpp)
+    target_link_libraries(tu_block manager)
+    target_link_libraries(tu_block hello)
+
     # Build TU for manager_bk
     c3qo_add_test(tu_manager_bk test/tu_manager_bk.cpp)
     target_link_libraries(tu_manager_bk manager)
-    target_link_libraries(tu_manager_bk hello)
 
     # Build TU for manager_fd
     c3qo_add_test(tu_manager_fd test/tu_manager_fd.cpp)

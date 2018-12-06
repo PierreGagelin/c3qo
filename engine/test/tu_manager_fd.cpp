@@ -44,7 +44,7 @@ static void tu_manager_fd_fd()
     file_d.fd = fd;
     file_d.socket = nullptr;
     file_d.read = true;
-    file_d.write = false;
+    file_d.write = true;
     ASSERT(mgr_.fd_add(file_d) == true);
 
     // Write into the managed
@@ -61,12 +61,32 @@ static void tu_manager_fd_fd()
     fclose(file);
 }
 
+static void tu_manager_fd_errors()
+{
+    struct block_fd bk_(&mgr_);
+    struct file_desc file_d;
+
+    // Add a file descriptor with no block
+    file_d.bk = nullptr;
+    ASSERT(mgr_.fd_add(file_d) == false);
+
+    // Add a file descriptor with no correct entry
+    file_d.bk = &bk_;
+    file_d.fd = -1;
+    file_d.socket = nullptr;
+    ASSERT(mgr_.fd_add(file_d) == false);
+
+    // Remove an unknown entry
+    mgr_.fd_remove(file_d);
+}
+
 int main(int, char **)
 {
     LOGGER_OPEN("tu_manager_fd");
     logger_set_level(LOGGER_LEVEL_DEBUG);
 
     tu_manager_fd_fd();
+    tu_manager_fd_errors();
 
     LOGGER_CLOSE();
     return 0;

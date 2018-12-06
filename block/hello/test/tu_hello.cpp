@@ -31,12 +31,13 @@ static void tu_hello_hello()
     {
         ASSERT(block.tx_(nullptr) == i);
     }
+    for (int i = 0; i < 8; i++)
+    {
+        ASSERT(block.ctrl_(nullptr) == i);
+    }
 
-    // Do not forward notification
-    ASSERT(block.ctrl_(nullptr) == 0);
-
-    // Block should count 16 data
-    ASSERT(block.count_ == 16);
+    // Block should count 24 data
+    ASSERT(block.count_ == 24);
 
     // Stop block
     block.stop_();

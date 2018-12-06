@@ -23,7 +23,7 @@ void hello::conf_(char *conf)
 
     name_ = std::string(conf);
 
-    LOGGER_INFO("Configure block [bk_id=%d ; conf=%s ; name=%s]", id_, conf, name_.c_str());
+    LOGGER_INFO("Configured block name [bk_id=%d ; name=%s]", id_, name_.c_str());
 }
 
 void hello::start_()
@@ -36,11 +36,11 @@ void hello::stop_()
     LOGGER_DEBUG("Goodbye world");
 }
 
-int hello::rx_(void *vdata)
+int hello::rx_(void *)
 {
     int ret;
 
-    LOGGER_DEBUG("Process RX data [bk_id=%d ; data=%p]", id_, vdata);
+    LOGGER_DEBUG("Process RX [bk_id=%d]", id_);
 
     // Get and increment index to return
     ret = count_++ % 8;
@@ -48,11 +48,11 @@ int hello::rx_(void *vdata)
     return ret;
 }
 
-int hello::tx_(void *vdata)
+int hello::tx_(void *)
 {
     int ret;
 
-    LOGGER_DEBUG("Process TX data [bk_id=%d ; data=%p]", id_, vdata);
+    LOGGER_DEBUG("Process TX [bk_id=%d]", id_);
 
     // Get and increment index to return
     ret = count_++ % 8;
@@ -60,13 +60,16 @@ int hello::tx_(void *vdata)
     return ret;
 }
 
-int hello::ctrl_(void *vnotif)
+int hello::ctrl_(void *)
 {
-    // Send a message
-    process_tx_(count_ % 8, vnotif);
+    int ret;
 
-    // No forwarding
-    return 0;
+    LOGGER_DEBUG("Process notification [bk_id=%d]", id_);
+
+    // Get and increment index to return
+    ret = count_++ % 8;
+
+    return ret;
 }
 
 //

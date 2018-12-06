@@ -1,5 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+#
 # ad-hoc library for c3qo
+#
 
 
 # No errors or undefined variables allowed
