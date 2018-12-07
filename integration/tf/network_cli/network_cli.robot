@@ -16,10 +16,7 @@ Network CLI Errors
 
 Remote Block Management
     [Documentation]    Remotely control a block life cycle
-    #
-    # Start the server
-    #
-    ${c3qo}    Process.Start Process    /tmp/c3qo-0.0.7-local/bin/c3qo
+    [Setup]    Setup Server
     #
     # Send the commands to do a life cycle
     #
@@ -37,9 +34,17 @@ Remote Block Management
     # Terminate
     #
     Builtin.Sleep    1s
-    Process.Terminate Process    ${c3qo}
+    [Teardown]    Teardown Server
 
 *** Keywords ***
+Setup Server
+    [Documentation]    Start c3qo server
+    Process.Start Process    /tmp/c3qo-0.0.7-local/bin/c3qo    alias=c3qo
+
+Teardown Server
+    [Documentation]    Stop c3qo server
+    Process.Terminate Process    c3qo
+
 Send Protobuf Command
     [Arguments]    ${command}    ${expected_rc}=${0}
     ${result}    Process.Run Process    /tmp/c3qo-0.0.7-local/bin/ncli    -A    ${command}
