@@ -8,7 +8,7 @@
 set -eu
 
 # Get absolute path to this script
-DIR_SCRIPT=$(cd $(dirname $0) > /dev/null && pwd)
+DIR_SCRIPT=$(dirname $(readlink -f $0))
 
 source $DIR_SCRIPT/c3qo_lib.sh
 

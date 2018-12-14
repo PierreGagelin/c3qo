@@ -6,7 +6,16 @@
 # Has to be launched in the root directory with project built under ../build
 #
 
+# No error or undefined variables allowed
 set -eu
+
+# Get absolute path to this script
+DIR_SCRIPT=$(dirname $(readlink -f $0))
+
+source $DIR_SCRIPT/c3qo_lib.sh
+
+# Generate every useful paths from source path
+c3qo_generate_path $DIR_SCRIPT
 
 INCLUDES=
 INCLUDES_OPT=
@@ -14,7 +23,7 @@ FILE_OUTPUT_REPORT="/tmp/cppcheck_result.txt"
 FILE_OUTPUT_CONFIG="/tmp/cppcheck_config.txt"
 
 # General c3qo includes
-INCLUDES=$(find . -name include)
+INCLUDES=$(find $C3QO_DIR_SOURCE -name include)
 for include in $INCLUDES
 do
     INCLUDES_OPT="$INCLUDES_OPT -I $include"

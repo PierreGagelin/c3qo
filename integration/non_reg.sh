@@ -12,12 +12,12 @@
 set -eu
 
 # Get absolute path to this script
-dir_script=$(cd $(dirname $0) > /dev/null && pwd)
+DIR_SCRIPT=$(dirname $(readlink -f $0))
 
-source $dir_script/../c3qo_lib.sh
+source $DIR_SCRIPT/../c3qo_lib.sh
 
 # Generate every useful paths from source path
-c3qo_generate_path $dir_script/..
+c3qo_generate_path $DIR_SCRIPT/..
 
 #
 # Compilation
