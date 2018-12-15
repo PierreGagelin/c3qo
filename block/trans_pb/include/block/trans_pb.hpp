@@ -11,7 +11,8 @@ struct trans_pb : block
 
     virtual int rx_(void *vdata) override final;
 
-    void parse_command(const uint8_t *data, size_t size);
+    bool proto_command_parse(const uint8_t *data, size_t size);
+    void proto_command_reply(bool is_ok);
 };
 
 struct trans_pb_factory : block_factory

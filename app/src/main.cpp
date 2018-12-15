@@ -83,7 +83,17 @@ int main(int argc, char **argv)
     mgr.block_add(-1, "zmq_pair");
     char conf[] = "type=server addr=tcp://127.0.0.1:1664";
     mgr.block_conf(-1, conf);
+    mgr.block_bind(-1, -1, 0);
     mgr.block_start(-1);
+
+    // Add the protobuf transcoder
+    mgr.block_add(-2, "trans_pb");
+    mgr.block_bind(-2, -1, 0);
+    mgr.block_start(-2);
+
+    // Bind ZMQ and transcoder
+    mgr.block_bind(-1, 0, -2);
+    mgr.block_bind(-2, 0, -1);
 
     // Register a signal handler
     {

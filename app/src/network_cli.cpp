@@ -220,6 +220,22 @@ int main(int argc, char **argv)
 
     c3qo_zmq_msg_del(msg);
 
+    // Wait for a response in the next 100 ms
+    {
+        zmq_pollitem_t poll_entry;
+
+        poll_entry.events = ZMQ_POLLIN;
+        poll_entry.fd = -1;
+        poll_entry.socket = client;
+        rc = zmq_poll(&poll_entry, 1, 100);
+        ASSERT(rc == 1);
+
+        socket_zmq_read(client, msg);
+        ASSERT(msg.size() == 2u);
+        ASSERT(msg[0].data == std::string("CONF.PROTO.CMD.REP"));
+        ASSERT(msg[1].data == std::string("OK"));
+    }
+
     // Close down the sockets
     zmq_close(client);
     zmq_close(monitor);

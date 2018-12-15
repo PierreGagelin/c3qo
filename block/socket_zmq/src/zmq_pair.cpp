@@ -162,7 +162,7 @@ int zmq_pair::tx_(void *vdata)
     if (vdata == nullptr)
     {
         LOGGER_ERR("Failed to process buffer: nullptr data");
-        return 0;
+        return -1;
     }
     msg = static_cast<std::vector<struct c3qo_zmq_part> *>(vdata);
 
@@ -174,7 +174,7 @@ int zmq_pair::tx_(void *vdata)
         tx_pkt_++;
     }
 
-    return 0;
+    return -1;
 }
 
 //

@@ -14,52 +14,83 @@ trans_pb::trans_pb(struct manager *mgr) : block(mgr) {}
 trans_pb::~trans_pb() {}
 
 //
-// @brief Parse and execute a protobuf command
+// @brief Parse and execute a protobuf configuration command
 //
-void trans_pb::parse_command(const uint8_t *data, size_t size)
+bool trans_pb::proto_command_parse(const uint8_t *data, size_t size)
 {
     Command *cmd;
+    bool is_ok;
 
     cmd = command__unpack(nullptr, size, data);
     if (cmd == nullptr)
     {
         LOGGER_ERR("Failed to unpack protobuf command: unknown reason [size=%zu]", size);
-        return;
+        return false;
     }
 
     switch (cmd->type_case)
     {
     case COMMAND__TYPE_ADD:
-        mgr_->block_add(cmd->add->id, cmd->add->type);
+        is_ok = mgr_->block_add(cmd->add->id, cmd->add->type);
         break;
 
     case COMMAND__TYPE_START:
-        mgr_->block_start(cmd->start->id);
+        is_ok = mgr_->block_start(cmd->start->id);
         break;
 
     case COMMAND__TYPE_STOP:
-        mgr_->block_stop(cmd->stop->id);
+        is_ok = mgr_->block_stop(cmd->stop->id);
         break;
 
     case COMMAND__TYPE_DEL:
-        mgr_->block_del(cmd->del->id);
+        is_ok = mgr_->block_del(cmd->del->id);
         break;
 
     case COMMAND__TYPE_CONF:
-        mgr_->block_conf(cmd->conf->id, cmd->conf->conf);
+        is_ok = mgr_->block_conf(cmd->conf->id, cmd->conf->conf);
         break;
 
     case COMMAND__TYPE_BIND:
-        mgr_->block_bind(cmd->bind->id, cmd->bind->port, cmd->bind->dest);
+        is_ok = mgr_->block_bind(cmd->bind->id, cmd->bind->port, cmd->bind->dest);
         break;
 
     case COMMAND__TYPE__NOT_SET:
     default:
         LOGGER_ERR("Failed to execute protobuf command: unknown command type [type=%d]", cmd->type_case);
+        is_ok = false;
         break;
     }
 
     command__free_unpacked(cmd, nullptr);
+
+    return is_ok;
+}
+
+//
+// @brief Reply to a protobuf configuration command
+//
+void trans_pb::proto_command_reply(bool is_ok)
+{
+    std::vector<struct c3qo_zmq_part> msg;
+    struct c3qo_zmq_part part;
+    const char *topic;
+    const char *status;
+
+    topic = "CONF.PROTO.CMD.REP";
+    part.len = strlen(topic);
+    part.data = new char[part.len];
+    memcpy(part.data, topic, part.len);
+    msg.push_back(part);
+
+    status = is_ok ? "OK" : "KO";
+    part.len = strlen(status);
+    part.data = new char[part.len];
+    memcpy(part.data, status, part.len);
+    msg.push_back(part);
+
+    process_tx_(0, &msg);
+
+    c3qo_zmq_msg_del(msg);
 }
 
 int trans_pb::rx_(void *vdata)
@@ -67,7 +98,7 @@ int trans_pb::rx_(void *vdata)
     if (vdata == nullptr)
     {
         LOGGER_ERR("trans_pb RX failed: nullptr data");
-        return 0;
+        return -1;
     }
 
     std::vector<struct c3qo_zmq_part> &msg = *(static_cast<std::vector<struct c3qo_zmq_part> *>(vdata));
@@ -75,21 +106,23 @@ int trans_pb::rx_(void *vdata)
     {
         LOGGER_ERR("Failed to decode message: unexpected message parts count [expected=%u ; actual=%zu]",
                    2u, msg.size());
-        return 0;
+        return -1;
     }
 
     // Action to take upon topic value
     if (strcmp("CONF.PROTO.CMD", msg[0].data) == 0)
     {
-        parse_command(reinterpret_cast<uint8_t *>(msg[1].data), msg[1].len);
+        bool is_ok;
+        is_ok = proto_command_parse(reinterpret_cast<uint8_t *>(msg[1].data), msg[1].len);
+        proto_command_reply(is_ok);
     }
     else
     {
         LOGGER_ERR("Failed to decode message: unknown topic [topic=%s]", msg[0].data);
-        return 0;
+        return -1;
     }
 
-    return 0;
+    return -1;
 }
 
 //

@@ -14,6 +14,7 @@ void c3qo_zmq_msg_del(std::vector<struct c3qo_zmq_part> &msg)
     {
         delete[] it.data;
     }
+    msg.clear();
 }
 
 //

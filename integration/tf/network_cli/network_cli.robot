@@ -29,7 +29,7 @@ Remote Block Management
     #
     # Send an unknown command
     #
-    Send Protobuf Command    dummy -i 20 -t wrong_type
+    Send Protobuf Command    dummy -i 20 -t wrong_type    ${1}
     #
     # Terminate
     #
