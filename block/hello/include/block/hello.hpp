@@ -16,9 +16,8 @@ struct hello : block
     virtual void start_() override final;
     virtual void stop_() override final;
 
-    virtual int rx_(void *vdata) override final;
-    virtual int tx_(void *vdata) override final;
-    virtual int ctrl_(void *vnotif) override final;
+    virtual int data_(void *vdata) override final;
+    virtual void ctrl_(void *vnotif) override final;
 };
 
 struct hello_factory : block_factory

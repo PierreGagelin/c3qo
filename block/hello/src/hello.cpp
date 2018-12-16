@@ -36,40 +36,25 @@ void hello::stop_()
     LOGGER_DEBUG("Goodbye world");
 }
 
-int hello::rx_(void *)
+int hello::data_(void *)
 {
     int ret;
 
-    LOGGER_DEBUG("Process RX [bk_id=%d]", id_);
+    LOGGER_DEBUG("Process data [bk_id=%d]", id_);
 
     // Get and increment index to return
-    ret = count_++ % 8;
+    ret = 1;
+    ret += count_++ % 8;
 
     return ret;
 }
 
-int hello::tx_(void *)
+void hello::ctrl_(void *)
 {
-    int ret;
-
-    LOGGER_DEBUG("Process TX [bk_id=%d]", id_);
-
-    // Get and increment index to return
-    ret = count_++ % 8;
-
-    return ret;
-}
-
-int hello::ctrl_(void *)
-{
-    int ret;
-
     LOGGER_DEBUG("Process notification [bk_id=%d]", id_);
 
-    // Get and increment index to return
-    ret = count_++ % 8;
-
-    return ret;
+    // Increment index to return
+    ++count_;
 }
 
 //

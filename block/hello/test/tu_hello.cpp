@@ -18,26 +18,21 @@ static void tu_hello_hello()
     struct hello block(&mgr_);
     char conf[] = "hello from TU";
 
-    // configure and start the block
+    // Configure and start the block
     block.conf_(conf);
     block.start_();
 
-    // Verify binding (block hello only increment port output)
+    // Verify output
+    for (int i = 1; i < 9; i++)
+    {
+        ASSERT(block.data_(nullptr) == i);
+    }
+    ASSERT(block.count_ == 8);
     for (int i = 0; i < 8; i++)
     {
-        ASSERT(block.rx_(nullptr) == i);
+        block.ctrl_(nullptr);
     }
-    for (int i = 0; i < 8; i++)
-    {
-        ASSERT(block.tx_(nullptr) == i);
-    }
-    for (int i = 0; i < 8; i++)
-    {
-        ASSERT(block.ctrl_(nullptr) == i);
-    }
-
-    // Block should count 24 data
-    ASSERT(block.count_ == 24);
+    ASSERT(block.count_ == 16);
 
     // Stop block
     block.stop_();
@@ -55,6 +50,8 @@ static void tu_hello_error()
 
     // Configure without a configuration
     block.conf_(nullptr);
+
+    logger_set_level(LOGGER_LEVEL_DEBUG);
 }
 
 int main(int, char **)

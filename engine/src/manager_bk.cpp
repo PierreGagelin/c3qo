@@ -8,10 +8,7 @@
 //
 // @brief Constructor and destructor
 //
-manager::manager()
-{
-    // Nothing to do
-}
+manager::manager() {}
 manager::~manager()
 {
     block_clear();
@@ -21,8 +18,8 @@ manager::~manager()
 //
 // @brief Add or replace a block
 //
-// @param id   : Block ID
-// @param type : Block type
+// @param id    : Identifier to give to the block
+// @param type  : Type of block to create
 //
 bool manager::block_add(int id, const char *type)
 {
@@ -48,8 +45,6 @@ bool manager::block_add(int id, const char *type)
         return false;
     }
 
-    LOGGER_INFO("Add block [bk_id=%d ; bk_type=%s]", id, type);
-
     // Build a block
     bk = factory->second->constructor(this);
     if (bk == nullptr)
@@ -64,6 +59,8 @@ bool manager::block_add(int id, const char *type)
 
     bk_map_.insert({id, bk});
 
+    LOGGER_INFO("Added block [bk_id=%d ; bk_type=%s]", id, type);
+
     return true;
 }
 
@@ -77,7 +74,7 @@ bool manager::block_start(int id)
     bk = block_get(id);
     if (bk == nullptr)
     {
-        LOGGER_WARNING("Cannot start block: unknown block ID [bk_id=%d]", id);
+        LOGGER_ERR("Failed to start block: unknown block [bk_id=%d]", id);
         return false;
     }
 
@@ -88,11 +85,10 @@ bool manager::block_start(int id)
         return true;
     }
 
-    LOGGER_INFO("Start block [bk_id=%d ; bk_type=%s ; bk_state=%s]",
-                bk->id_, bk->type_.c_str(), bk_state_to_string(STATE_START));
-
     bk->state_ = STATE_START;
     bk->start_();
+
+    LOGGER_INFO("Started block [bk_id=%d ; bk_type=%s]", bk->id_, bk->type_.c_str());
 
     return true;
 }
@@ -107,7 +103,7 @@ bool manager::block_stop(int id)
     bk = block_get(id);
     if (bk == nullptr)
     {
-        LOGGER_WARNING("Cannot stop block: unknown block ID [bk_id=%d]", id);
+        LOGGER_ERR("Failed to stop block: unknown block [bk_id=%d]", id);
         return false;
     }
 
@@ -118,20 +114,16 @@ bool manager::block_stop(int id)
         return true;
     }
 
-    LOGGER_INFO("Stop block [bk_id=%d ; bk_type=%s ; bk_state=%s]",
-                id, bk->type_.c_str(), bk_state_to_string(STATE_STOP));
-
     bk->state_ = STATE_STOP;
-
     bk->stop_();
+
+    LOGGER_INFO("Stopped block [bk_id=%d ; bk_type=%s]", id, bk->type_.c_str());
 
     return true;
 }
 
 //
 // @brief Stop and delete a block
-//
-// @param id : Block ID
 //
 bool manager::block_del(int id)
 {
@@ -140,26 +132,25 @@ bool manager::block_del(int id)
     bk = block_get(id);
     if (bk == nullptr)
     {
-        LOGGER_WARNING("Cannot delete block: unknown block ID [bk_id=%d]", id);
+        LOGGER_ERR("Failed to delete block: unknown block [bk_id=%d]", id);
         return false;
     }
 
     // Verify block state
     if (bk->state_ != STATE_STOP)
     {
-        LOGGER_WARNING("Cannot delete block: block not stopped [bk_id=%d ; bk_state=%s]",
-                       bk->id_, bk_state_to_string(bk->state_));
+        LOGGER_ERR("Failed to delete block: block not stopped [bk_id=%d]", bk->id_);
         return false;
     }
-
-    LOGGER_INFO("Delete block [bk_id=%d ; bk_type=%s]", bk->id_, bk->type_.c_str());
 
     const auto &factory = bk_factory_.find(bk->type_);
     if (factory == bk_factory_.cend())
     {
-        LOGGER_ERR("Failed to delete block: no factory found [type=%s]", bk->type_.c_str());
+        LOGGER_ERR("Failed to delete block: unknown factory [type=%s]", bk->type_.c_str());
         return false;
     }
+
+    LOGGER_INFO("Deleting block [bk_id=%d ; bk_type=%s]", bk->id_, bk->type_.c_str());
 
     factory->second->destructor(bk);
     bk_map_.erase(id);
@@ -177,13 +168,12 @@ bool manager::block_conf(int id, char *conf)
     bk = block_get(id);
     if (bk == nullptr)
     {
-        LOGGER_WARNING("Cannot configure block: unknown block ID [bk_id=%d]", id);
+        LOGGER_ERR("Failed to configure block: unknown block [bk_id=%d]", id);
         return false;
     }
-
-    LOGGER_INFO("Configure block [bk_id=%d ; bk_type=%s ; conf=%s]", id, bk->type_.c_str(), conf);
-
     bk->conf_(conf);
+
+    LOGGER_INFO("Configured block [bk_id=%d ; bk_type=%s]", id, bk->type_.c_str());
 
     return true;
 }
@@ -191,39 +181,34 @@ bool manager::block_conf(int id, char *conf)
 //
 // @brief Bind a block
 //
-bool manager::block_bind(int id, int port, int bk_id)
+bool manager::block_bind(int bk_id_src, int port, int bk_id_dst)
 {
     struct bind_info bind;
 
     // Find the block concerned by the command
-    const auto &source = bk_map_.find(id);
-    const auto &end = bk_map_.end();
-    if (source == end)
+    const auto &src = bk_map_.find(bk_id_src);
+    const auto &dst = bk_map_.find(bk_id_dst);
+    const auto &end = bk_map_.cend();
+    if ((src == end) || (dst == end))
     {
-        LOGGER_WARNING("Cannot bind block: unknown source [bk_id=%d]", id);
+        LOGGER_ERR("Failed to bind block: unknown block [bk_id_src=%d ; bk_id_dst=%d]", bk_id_src, bk_id_dst);
         return false;
     }
 
-    LOGGER_INFO("Bind block [bk_id=%d ; port=%d ; bk_id_dest=%d]", source->first, port, bk_id);
-
-    source->second->bind_(port, bk_id);
-
-    // Add a binding in the engine with a weak reference to the block
-    // If the block does not exist, we just let it undefined
-    const auto &dest = bk_map_.find(bk_id);
-    if (dest != end)
-    {
-        bind.bk = dest->second;
-    }
+    bind.bk = dst->second;
     bind.port = port;
-    bind.bk_id = bk_id;
-    source->second->binds_.push_back(bind);
+    src->second->binds_.push_back(bind);
+
+    LOGGER_INFO("Bound block [bk_id_src=%d ; port=%d ; bk_id_dest=%d]", bk_id_src, port, bk_id_dst);
+
+    // Notify the block that it has been bound
+    src->second->bind_(port, bk_id_dst);
 
     return true;
 }
 
 //
-// @brief Get block information
+// @brief Get a block
 //
 struct block *manager::block_get(int id)
 {
@@ -248,11 +233,17 @@ void manager::block_clear()
     }
 }
 
+//
+// @brief Register a type of block in the factory
+//
 void manager::block_factory_register(const char *type, struct block_factory *factory)
 {
     bk_factory_.insert({type, factory});
 }
 
+//
+// @brief Unregister a type of block in the factory
+//
 void manager::block_factory_unregister(const char *type)
 {
     bk_factory_.erase(type);

@@ -18,9 +18,7 @@ static void tu_perf_commutation()
 {
     size_t nb_block = 1 * 100;
     size_t nb_buf = 1 * 10 * 1000;
-
-    // Reduce amount of output
-    logger_set_level(LOGGER_LEVEL_WARNING);
+    struct block *bk;
 
     // Add, init and start some blocks
     for (size_t i = 1; i < nb_block + 1; i++)
@@ -33,39 +31,29 @@ static void tu_perf_commutation()
     //   - bk_1 -> bk_2 -> bk_3 -> bk_4... -> bk_N
     for (size_t i = 1; i < nb_block; i++)
     {
-        for (int j = 0; j < 8; j++)
+        for (int j = 1; j < 9; j++)
         {
             // Bind port j of bk_i to bk_i+1
             ASSERT(mgr_.block_bind(i, j, i + 1) == true);
         }
     }
 
-    // Bind the last block to 0 (trash)
-    for (int j = 0; j < 8; j++)
-    {
-        ASSERT(mgr_.block_bind(nb_block, j, 0) == true);
-    }
-
     // Send data from bk_1
+    bk = mgr_.block_get(1);
+    ASSERT(bk != nullptr);
     for (size_t i = 0; i < nb_buf; i++)
     {
-        struct block *bi;
-        char buf[] = "yolooooo";
-
-        bi = mgr_.block_get(1);
-        ASSERT(bi != nullptr);
-
-        bi->process_rx_(0, buf);
+        bk->process_data_(1, nullptr);
     }
 
     // Verify that buffers crossed bk_2 to the last block
     for (size_t i = 2; i < nb_block + 1; i++)
     {
-        struct hello *bi;
+        struct hello *bk_hello;
 
-        bi = static_cast<struct hello *>(mgr_.block_get(i));
-        ASSERT(bi != nullptr);
-        ASSERT(bi->count_ == static_cast<int>(nb_buf));
+        bk_hello = static_cast<struct hello *>(mgr_.block_get(i));
+        ASSERT(bk_hello != nullptr);
+        ASSERT(bk_hello->count_ == static_cast<int>(nb_buf));
     }
 
     // Clean blocks
@@ -75,7 +63,7 @@ static void tu_perf_commutation()
 int main(int, char **)
 {
     LOGGER_OPEN("tu_perf");
-    logger_set_level(LOGGER_LEVEL_DEBUG);
+    logger_set_level(LOGGER_LEVEL_CRIT);
 
     mgr_.block_factory_register("hello", &factory);
 

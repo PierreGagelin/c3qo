@@ -25,7 +25,7 @@ struct zmq_pair : block
     virtual void start_() override final;
     virtual void stop_() override final;
 
-    virtual int tx_(void *vdata) override final;
+    virtual int data_(void *vdata) override final;
 
     virtual void on_fd_(struct file_desc &fd) override final;
 };

@@ -66,8 +66,8 @@ static void tu_zmq_pair_data()
     {
         message_create(msg, "hello", "world");
 
-        client.tx_(&msg);
-        server.tx_(&msg);
+        client.data_(&msg);
+        server.data_(&msg);
 
         mgr_.fd_poll();
 
@@ -105,7 +105,7 @@ static void tu_zmq_pair_error()
     block.conf_(const_cast<char *>("type=client addr="));
     block.conf_(const_cast<char *>("type=client addr= "));
 
-    block.tx_(nullptr);
+    block.data_(nullptr);
 
     // Connect failure
     block.addr_ = "well, obviously it's not an address";

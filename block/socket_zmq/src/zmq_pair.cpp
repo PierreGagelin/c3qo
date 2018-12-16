@@ -39,7 +39,7 @@ void zmq_pair::on_fd_(struct file_desc &fd)
 
     if (fd.socket != zmq_sock_.socket)
     {
-        LOGGER_ERR("Failed to execute ZMQ callback: unknown socket [socket=%p ; expected=%p]", fd.socket, zmq_sock_.socket);
+        LOGGER_ERR("Failed to receive message: unknown socket [expected=%p ; actual=%p]", zmq_sock_.socket, fd.socket);
         return;
     }
 
@@ -47,10 +47,10 @@ void zmq_pair::on_fd_(struct file_desc &fd)
     socket_zmq_read(zmq_sock_.socket, msg);
     ++rx_pkt_;
 
-    LOGGER_DEBUG("Message received on ZMQ socket [bk_id=%d ; parts_count=%zu]", id_, msg.size());
+    LOGGER_DEBUG("Received message [bk_id=%d ; parts_count=%zu]", id_, msg.size());
 
-    // Send it in reception chain
-    process_rx_(0, &msg);
+    // Send it to the next block
+    process_data_(1, &msg);
 
     c3qo_zmq_msg_del(msg);
 }
@@ -154,7 +154,7 @@ void zmq_pair::stop_()
 //
 // @brief Send data to the exterior
 //
-int zmq_pair::tx_(void *vdata)
+int zmq_pair::data_(void *vdata)
 {
     std::vector<struct c3qo_zmq_part> *msg;
     bool ok;
@@ -162,7 +162,7 @@ int zmq_pair::tx_(void *vdata)
     if (vdata == nullptr)
     {
         LOGGER_ERR("Failed to process buffer: nullptr data");
-        return -1;
+        return PORT_STOP;
     }
     msg = static_cast<std::vector<struct c3qo_zmq_part> *>(vdata);
 
@@ -174,7 +174,7 @@ int zmq_pair::tx_(void *vdata)
         tx_pkt_++;
     }
 
-    return -1;
+    return PORT_STOP;
 }
 
 //

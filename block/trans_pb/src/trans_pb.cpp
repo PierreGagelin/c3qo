@@ -88,25 +88,24 @@ void trans_pb::proto_command_reply(bool is_ok)
     memcpy(part.data, status, part.len);
     msg.push_back(part);
 
-    process_tx_(0, &msg);
+    process_data_(1, &msg);
 
     c3qo_zmq_msg_del(msg);
 }
 
-int trans_pb::rx_(void *vdata)
+int trans_pb::data_(void *vdata)
 {
     if (vdata == nullptr)
     {
-        LOGGER_ERR("trans_pb RX failed: nullptr data");
-        return -1;
+        LOGGER_ERR("Failed to process data: nullptr data");
+        return PORT_STOP;
     }
 
     std::vector<struct c3qo_zmq_part> &msg = *(static_cast<std::vector<struct c3qo_zmq_part> *>(vdata));
     if (msg.size() != 2u)
     {
-        LOGGER_ERR("Failed to decode message: unexpected message parts count [expected=%u ; actual=%zu]",
-                   2u, msg.size());
-        return -1;
+        LOGGER_ERR("Failed to decode message: unexpected parts count [expected=%u ; actual=%zu]", 2u, msg.size());
+        return PORT_STOP;
     }
 
     // Action to take upon topic value
@@ -119,10 +118,10 @@ int trans_pb::rx_(void *vdata)
     else
     {
         LOGGER_ERR("Failed to decode message: unknown topic [topic=%s]", msg[0].data);
-        return -1;
+        return PORT_STOP;
     }
 
-    return -1;
+    return PORT_STOP;
 }
 
 //

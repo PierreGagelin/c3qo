@@ -28,9 +28,8 @@ static void tu_block_interface()
     bk.start_();
     bk.stop_();
 
-    ASSERT(bk.rx_(nullptr) == 0);
-    ASSERT(bk.tx_(nullptr) == 0);
-    ASSERT(bk.ctrl_(nullptr) == 0);
+    ASSERT(bk.data_(nullptr) == 0);
+    bk.ctrl_(nullptr);
 
     struct timer t;
     bk.on_timer_(t);
@@ -46,22 +45,18 @@ static void tu_block_flow()
 {
     struct hello *bk_1;
     struct hello *bk_2;
-    char notif[] = "dummy value";
 
     // Add, initialize and start 2 blocks
-    for (int i = 1; i < 3; i++)
+    for (int i = 1; i < 3; ++i)
     {
         ASSERT(mgr_.block_add(i, "hello") == true);
         ASSERT(mgr_.block_start(i) == true);
     }
 
-    // Bind:
-    //   - block 1 to block 2
-    //   - block 2 to block 0 (trash)
-    for (int i = 0; i < 8; i++)
+    // Bind block 1 to block 2
+    for (int i = 1; i < 9; ++i)
     {
         ASSERT(mgr_.block_bind(1, i, 2) == true);
-        ASSERT(mgr_.block_bind(2, i, 0) == true);
     }
 
     // Retrieve block 1 and block 2
@@ -74,32 +69,37 @@ static void tu_block_flow()
     ASSERT(bk_1->count_ == 0);
     ASSERT(bk_2->count_ == 0);
 
+    // Control a block
+    bk_1->process_ctrl_(1, nullptr);
+    ASSERT(bk_1->count_ == 1);
+    bk_2->process_ctrl_(2, nullptr);
+    ASSERT(bk_2->count_ == 1);
+
     // Generate flow from the block
-    bk_1->process_notif_(0, notif);
-    bk_1->process_rx_(0, notif);
-    bk_1->process_tx_(0, notif);
-
-    // A buffer should have crossed block 2
-    ASSERT(bk_1->count_ == 0);
+    bk_1->process_data_(1, nullptr);
+    ASSERT(bk_2->count_ == 2);
+    bk_1->process_data_(1, nullptr);
     ASSERT(bk_2->count_ == 3);
-
-    // Process unknown flow
-    bk_1->process_flow_(0, nullptr, static_cast<enum flow_type>(42));
 
     // Clear blocks
     mgr_.block_clear();
 }
 
-//
-// @brief String version of the block enumerates
-//
-static void tu_block_strings()
+static void tu_block_errors()
 {
-    for (int i = 0; i < 10; i++)
-    {
-        bk_state_to_string(static_cast<enum bk_state>(i));
-        flow_type_to_string(static_cast<enum flow_type>(i));
-    }
+    struct hello *bk;
+
+    ASSERT(mgr_.block_add(1, "hello") == true);
+    ASSERT(mgr_.block_add(2, "hello") == true);
+
+    bk = static_cast<struct hello *>(mgr_.block_get(1));
+    ASSERT(bk != nullptr);
+
+    // Control unknown block
+    bk->process_ctrl_(42, nullptr);
+
+    // Flow without a route
+    bk->process_data_(1, nullptr);
 }
 
 int main(int, char **)
@@ -111,7 +111,7 @@ int main(int, char **)
 
     tu_block_interface();
     tu_block_flow();
-    tu_block_strings();
+    tu_block_errors();
 
     LOGGER_CLOSE();
     return 0;

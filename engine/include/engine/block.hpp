@@ -4,6 +4,9 @@
 // Project headers
 #include "utils/logger.hpp"
 
+// Port value to return in order to stop a data flow
+#define PORT_STOP 0
+
 //
 // @enum bk_state
 //
@@ -14,18 +17,6 @@ enum bk_state
     STATE_STOP,  // Block is stopped
     STATE_START, // Block is started
 };
-const char *bk_state_to_string(enum bk_state t);
-
-//
-// @enum flow_type
-//
-enum flow_type
-{
-    FLOW_RX,    // RX flow
-    FLOW_TX,    // TX flow
-    FLOW_NOTIF, // Notification flow
-};
-const char *flow_type_to_string(enum flow_type type);
 
 //
 // @struct bind_info
@@ -35,7 +26,6 @@ const char *flow_type_to_string(enum flow_type type);
 struct bind_info
 {
     int port;         // Port from source block
-    int bk_id;        // Identifier of the destination block
     struct block *bk; // Destination block
 };
 
@@ -94,15 +84,12 @@ struct block
     virtual void on_fd_(struct file_desc &fd);
 
     // Data callbacks
-    virtual int rx_(void *vdata);
-    virtual int tx_(void *vdata);
-    virtual int ctrl_(void *vnotif);
+    virtual int data_(void *vdata);
+    virtual void ctrl_(void *vnotif);
 
-    // Data flow methods
-    void process_rx_(int port, void *data);
-    void process_tx_(int port, void *data);
-    void process_notif_(int port, void *notif);
-    void process_flow_(int port, void *data, enum flow_type type);
+    // Flow methods
+    void process_data_(int port, void *data);
+    void process_ctrl_(int port, void *notif);
 };
 
 // Factory to create and destroy blocks

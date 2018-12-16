@@ -108,7 +108,7 @@ struct tu_trans_pb
         tmp.data = reinterpret_cast<char *>(buffer);
         tmp.len = size;
         msg.push_back(tmp);
-        block_.rx_(&msg);
+        block_.data_(&msg);
 
         free(topic);
         free(block_arg);
@@ -130,13 +130,13 @@ static void tu_trans_pb_errors()
 
     // No message
     {
-        test.block_.rx_(nullptr);
+        test.block_.data_(nullptr);
     }
 
     // Message with wrong size
     {
         std::vector<struct c3qo_zmq_part> msg;
-        test.block_.rx_(&msg);
+        test.block_.data_(&msg);
     }
 
     // Message with unknown topic
@@ -149,7 +149,7 @@ static void tu_trans_pb_errors()
         msg.push_back(tmp);
         msg.push_back(tmp);
 
-        test.block_.rx_(&msg);
+        test.block_.data_(&msg);
 
         free(tmp.data);
     }
@@ -164,7 +164,7 @@ static void tu_trans_pb_errors()
         msg.push_back(tmp); // topic: OK
         msg.push_back(tmp); // protobuf data: not OK
 
-        test.block_.rx_(&msg);
+        test.block_.data_(&msg);
 
         free(tmp.data);
     }
