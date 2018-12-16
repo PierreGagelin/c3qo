@@ -97,7 +97,6 @@ static void tu_block_strings()
 {
     for (int i = 0; i < 10; i++)
     {
-        bk_cmd_to_string(static_cast<enum bk_cmd>(i));
         bk_state_to_string(static_cast<enum bk_state>(i));
         flow_type_to_string(static_cast<enum flow_type>(i));
     }

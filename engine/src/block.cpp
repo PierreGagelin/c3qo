@@ -4,36 +4,6 @@
 #include "engine/block.hpp"
 
 //
-// @brief Stringify the block command
-//
-const char *bk_cmd_to_string(enum bk_cmd t)
-{
-    switch (t)
-    {
-    case CMD_ADD:
-        return "BLOCK_COMMAND_ADD";
-
-    case CMD_START:
-        return "BLOCK_COMMAND_START";
-
-    case CMD_STOP:
-        return "BLOCK_COMMAND_STOP";
-
-    case CMD_DEL:
-        return "BLOCK_COMMAND_DEL";
-
-    case CMD_CONF:
-        return "BLOCK_COMMAND_CONF";
-
-    case CMD_BIND:
-        return "BLOCK_COMMAND_BIND";
-
-    default:
-        return "BLOCK_COMMAND_UNKOWN";
-    }
-}
-
-//
 // @brief Stringify the block state
 //
 const char *bk_state_to_string(enum bk_state t)

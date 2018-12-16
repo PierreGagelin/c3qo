@@ -5,25 +5,6 @@
 #include "utils/logger.hpp"
 
 //
-// @enum bk_cmd
-//
-// @brief Commands to manage a block
-//
-// @note Values are used by configuration file any change has an impact on it
-//
-enum bk_cmd
-{
-    CMD_UNKNOWN,
-    CMD_ADD,   // Create a block
-    CMD_CONF,  // Configure a block
-    CMD_BIND,  // Bind a block to another
-    CMD_START, // Start a block
-    CMD_STOP,  // Stop a block
-    CMD_DEL,   // Delete a block
-};
-const char *bk_cmd_to_string(enum bk_cmd t);
-
-//
 // @enum bk_state
 //
 // @brief Block state
