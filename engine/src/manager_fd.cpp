@@ -9,8 +9,6 @@
 // Is meant to be a static management of every fd of the process
 //
 
-#define LOGGER_TAG "[engine.fd]"
-
 // Project headers
 #include "engine/manager.hpp"
 

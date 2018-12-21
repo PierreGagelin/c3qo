@@ -1,7 +1,5 @@
 
 
-#define LOGGER_TAG "[block.trans_pb]"
-
 // Project headers
 #include "block/trans_pb.hpp"
 #include "engine/manager.hpp"

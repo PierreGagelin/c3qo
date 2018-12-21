@@ -2,15 +2,13 @@
 // @brief API to manage socket
 //
 
-#define LOGGER_TAG "[lib.socket]"
-
 // Project headers
 #include "utils/socket.hpp"
 #include "utils/logger.hpp"
 
 void c3qo_zmq_msg_del(std::vector<struct c3qo_zmq_part> &msg)
 {
-    for (const auto &it: msg)
+    for (const auto &it : msg)
     {
         delete[] it.data;
     }

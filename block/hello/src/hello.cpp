@@ -1,7 +1,5 @@
 
 
-#define LOGGER_TAG "[block.hello]"
-
 // Project headers
 #include "block/hello.hpp"
 

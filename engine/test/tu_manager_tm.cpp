@@ -2,8 +2,6 @@
 // @brief Test file for the block manager
 //
 
-#define LOGGER_TAG "[TU.engine.timer]"
-
 // Project headers
 #include "engine/tu.hpp"
 

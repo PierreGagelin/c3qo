@@ -5,8 +5,6 @@
 //        Is meant to be statically used
 //
 
-#define LOGGER_TAG "[engine.timer]"
-
 // Project headers
 #include "engine/manager.hpp"
 

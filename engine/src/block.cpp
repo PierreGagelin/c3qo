@@ -1,5 +1,4 @@
 
-#define LOGGER_TAG "[block.lib]"
 
 #include "engine/block.hpp"
 #include "engine/manager.hpp"

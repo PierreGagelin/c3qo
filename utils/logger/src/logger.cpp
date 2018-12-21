@@ -1,7 +1,5 @@
 
 
-#define LOGGER_TAG "[lib.logger]"
-
 // Project headers
 #include "utils/logger.hpp"
 

@@ -2,8 +2,6 @@
 // @brief Test file for the hello block
 //
 
-#define LOGGER_TAG "[TU.hello]"
-
 // Project headers
 #include "block/hello.hpp"
 #include "engine/tu.hpp"

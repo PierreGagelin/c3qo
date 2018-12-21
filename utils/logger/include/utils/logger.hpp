@@ -46,17 +46,17 @@ void logger_set_level(enum logger_level l);
 
 #ifdef C3QO_LOG
 
-#define LOGGER_TRACE(level, msg, ...)                 \
-    syslog(level, LOGGER_TAG " " msg, ##__VA_ARGS__); \
-    printf("[%s]" LOGGER_TAG " " msg "\n", get_logger_level(static_cast<enum logger_level>(level + 1)), ##__VA_ARGS__);
+#define LOGGER_TRACE(level, msg, ...)  \
+    syslog(level, msg, ##__VA_ARGS__); \
+    printf("[%s] " msg "\n", get_logger_level(static_cast<enum logger_level>(level + 1)), ##__VA_ARGS__);
 
 #else
 
 // Code will be removed if unused and without a warning
-#define LOGGER_TRACE(level, msg, ...)                     \
-    if (false == true)                                    \
-    {                                                     \
-        syslog(level, LOGGER_TAG " " msg, ##__VA_ARGS__); \
+#define LOGGER_TRACE(level, msg, ...)      \
+    if (false == true)                     \
+    {                                      \
+        syslog(level, msg, ##__VA_ARGS__); \
     }
 
 #endif // C3QO_LOG
@@ -64,50 +64,46 @@ void logger_set_level(enum logger_level l);
 // Current level of log. Only log with lower level will be displayed
 extern enum logger_level logger_level;
 
-#ifndef LOGGER_TAG
-#define LOGGER_TAG ""
-#endif
-
 // Format a log entry with function name, line and level
-#define LOGGER_EMERG(msg, ...)                                                      \
-    if (logger_level >= LOGGER_LEVEL_EMERG)                                         \
-    {                                                                               \
-        LOGGER_TRACE(LOG_EMERG, msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
+#define LOGGER_EMERG(msg, ...)                       \
+    if (logger_level >= LOGGER_LEVEL_EMERG)          \
+    {                                                \
+        LOGGER_TRACE(LOG_EMERG, msg, ##__VA_ARGS__); \
     }
-#define LOGGER_ALERT(msg, ...)                                                      \
-    if (logger_level >= LOGGER_LEVEL_ALERT)                                         \
-    {                                                                               \
-        LOGGER_TRACE(LOG_ALERT, msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
+#define LOGGER_ALERT(msg, ...)                       \
+    if (logger_level >= LOGGER_LEVEL_ALERT)          \
+    {                                                \
+        LOGGER_TRACE(LOG_ALERT, msg, ##__VA_ARGS__); \
     }
-#define LOGGER_CRIT(msg, ...)                                                      \
-    if (logger_level >= LOGGER_LEVEL_CRIT)                                         \
-    {                                                                              \
-        LOGGER_TRACE(LOG_CRIT, msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
+#define LOGGER_CRIT(msg, ...)                       \
+    if (logger_level >= LOGGER_LEVEL_CRIT)          \
+    {                                               \
+        LOGGER_TRACE(LOG_CRIT, msg, ##__VA_ARGS__); \
     }
-#define LOGGER_ERR(msg, ...)                                                      \
-    if (logger_level >= LOGGER_LEVEL_ERR)                                         \
-    {                                                                             \
-        LOGGER_TRACE(LOG_ERR, msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
+#define LOGGER_ERR(msg, ...)                       \
+    if (logger_level >= LOGGER_LEVEL_ERR)          \
+    {                                              \
+        LOGGER_TRACE(LOG_ERR, msg, ##__VA_ARGS__); \
     }
-#define LOGGER_WARNING(msg, ...)                                                      \
-    if (logger_level >= LOGGER_LEVEL_WARNING)                                         \
-    {                                                                                 \
-        LOGGER_TRACE(LOG_WARNING, msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
+#define LOGGER_WARNING(msg, ...)                       \
+    if (logger_level >= LOGGER_LEVEL_WARNING)          \
+    {                                                  \
+        LOGGER_TRACE(LOG_WARNING, msg, ##__VA_ARGS__); \
     }
-#define LOGGER_NOTICE(msg, ...)                                                      \
-    if (logger_level >= LOGGER_LEVEL_NOTICE)                                         \
-    {                                                                                \
-        LOGGER_TRACE(LOG_NOTICE, msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
+#define LOGGER_NOTICE(msg, ...)                       \
+    if (logger_level >= LOGGER_LEVEL_NOTICE)          \
+    {                                                 \
+        LOGGER_TRACE(LOG_NOTICE, msg, ##__VA_ARGS__); \
     }
-#define LOGGER_INFO(msg, ...)                                                      \
-    if (logger_level >= LOGGER_LEVEL_INFO)                                         \
-    {                                                                              \
-        LOGGER_TRACE(LOG_INFO, msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
+#define LOGGER_INFO(msg, ...)                       \
+    if (logger_level >= LOGGER_LEVEL_INFO)          \
+    {                                               \
+        LOGGER_TRACE(LOG_INFO, msg, ##__VA_ARGS__); \
     }
-#define LOGGER_DEBUG(msg, ...)                                                      \
-    if (logger_level >= LOGGER_LEVEL_DEBUG)                                         \
-    {                                                                               \
-        LOGGER_TRACE(LOG_DEBUG, msg " (%s:%d)", ##__VA_ARGS__, __func__, __LINE__); \
+#define LOGGER_DEBUG(msg, ...)                       \
+    if (logger_level >= LOGGER_LEVEL_DEBUG)          \
+    {                                                \
+        LOGGER_TRACE(LOG_DEBUG, msg, ##__VA_ARGS__); \
     }
 
 #define ASSERT(condition)                                           \

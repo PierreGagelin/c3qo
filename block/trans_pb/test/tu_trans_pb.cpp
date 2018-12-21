@@ -2,8 +2,6 @@
 // @brief Test file for a block
 //
 
-#define LOGGER_TAG "[TU.trans_pb]"
-
 // Project headers
 #include "block/trans_pb.hpp"
 #include "engine/tu.hpp"

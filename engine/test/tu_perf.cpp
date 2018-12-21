@@ -2,8 +2,6 @@
 // @brief Test file for the block manager
 //
 
-#define LOGGER_TAG "[TU.perf]"
-
 // Project headers
 #include "block/hello.hpp"
 #include "engine/tu.hpp"

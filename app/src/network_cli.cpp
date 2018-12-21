@@ -1,7 +1,5 @@
 
 
-#define LOGGER_TAG "[app.network_cli]"
-
 #include <wordexp.h>
 
 // Project headers

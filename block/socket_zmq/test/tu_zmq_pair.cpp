@@ -2,8 +2,6 @@
 // @brief Test file for a block
 //
 
-#define LOGGER_TAG "[TU.zmq_pair]"
-
 // Project headers
 #include "block/zmq_pair.hpp"
 #include "engine/tu.hpp"
