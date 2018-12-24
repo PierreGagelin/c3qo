@@ -15,7 +15,6 @@ block::block(struct manager *mgr) : id_(0), state_(STATE_STOP), mgr_(mgr) {}
 block::~block() {}
 
 // Block interface default implementation
-void block::conf_(char *) {}
 void block::bind_(int, int) {}
 void block::start_() {}
 void block::stop_() {}

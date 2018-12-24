@@ -21,7 +21,6 @@ struct zmq_pair : block
     explicit zmq_pair(struct manager *mgr);
     virtual ~zmq_pair() override final;
 
-    virtual void conf_(char *conf) override final;
     virtual void start_() override final;
     virtual void stop_() override final;
 

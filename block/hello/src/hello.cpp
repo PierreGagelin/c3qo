@@ -7,22 +7,12 @@
 // Implementation of the block interface
 //
 
-hello::hello(struct manager *mgr) : block(mgr), name_("unknown"), count_(0) {}
-hello::~hello() {}
-
-void hello::conf_(char *conf)
+hello::hello(struct manager *mgr) : block(mgr),
+                                    name_("unknown"),
+                                    count_(0)
 {
-    // Verify input
-    if (conf == nullptr)
-    {
-        LOGGER_ERR("Failed to configure block: nullptr conf");
-        return;
-    }
-
-    name_ = std::string(conf);
-
-    LOGGER_INFO("Configured block name [bk_id=%d ; name=%s]", id_, name_.c_str());
 }
+hello::~hello() {}
 
 void hello::start_()
 {

@@ -23,7 +23,6 @@ static void tu_block_interface()
 {
     struct block_derived bk(&mgr_);
 
-    bk.conf_(nullptr);
     bk.bind_(0, 0);
     bk.start_();
     bk.stop_();

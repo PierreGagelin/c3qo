@@ -157,26 +157,6 @@ bool manager::block_del(int id)
 }
 
 //
-// @brief Configure a block
-//
-bool manager::block_conf(int id, char *conf)
-{
-    struct block *bk;
-
-    bk = block_get(id);
-    if (bk == nullptr)
-    {
-        LOGGER_ERR("Failed to configure block: unknown block [bk_id=%d]", id);
-        return false;
-    }
-    bk->conf_(conf);
-
-    LOGGER_INFO("Configured block [bk_id=%d ; bk_type=%s]", id, bk->type_.c_str());
-
-    return true;
-}
-
-//
 // @brief Bind a block
 //
 bool manager::block_bind(int bk_id_src, int port, int bk_id_dst)

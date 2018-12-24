@@ -8,7 +8,11 @@
 #define NEEDLE_TYPE "type=" // either "server" or "client"
 #define NEEDLE_ADDR "addr=" // fully specified address
 
-zmq_pair::zmq_pair(struct manager *mgr) : block(mgr), client_(false), addr_("tcp://127.0.0.1:6666"), rx_pkt_(0u), tx_pkt_(0u)
+zmq_pair::zmq_pair(struct manager *mgr) : block(mgr),
+                                          client_(false),
+                                          addr_("tcp://127.0.0.1:6666"),
+                                          rx_pkt_(0u),
+                                          tx_pkt_(0u)
 {
     // Create a ZMQ context
     zmq_ctx_ = zmq_ctx_new();
@@ -51,52 +55,6 @@ void zmq_pair::on_fd_(struct file_desc &fd)
     process_data_(1, &msg);
 
     c3qo_zmq_msg_del(msg);
-}
-
-void zmq_pair::conf_(char *conf)
-{
-    char type[32];
-    char addr[32];
-    int ret;
-
-    // Verify input
-    if (conf == nullptr)
-    {
-        LOGGER_ERR("Failed to configure block: nullptr conf");
-        return;
-    }
-
-    LOGGER_INFO("Configure block [bk_id=%d ; conf=%s]", id_, conf);
-
-    // Retrieve type and address
-    ret = sscanf(conf, NEEDLE_TYPE "%31s " NEEDLE_ADDR "%31s", type, addr);
-    if (ret == EOF)
-    {
-        LOGGER_ERR("Failed to call sscanf: %s [errno=%d ; str=%s]", strerror(errno), errno, conf);
-        return;
-    }
-    else if (ret != 2)
-    {
-        LOGGER_ERR("Failed to call sscanf: wrong number of matched element [expected=2 ; actual=%d]", ret);
-        return;
-    }
-
-    if (strcmp(type, "client") == 0)
-    {
-        client_ = true;
-    }
-    else if (strcmp(type, "server") == 0)
-    {
-        client_ = false;
-    }
-    else
-    {
-        LOGGER_ERR("Failed to configure socket type: unknown type [bk_id=%d ; type=%s]", id_, type);
-        return;
-    }
-    addr_ = std::string(addr);
-
-    LOGGER_INFO("Configured ZMQ socket [type=%s ; addr=%s]", type, addr_.c_str());
 }
 
 //

@@ -44,10 +44,6 @@ bool trans_pb::proto_command_parse(const uint8_t *data, size_t size)
         is_ok = mgr_->block_del(cmd->del->id);
         break;
 
-    case COMMAND__TYPE_CONF:
-        is_ok = mgr_->block_conf(cmd->conf->id, cmd->conf->conf);
-        break;
-
     case COMMAND__TYPE_BIND:
         is_ok = mgr_->block_bind(cmd->bind->id, cmd->bind->port, cmd->bind->dest);
         break;

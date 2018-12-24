@@ -35,7 +35,6 @@ struct manager
     bool block_start(int id);
     bool block_stop(int id);
     bool block_del(int id);
-    bool block_conf(int id, char *conf);
     bool block_bind(int id, int port, int bk_id);
 
     struct block *block_get(int id);

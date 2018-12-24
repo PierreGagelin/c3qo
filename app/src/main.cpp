@@ -78,9 +78,11 @@ int main(int argc, char **argv)
     mgr.block_factory_register("zmq_pair", &zmq_pair);
 
     // Add the ZMQ monitoring server
+    struct zmq_pair *block;
     mgr.block_add(-1, "zmq_pair");
-    char conf[] = "type=server addr=tcp://127.0.0.1:1664";
-    mgr.block_conf(-1, conf);
+    block = static_cast<struct zmq_pair *>(mgr.block_get(-1));
+    block->addr_ = "tcp://127.0.0.1:1664";
+    block->client_ = false;
     mgr.block_start(-1);
 
     // Add the protobuf transcoder

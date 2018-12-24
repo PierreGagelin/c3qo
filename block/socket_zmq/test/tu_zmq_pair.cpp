@@ -39,8 +39,7 @@ static void tu_zmq_pair_data()
 {
     struct zmq_pair client(&mgr_);
     struct zmq_pair server(&mgr_);
-    char conf_s[] = "type=server addr=tcp://127.0.0.1:5555";
-    char conf_c[] = "type=client addr=tcp://127.0.0.1:5555";
+    const char *address = "tcp://127.0.0.1:5555";
     std::vector<struct c3qo_zmq_part> msg;
 
     // Initialize two ZMQ pairs
@@ -48,8 +47,10 @@ static void tu_zmq_pair_data()
     client.id_ = 2;
 
     // Configure them
-    server.conf_(conf_s);
-    client.conf_(conf_c);
+    server.addr_ = std::string(address);
+    server.client_ = false;
+    client.addr_ = std::string(address);
+    server.client_ = true;
 
     // Start them
     server.start_();
@@ -66,6 +67,9 @@ static void tu_zmq_pair_data()
 
         client.data_(&msg);
         server.data_(&msg);
+
+        // FIXME: this is ugly
+        usleep(10 * 1000);
 
         mgr_.fd_poll();
 
@@ -89,19 +93,6 @@ static void tu_zmq_pair_error()
     logger_set_level(LOGGER_LEVEL_CRIT);
 
     block.id_ = 1;
-
-    block.conf_(nullptr);
-
-    // Type error
-    block.conf_(const_cast<char *>("hello"));
-    block.conf_(const_cast<char *>("type="));
-    block.conf_(const_cast<char *>("type= "));
-    block.conf_(const_cast<char *>("type=banana "));
-
-    // Address error
-    block.conf_(const_cast<char *>("type=client no address"));
-    block.conf_(const_cast<char *>("type=client addr="));
-    block.conf_(const_cast<char *>("type=client addr= "));
 
     block.data_(nullptr);
 

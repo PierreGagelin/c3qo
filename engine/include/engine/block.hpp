@@ -72,7 +72,6 @@ struct block
     virtual ~block() = 0;
 
     // Management callbacks
-    virtual void conf_(char *conf);
     virtual void bind_(int port, int bk_id);
     virtual void start_();
     virtual void stop_();

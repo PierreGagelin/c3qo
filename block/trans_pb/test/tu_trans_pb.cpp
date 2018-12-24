@@ -31,7 +31,6 @@ struct tu_trans_pb
         BlockStart start;
         BlockStop stop;
         BlockDel del;
-        BlockConf conf;
         BlockBind bind;
 
         command__init(&cmd);
@@ -65,14 +64,6 @@ struct tu_trans_pb
             block_del__init(&del);
             cmd.del = &del;
             cmd.del->id = block_id;
-            break;
-
-        case COMMAND__TYPE_CONF:
-            cmd.type_case = COMMAND__TYPE_CONF;
-            block_conf__init(&conf);
-            cmd.conf = &conf;
-            cmd.conf->id = block_id;
-            cmd.conf->conf = block_arg;
             break;
 
         case COMMAND__TYPE_BIND:
@@ -186,7 +177,6 @@ static void tu_trans_pb_pbc_conf()
     bk = test.mgr_.block_get(bk_id);
     ASSERT(bk != nullptr);
 
-    ASSERT(test.proto_cmd_send(COMMAND__TYPE_CONF, bk_id, "my_name_is"));
     ASSERT(test.proto_cmd_send(COMMAND__TYPE_BIND, bk_id, "", 2, 5));
 
     ASSERT(test.proto_cmd_send(COMMAND__TYPE_START, bk_id, ""));

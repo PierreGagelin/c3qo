@@ -22,7 +22,6 @@ Remote Block Management
     #
     Send Protobuf Command    dummy -i 10 -t add -a hello
     Send Protobuf Command    dummy -i 20 -t add -a hello
-    Send Protobuf Command    dummy -i 20 -t conf -a ZIGOUILLATOR3000
     Send Protobuf Command    dummy -i 20 -t bind -p 2 -d 10
     Send Protobuf Command    dummy -i 20 -t start
     Send Protobuf Command    dummy -i 20 -t stop

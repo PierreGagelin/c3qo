@@ -23,12 +23,6 @@ message BlockDel
     int32 id = 1;
 }
 
-message BlockConf
-{
-    int32 id = 1;
-    string conf = 2;
-}
-
 message BlockBind
 {
     int32 id = 1;
@@ -44,7 +38,6 @@ message Command
         BlockStart start = 2;
         BlockStop stop = 3;
         BlockDel del = 4;
-        BlockConf conf = 5;
         BlockBind bind = 6;
     }
 }

@@ -12,7 +12,6 @@ struct hello : block
     explicit hello(struct manager *mgr);
     virtual ~hello() override final;
 
-    virtual void conf_(char *conf) override final;
     virtual void start_() override final;
     virtual void stop_() override final;
 

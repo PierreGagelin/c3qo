@@ -73,7 +73,6 @@ static bool ncli_conf_proto(int argc, char **argv, std::vector<struct c3qo_zmq_p
     BlockStart start;
     BlockStop stop;
     BlockDel del;
-    BlockConf conf;
     BlockBind bind;
     command__init(&cmd);
 
@@ -105,14 +104,6 @@ static bool ncli_conf_proto(int argc, char **argv, std::vector<struct c3qo_zmq_p
         block_del__init(&del);
         cmd.del = &del;
         cmd.del->id = block_id;
-    }
-    else if (strcmp(type, "conf") == 0)
-    {
-        cmd.type_case = COMMAND__TYPE_CONF;
-        block_conf__init(&conf);
-        cmd.conf = &conf;
-        cmd.conf->id = block_id;
-        cmd.conf->conf = block_arg;
     }
     else if (strcmp(type, "bind") == 0)
     {
