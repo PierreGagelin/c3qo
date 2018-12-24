@@ -1,47 +1,33 @@
 
 
 // Project headers
-#include "block/zmq_pair.hpp"
+#include "block/hook_zmq.hpp"
 #include "engine/manager.hpp"
 
-// Needle to look for in configuration
-#define NEEDLE_TYPE "type=" // either "server" or "client"
-#define NEEDLE_ADDR "addr=" // fully specified address
-
-zmq_pair::zmq_pair(struct manager *mgr) : block(mgr),
+hook_zmq::hook_zmq(struct manager *mgr) : block(mgr),
                                           client_(false),
+                                          type_(ZMQ_PAIR),
+                                          name_(""),
                                           addr_("tcp://127.0.0.1:6666"),
                                           rx_pkt_(0u),
                                           tx_pkt_(0u)
 {
-    // Create a ZMQ context
-    zmq_ctx_ = zmq_ctx_new();
-    ASSERT(zmq_ctx_ != nullptr);
-
-    // Create a ZMQ socket
-    zmq_sock_.socket = zmq_socket(zmq_ctx_, ZMQ_PAIR);
-    ASSERT(zmq_sock_.socket != nullptr);
 }
 
-zmq_pair::~zmq_pair()
-{
-    // Close a ZMQ socket
-    zmq_close(zmq_sock_.socket);
-
-    // Delete a ZMQ context
-    zmq_ctx_term(zmq_ctx_);
-}
+hook_zmq::~hook_zmq() {}
 
 //
 // @brief Callback to handle data available on the socket
 //
-void zmq_pair::on_fd_(struct file_desc &fd)
+void hook_zmq::on_fd_(struct file_desc &fd)
 {
     std::vector<struct c3qo_zmq_part> msg;
 
     if (fd.socket != zmq_sock_.socket)
     {
-        LOGGER_ERR("Failed to receive message: unknown socket [expected=%p ; actual=%p]", zmq_sock_.socket, fd.socket);
+        LOGGER_ERR("Failed to receive message: unknown socket [expected=%p ; actual=%p]",
+                   zmq_sock_.socket,
+                   fd.socket);
         return;
     }
 
@@ -60,11 +46,33 @@ void zmq_pair::on_fd_(struct file_desc &fd)
 //
 // @brief Start the block
 //
-void zmq_pair::start_()
+void hook_zmq::start_()
 {
     int ret;
 
-    LOGGER_INFO("Start block ZMQ Pair [bk_id=%d]", id_);
+    // Create a ZMQ context
+    zmq_ctx_ = zmq_ctx_new();
+    if (zmq_ctx_ == nullptr)
+    {
+        LOGGER_ERR("Failed to create ZMQ context [bk_id=%d]", id_);
+        return;
+    }
+
+    // Create the socket
+    zmq_sock_.socket = zmq_socket(zmq_ctx_, type_);
+    if (zmq_sock_.socket == nullptr)
+    {
+        LOGGER_ERR("Failed to create ZMQ socket [bk_id=%d ; type=%d]", id_, type_);
+        return;
+    }
+
+    // Set identity
+    ret = zmq_setsockopt(zmq_sock_.socket, ZMQ_IDENTITY, name_.c_str(), name_.size() + 1);
+    if (ret != 0)
+    {
+        LOGGER_ERR("Failed to set ZMQ_IDENTITY [bk_id=%d ; identity=%s]", id_, name_.c_str());
+        return;
+    }
 
     // Bind or connect the socket
     if (client_ == true)
@@ -72,7 +80,11 @@ void zmq_pair::start_()
         ret = zmq_connect(zmq_sock_.socket, addr_.c_str());
         if (ret == -1)
         {
-            LOGGER_ERR("Failed to connect ZMQ socket: %s [bk_id=%d ; addr=%s ; errno=%d]", strerror(errno), id_, addr_.c_str(), errno);
+            LOGGER_ERR("Failed to connect ZMQ socket: %s [errno=%d ; bk_id=%d ; addr=%s]",
+                       strerror(errno),
+                       errno,
+                       id_,
+                       addr_.c_str());
             return;
         }
         LOGGER_DEBUG("Connected client socket [bk_id=%d ; addr=%s]", id_, addr_.c_str());
@@ -82,7 +94,11 @@ void zmq_pair::start_()
         ret = zmq_bind(zmq_sock_.socket, addr_.c_str());
         if (ret == -1)
         {
-            LOGGER_ERR("Failed to bind ZMQ socket: %s [bk_id=%d ; addr=%s ; errno=%d]", strerror(errno), id_, addr_.c_str(), errno);
+            LOGGER_ERR("Failed to bind ZMQ socket: %s [errno=%d ; bk_id=%d ; addr=%s]",
+                       strerror(errno),
+                       errno,
+                       id_,
+                       addr_.c_str());
             return;
         }
         LOGGER_DEBUG("Bound server socket [bk_id=%d ; addr=%s]", id_, addr_.c_str());
@@ -94,23 +110,31 @@ void zmq_pair::start_()
     zmq_sock_.read = true;
     zmq_sock_.write = false;
     mgr_->fd_add(zmq_sock_);
+
+    LOGGER_INFO("Started ZMQ hook [bk_id=%d ; type=%d]", id_, type_);
 }
 
 //
 // @brief Stop the block
 //
-void zmq_pair::stop_()
+void hook_zmq::stop_()
 {
     // Remove the socket's callback
     mgr_->fd_remove(zmq_sock_);
 
-    LOGGER_INFO("Stop block ZMQ Pair [bk_id=%d]", id_);
+    // Close the socket
+    zmq_close(zmq_sock_.socket);
+
+    // Delete the context
+    zmq_ctx_term(zmq_ctx_);
+
+    LOGGER_INFO("Stopped ZMQ hook [bk_id=%d]", id_);
 }
 
 //
 // @brief Send data to the exterior
 //
-int zmq_pair::data_(void *vdata)
+int hook_zmq::data_(void *vdata)
 {
     std::vector<struct c3qo_zmq_part> *msg;
     bool ok;
@@ -137,12 +161,12 @@ int zmq_pair::data_(void *vdata)
 // Implementation of the factory interface
 //
 
-struct block *zmq_pair_factory::constructor(struct manager *mgr)
+struct block *hook_zmq_factory::constructor(struct manager *mgr)
 {
-    return new struct zmq_pair(mgr);
+    return new struct hook_zmq(mgr);
 }
 
-void zmq_pair_factory::destructor(struct block *bk)
+void hook_zmq_factory::destructor(struct block *bk)
 {
-    delete static_cast<struct zmq_pair *>(bk);
+    delete static_cast<struct hook_zmq *>(bk);
 }

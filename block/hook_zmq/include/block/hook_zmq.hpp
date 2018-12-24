@@ -1,10 +1,10 @@
-#ifndef ZMQ_PAIR_HPP
-#define ZMQ_PAIR_HPP
+#ifndef HOOK_ZMQ_HPP
+#define HOOK_ZMQ_HPP
 
 // Project headers
 #include "engine/block.hpp"
 
-struct zmq_pair : block
+struct hook_zmq : block
 {
     // Context
     void *zmq_ctx_;
@@ -12,14 +12,16 @@ struct zmq_pair : block
 
     // Configuration
     bool client_;      // either client or server
+    int type_;         // ZMQ socket type
+    std::string name_; // identity of this hook
     std::string addr_; // address to connect or bind
 
     // Statistics
     unsigned long rx_pkt_;
     unsigned long tx_pkt_;
 
-    explicit zmq_pair(struct manager *mgr);
-    virtual ~zmq_pair() override final;
+    explicit hook_zmq(struct manager *mgr);
+    virtual ~hook_zmq() override final;
 
     virtual void start_() override final;
     virtual void stop_() override final;
@@ -29,10 +31,10 @@ struct zmq_pair : block
     virtual void on_fd_(struct file_desc &fd) override final;
 };
 
-struct zmq_pair_factory : block_factory
+struct hook_zmq_factory : block_factory
 {
     virtual struct block *constructor(struct manager *mgr) override final;
     virtual void destructor(struct block *bk) override final;
 };
 
-#endif // ZMQ_PAIR_HPP
+#endif // HOOK_ZMQ_HPP

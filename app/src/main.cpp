@@ -3,7 +3,7 @@
 // Project headers
 #include "block/hello.hpp"
 #include "block/trans_pb.hpp"
-#include "block/zmq_pair.hpp"
+#include "block/hook_zmq.hpp"
 #include "engine/manager.hpp"
 
 // C headers
@@ -72,15 +72,15 @@ int main(int argc, char **argv)
     // Register block factories
     struct hello_factory hello;
     struct trans_pb_factory trans_pb;
-    struct zmq_pair_factory zmq_pair;
+    struct hook_zmq_factory hook_zmq;
     mgr.block_factory_register("hello", &hello);
     mgr.block_factory_register("trans_pb", &trans_pb);
-    mgr.block_factory_register("zmq_pair", &zmq_pair);
+    mgr.block_factory_register("hook_zmq", &hook_zmq);
 
     // Add the ZMQ monitoring server
-    struct zmq_pair *block;
-    mgr.block_add(-1, "zmq_pair");
-    block = static_cast<struct zmq_pair *>(mgr.block_get(-1));
+    struct hook_zmq *block;
+    mgr.block_add(-1, "hook_zmq");
+    block = static_cast<struct hook_zmq *>(mgr.block_get(-1));
     block->addr_ = "tcp://127.0.0.1:1664";
     block->client_ = false;
     mgr.block_start(-1);
