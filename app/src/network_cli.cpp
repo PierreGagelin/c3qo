@@ -1,6 +1,9 @@
 
 
+extern "C"
+{
 #include <wordexp.h>
+}
 
 // Project headers
 #include "utils/logger.hpp"

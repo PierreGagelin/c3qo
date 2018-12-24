@@ -1,7 +1,7 @@
 
 
 # Build c3qo main executable
-c3qo_add_executable(c3qo src/main.cpp)
+c3qo_add_executable(c3qo src/c3qo.cpp)
 target_link_libraries(c3qo manager)
 target_link_libraries(c3qo hello)
 target_link_libraries(c3qo trans_pb)
