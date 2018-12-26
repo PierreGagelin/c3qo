@@ -14,7 +14,7 @@ extern "C"
 #include "conf.pb-c.h"
 
 // Local headers
-#include "network_cli.hpp"
+#include "ncli.hpp"
 
 extern int optind;
 extern char *optarg;

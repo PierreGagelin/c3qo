@@ -1,7 +1,5 @@
-
-
-#ifndef NETWORK_CLI_HPP
-#define NETWORK_CLI_HPP
+#ifndef NCLI_HPP
+#define NCLI_HPP
 
 #include "engine/block.hpp"
 
@@ -29,4 +27,4 @@ struct ncli : public block
     bool timeout_expired_;
 };
 
-#endif
+#endif // NCLI_HPP
