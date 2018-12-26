@@ -7,7 +7,7 @@ c3qo_add_library_protobuf_c(pb_config src conf)
 c3qo_add_block(trans_pb src/trans_pb.cpp)
 target_include_directories(trans_pb PUBLIC include/)
 target_link_libraries(trans_pb pb_config)
-target_link_libraries(trans_pb socket)
+target_link_libraries(trans_pb buffer)
 
 # Build test unit
 if (${C3QO_TEST})

@@ -6,9 +6,10 @@ extern "C"
 }
 
 // Project headers
+#include "block/hook_zmq.hpp"
 #include "engine/manager.hpp"
 #include "utils/logger.hpp"
-#include "utils/socket.hpp"
+#include "utils/buffer.hpp"
 
 // Generated protobuf command
 #include "conf.pb-c.h"
@@ -25,7 +26,7 @@ ncli::~ncli() {}
 //
 // @brief Fills a ZMQ message to send a raw configuration line
 //
-static bool ncli_conf_proto(int argc, char **argv, std::vector<struct c3qo_zmq_part> &msg)
+static bool ncli_conf_proto(int argc, char **argv, struct buffer &buf)
 {
     const char *options;
     char *block_arg;
@@ -135,15 +136,10 @@ static bool ncli_conf_proto(int argc, char **argv, std::vector<struct c3qo_zmq_p
     command__pack(&cmd, buffer);
 
     // Fill ZMQ message
-    struct c3qo_zmq_part part;
-    part.data = strdup("CONF.PROTO.CMD");
-    ASSERT(part.data != nullptr);
-    part.len = strlen(part.data);
-    msg.push_back(part);
+    const char *topic = "CONF.PROTO.CMD";
+    buf.push_back(topic, strlen(topic));
 
-    part.data = reinterpret_cast<char *>(buffer);
-    part.len = size;
-    msg.push_back(part);
+    buf.push_back(buffer, size);
 
     return true;
 }
@@ -151,48 +147,25 @@ static bool ncli_conf_proto(int argc, char **argv, std::vector<struct c3qo_zmq_p
 void ncli::start_()
 {
     bool ok;
-    int rc;
-
-    //
-    // ZeroMQ setup
-    //
-    zmq_ctx_ = zmq_ctx_new();
-    ASSERT(zmq_ctx_ != nullptr);
-
-    zmq_sock_.socket = zmq_socket(zmq_ctx_, ZMQ_PAIR);
-    ASSERT(zmq_sock_.socket != nullptr);
-
-    rc = zmq_connect(zmq_sock_.socket, "tcp://127.0.0.1:1665");
-    ASSERT(rc != -1);
-
-    zmq_sock_.bk = this;
-    zmq_sock_.fd = -1;
-    zmq_sock_.read = true;
-    zmq_sock_.write = false;
-    mgr_->fd_add(zmq_sock_);
 
     //
     // Prepare and send the network command
     //
-    std::vector<struct c3qo_zmq_part> msg;
-    struct c3qo_zmq_part dest;
+    struct buffer buf;
     wordexp_t we;
 
     ASSERT(wordexp(ncli_args_, &we, 0) == 0);
 
-    dest.data = strdup(ncli_peer_);
-    dest.len = strlen(dest.data) + 1;
-    msg.push_back(dest);
+    buf.push_back(ncli_peer_, strlen(ncli_peer_) + 1);
 
-    ok = ncli_conf_proto(we.we_wordc, we.we_wordv, msg);
+    ok = ncli_conf_proto(we.we_wordc, we.we_wordv, buf);
     ASSERT(ok == true);
 
     wordfree(&we);
 
-    ok = socket_zmq_write(zmq_sock_.socket, msg);
-    ASSERT(ok == true);
+    process_data_(1, &buf);
 
-    c3qo_zmq_msg_del(msg);
+    buf.clear();
 
     //
     // Set a timeout upon answer reception
@@ -208,42 +181,37 @@ void ncli::start_()
 
 void ncli::stop_()
 {
-    // Unregister the socket
-    mgr_->fd_remove(zmq_sock_);
-
-    // ZeroMQ teardown
-    zmq_close(zmq_sock_.socket);
-    zmq_ctx_term(zmq_ctx_);
+    // Remove timer
+    struct timer tm;
+    tm.bk = this;
+    tm.tid = 1;
+    mgr_->timer_del(tm);
 }
 
-void ncli::on_fd_(struct file_desc &)
+int ncli::data_(void *vdata)
 {
-    std::vector<struct c3qo_zmq_part> msg;
+    struct buffer &buf = *(static_cast<struct buffer *>(vdata));
 
-    socket_zmq_read(zmq_sock_.socket, msg);
-    if (msg.size() != 3u)
+    if (buf.parts_.size() != 3u)
     {
-        LOGGER_DEBUG("Discard message: unexpected parts count [expected=3 ; actual=%zu]", msg.size());
-        return;
+        LOGGER_DEBUG("Discard message: wrong parts count [expected=3 ; actual=%zu]", buf.parts_.size());
+        return PORT_STOP;
     }
-    if (msg[0].data != std::string(ncli_peer_))
+    if ((memcmp(buf.parts_[0].data, ncli_peer_, buf.parts_[0].len) != 0) ||
+        (memcmp(buf.parts_[1].data, "CONF.PROTO.CMD.REP", buf.parts_[1].len) != 0) ||
+        (memcmp(buf.parts_[2].data, "OK", buf.parts_[2].len) != 0))
     {
-        LOGGER_DEBUG("Discard message: unexpected peer [expected=%s ; actual=%s]", ncli_peer_, msg[0].data);
-        return;
-    }
-    if (msg[1].data != std::string("CONF.PROTO.CMD.REP"))
-    {
-        LOGGER_DEBUG("Discard message: unexpected topic [expected=CONF.PROTO.CMD.REP ; actual=%s]", msg[1].data);
-        return;
-    }
-    if (msg[2].data != std::string("OK"))
-    {
-        LOGGER_DEBUG("Discard message: unexpected status [expected=OK ; actual=%s]", msg[2].data);
-        return;
+        LOGGER_DEBUG("Discard unexpected message [peer=%s ; topic=%s ; status=%s]",
+                     static_cast<char *>(buf.parts_[0].data),
+                     static_cast<char *>(buf.parts_[1].data),
+                     static_cast<char *>(buf.parts_[2].data));
+        return PORT_STOP;
     }
 
     LOGGER_DEBUG("Received expected answer");
     received_answer_ = true;
+
+    return PORT_STOP;
 }
 
 void ncli::on_timer_(struct timer &)
@@ -252,31 +220,63 @@ void ncli::on_timer_(struct timer &)
     timeout_expired_ = true;
 }
 
+struct block *ncli_factory::constructor(struct manager *mgr)
+{
+    return new struct ncli(mgr);
+}
+
+void ncli_factory::destructor(struct block *bk)
+{
+    delete static_cast<struct ncli *>(bk);
+}
+
 int main(int argc, char **argv)
 {
     struct manager mgr;
-    struct ncli network_cli(&mgr);
-    const char *options;
 
     LOGGER_OPEN("ncli");
     logger_set_level(LOGGER_LEVEL_DEBUG);
 
-    // Get CLI options
+    //
+    // Create
+    //
+    struct hook_zmq_factory hook_zmq_f;
+    struct hook_zmq *hook;
+    mgr.block_factory_register("hook_zmq", &hook_zmq_f);
+    mgr.block_add(1, "hook_zmq");
+    hook = static_cast<struct hook_zmq *>(mgr.block_get(1));
+    ASSERT(hook != nullptr);
+
+    struct ncli_factory ncli_f;
+    struct ncli *cli;
+    mgr.block_factory_register("ncli", &ncli_f);
+    mgr.block_add(2, "ncli");
+    cli = static_cast<struct ncli *>(mgr.block_get(2));
+    ASSERT(cli != nullptr);
+
+    //
+    // Configure
+    //
+    hook->client_ = true;
+    hook->type_ = ZMQ_PAIR;
+    hook->addr_ = std::string("tcp://127.0.0.1:1665");
+
+    const char *options;
     options = "A:i:";
-    network_cli.ncli_args_ = nullptr;
-    network_cli.ncli_peer_ = nullptr;
+    cli->ncli_args_ = nullptr;
+    cli->ncli_peer_ = nullptr;
     for (int opt = getopt(argc, argv, options); opt != -1; opt = getopt(argc, argv, options))
     {
         switch (opt)
         {
         case 'A':
             LOGGER_DEBUG("Set network option request [value=%s]", optarg);
-            network_cli.ncli_args_ = optarg;
+            cli->ncli_args_ = optarg;
             break;
 
         case 'i':
             LOGGER_DEBUG("Set identity of the peer [value=%s]", optarg);
-            network_cli.ncli_peer_ = optarg;
+            cli->ncli_peer_ = optarg;
             break;
 
         default:
@@ -284,24 +284,44 @@ int main(int argc, char **argv)
             return 1;
         }
     }
+    ASSERT(cli->ncli_args_ != nullptr);
+    ASSERT(cli->ncli_peer_ != nullptr);
 
-    // Verify input
-    ASSERT(network_cli.ncli_args_ != nullptr);
-    ASSERT(network_cli.ncli_peer_ != nullptr);
+    //
+    // Bind and start
+    //
+    mgr.block_bind(1, 1, 2);
+    mgr.block_bind(2, 1, 1);
 
-    network_cli.start_();
+    mgr.block_start(1);
+    mgr.block_start(2);
 
-    network_cli.received_answer_ = false;
-    network_cli.timeout_expired_ = false;
-    while ((network_cli.received_answer_ == false) && (network_cli.timeout_expired_ == false))
+    //
+    // Wait for answer or timeout
+    //
+    cli->received_answer_ = false;
+    cli->timeout_expired_ = false;
+    while ((cli->received_answer_ == false) && (cli->timeout_expired_ == false))
     {
         mgr.fd_poll();
         mgr.timer_check_exp();
     }
 
-    network_cli.stop_();
+    int return_status = (cli->received_answer_ == true) ? 0 : 1;
+
+    //
+    // Destroy
+    //
+    mgr.block_stop(1);
+    mgr.block_stop(2);
+
+    mgr.block_del(1);
+    mgr.block_del(2);
+
+    mgr.block_factory_unregister("ncli");
+    mgr.block_factory_unregister("hook_zmq");
 
     LOGGER_CLOSE();
 
-    return network_cli.received_answer_ ? 0 : 1;
+    return return_status;
 }

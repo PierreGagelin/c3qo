@@ -87,19 +87,16 @@ struct tu_trans_pb
         command__pack(&cmd, buffer);
         buffer[size] = '\0';
 
-        std::vector<struct c3qo_zmq_part> msg;
-        struct c3qo_zmq_part tmp;
+        struct buffer buf;
 
-        char *topic = strdup("CONF.PROTO.CMD");
-        tmp.data = topic;
-        tmp.len = sizeof("CONF.PROTO.CMD");
-        msg.push_back(tmp);
-        tmp.data = reinterpret_cast<char *>(buffer);
-        tmp.len = size;
-        msg.push_back(tmp);
-        block_.data_(&msg);
+        const char *topic = "CONF.PROTO.CMD";
+        buf.push_back(topic, strlen(topic));
+        buf.push_back(buffer, size);
 
-        free(topic);
+        block_.data_(&buf);
+
+        buf.clear();
+
         free(block_arg);
         delete[] buffer;
 
@@ -124,38 +121,34 @@ static void tu_trans_pb_errors()
 
     // Message with wrong size
     {
-        std::vector<struct c3qo_zmq_part> msg;
-        test.block_.data_(&msg);
+        struct buffer buf;
+        test.block_.data_(&buf);
     }
 
     // Message with unknown topic
     {
-        std::vector<struct c3qo_zmq_part> msg;
-        struct c3qo_zmq_part tmp;
+        struct buffer buf;
 
-        tmp.data = strdup("what a nice topic you've got there");
-        tmp.len = strlen(tmp.data);
-        msg.push_back(tmp);
-        msg.push_back(tmp);
+        const char *tmp = "what a nice topic you've got there";
+        buf.push_back(tmp, strlen(tmp));
+        buf.push_back(tmp, strlen(tmp));
 
-        test.block_.data_(&msg);
+        test.block_.data_(&buf);
 
-        free(tmp.data);
+        buf.clear();
     }
 
     // Message with bad protobuf data
     {
-        std::vector<struct c3qo_zmq_part> msg;
-        struct c3qo_zmq_part tmp;
+        struct buffer buf;
 
-        tmp.data = strdup("CONF.PROTO.CMD");
-        tmp.len = strlen(tmp.data);
-        msg.push_back(tmp); // topic: OK
-        msg.push_back(tmp); // protobuf data: not OK
+        const char *tmp = "CONF.PROTO.CMD";
+        buf.push_back(tmp, strlen(tmp)); // topic: OK
+        buf.push_back(tmp, strlen(tmp)); // protobuf data: not OK
 
-        test.block_.data_(&msg);
+        test.block_.data_(&buf);
 
-        free(tmp.data);
+        buf.clear();
     }
 
     // Unknown command type

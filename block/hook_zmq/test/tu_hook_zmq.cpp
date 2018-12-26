@@ -8,28 +8,15 @@
 
 struct manager mgr_;
 
-void message_create(std::vector<struct c3qo_zmq_part> &msg, const char *topic, const char *payload)
+void message_create(struct buffer &buf, const char *topic, const char *payload)
 {
-    struct c3qo_zmq_part part;
-
-    part.data = strdup(topic);
-    ASSERT(part.data != nullptr);
-    part.len = strlen(part.data) + 1;
-    msg.push_back(part);
-
-    part.data = strdup(payload);
-    ASSERT(part.data != nullptr);
-    part.len = strlen(part.data) + 1;
-    msg.push_back(part);
+    buf.push_back(topic, strlen(topic) + 1);
+    buf.push_back(payload, strlen(payload) + 1);
 }
 
-void message_destroy(std::vector<struct c3qo_zmq_part> &msg)
+void message_destroy(struct buffer &buf)
 {
-    for (const auto &it : msg)
-    {
-        free(it.data);
-    }
-    msg.clear();
+    buf.clear();
 }
 
 //
@@ -40,7 +27,7 @@ static void tu_hook_pair_pair()
     struct hook_zmq client(&mgr_);
     struct hook_zmq server(&mgr_);
     const char *address = "tcp://127.0.0.1:5555";
-    std::vector<struct c3qo_zmq_part> msg;
+    struct buffer buf;
 
     // Initialize two ZMQ pairs
     server.id_ = 1;
@@ -66,17 +53,17 @@ static void tu_hook_pair_pair()
     // Some messages are lost because subscription can take some time
     for (int i = 0; i < 10; i++)
     {
-        message_create(msg, "hello", "world");
+        message_create(buf, "hello", "world");
 
-        client.data_(&msg);
-        server.data_(&msg);
+        client.data_(&buf);
+        server.data_(&buf);
 
         // FIXME: this is ugly
         usleep(10 * 1000);
 
         mgr_.fd_poll();
 
-        message_destroy(msg);
+        message_destroy(buf);
     }
 
     // At least one message should be received
@@ -122,15 +109,15 @@ static void tu_hook_dealer_router()
     // Some messages are lost because subscription can take some time
     for (int i = 0; i < 10; i++)
     {
-        std::vector<struct c3qo_zmq_part> msg;
+        struct buffer buf;
 
-        message_create(msg, "question", "?");
-        client.data_(&msg);
-        message_destroy(msg);
+        message_create(buf, "question", "?");
+        client.data_(&buf);
+        message_destroy(buf);
 
-        message_create(msg, dealer_name, "answer");
-        server.data_(&msg);
-        message_destroy(msg);
+        message_create(buf, dealer_name, "answer");
+        server.data_(&buf);
+        message_destroy(buf);
 
         // FIXME: this is ugly
         usleep(10 * 1000);

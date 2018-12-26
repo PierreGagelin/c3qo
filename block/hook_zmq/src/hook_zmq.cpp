@@ -17,11 +17,73 @@ hook_zmq::hook_zmq(struct manager *mgr) : block(mgr),
 hook_zmq::~hook_zmq() {}
 
 //
+// @brief Receive a ZMQ multi-parts message
+//
+void hook_zmq::recv_(struct buffer &buf)
+{
+    int ret;
+
+    ret = 1;
+    while (ret == 1)
+    {
+        zmq_msg_t part;
+
+        // Receive a message
+        zmq_msg_init(&part);
+
+        ret = zmq_msg_recv(&part, zmq_sock_.socket, ZMQ_DONTWAIT);
+        if (ret <= 0)
+        {
+            LOGGER_ERR("Failed to receive data from ZMQ socket: %s [errno=%d]", strerror(errno), errno);
+            break;
+        }
+
+        buf.push_back(zmq_msg_data(&part), zmq_msg_size(&part));
+
+        // Look if there is another part to come
+        ret = zmq_msg_more(&part);
+
+        zmq_msg_close(&part);
+    }
+}
+
+//
+// @brief Send a ZMQ multi-part message
+//
+bool hook_zmq::send_(struct buffer &buf, int flags = ZMQ_DONTWAIT)
+{
+    flags |= ZMQ_SNDMORE;
+
+    for (size_t idx = 0u; idx < buf.parts_.size(); ++idx)
+    {
+        zmq_msg_t message;
+        int rc;
+
+        zmq_msg_init_size(&message, buf.parts_[idx].len);
+        memcpy(zmq_msg_data(&message), buf.parts_[idx].data, buf.parts_[idx].len);
+
+        if (idx == buf.parts_.size() - 1)
+        {
+            flags &= ~ZMQ_SNDMORE;
+        }
+
+        rc = zmq_msg_send(&message, zmq_sock_.socket, flags);
+        if (rc == -1)
+        {
+            LOGGER_ERR("Failed to send ZMQ message: %s [errno=%d]", strerror(errno), errno);
+            zmq_msg_close(&message);
+            return false;
+        }
+    }
+    return true;
+}
+
+//
 // @brief Callback to handle data available on the socket
 //
 void hook_zmq::on_fd_(struct file_desc &fd)
 {
-    std::vector<struct c3qo_zmq_part> msg;
+    struct buffer buf;
 
     if (fd.socket != zmq_sock_.socket)
     {
@@ -32,15 +94,15 @@ void hook_zmq::on_fd_(struct file_desc &fd)
     }
 
     // Read a possibly multi-part message
-    socket_zmq_read(zmq_sock_.socket, msg);
+    recv_(buf);
     ++rx_pkt_;
 
-    LOGGER_DEBUG("Received message [bk_id=%d ; parts_count=%zu]", id_, msg.size());
+    LOGGER_DEBUG("Received message [bk_id=%d ; parts_count=%zu]", id_, buf.parts_.size());
 
     // Send it to the next block
-    process_data_(1, &msg);
+    process_data_(1, &buf);
 
-    c3qo_zmq_msg_del(msg);
+    buf.clear();
 }
 
 //
@@ -114,20 +176,19 @@ void hook_zmq::start_()
     // Send a first message to register identity
     if (type_ == ZMQ_DEALER)
     {
-        std::vector<struct c3qo_zmq_part> msg;
-        struct c3qo_zmq_part part;
-        char dummy[] = "dummy";
+        struct buffer buf;
+        const char *dummy = "dummy";
 
-        part.data = dummy;
-        part.len = strlen(dummy);
-        msg.push_back(part);
+        buf.push_back(dummy, strlen(dummy));
 
-        bool is_ok = socket_zmq_write(zmq_sock_.socket, msg, 0);
+        bool is_ok = send_(buf, 0);
         if (is_ok == false)
         {
             LOGGER_ERR("Failed to register identity");
             return;
         }
+
+        buf.clear();
     }
 
     LOGGER_INFO("Started ZMQ hook [bk_id=%d ; type=%d]", id_, type_);
@@ -155,7 +216,6 @@ void hook_zmq::stop_()
 //
 int hook_zmq::data_(void *vdata)
 {
-    std::vector<struct c3qo_zmq_part> *msg;
     bool ok;
 
     if (vdata == nullptr)
@@ -163,13 +223,13 @@ int hook_zmq::data_(void *vdata)
         LOGGER_ERR("Failed to process buffer: nullptr data");
         return PORT_STOP;
     }
-    msg = static_cast<std::vector<struct c3qo_zmq_part> *>(vdata);
+    struct buffer &buf = *(static_cast<struct buffer *>(vdata));
 
     // Send topic and data
-    ok = socket_zmq_write(zmq_sock_.socket, *msg);
+    ok = send_(buf);
     if (ok == true)
     {
-        LOGGER_DEBUG("Message sent on ZMQ socket [bk_id=%d ; parts=%zu]", id_, msg->size());
+        LOGGER_DEBUG("Message sent on ZMQ socket [bk_id=%d ; parts=%zu]", id_, buf.parts_.size());
         tx_pkt_++;
     }
 

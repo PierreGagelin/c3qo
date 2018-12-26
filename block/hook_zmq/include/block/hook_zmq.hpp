@@ -1,5 +1,3 @@
-
-
 #ifndef HOOK_ZMQ_HPP
 #define HOOK_ZMQ_HPP
 
@@ -21,6 +19,9 @@ struct hook_zmq : block
     // Statistics
     unsigned long rx_pkt_;
     unsigned long tx_pkt_;
+
+    bool send_(struct buffer &buf, int flags);
+    void recv_(struct buffer &buf);
 
     explicit hook_zmq(struct manager *mgr);
     virtual ~hook_zmq() override final;

@@ -3,7 +3,7 @@
 // Project headers
 #include "block/trans_pb.hpp"
 #include "engine/manager.hpp"
-#include "utils/socket.hpp"
+#include "utils/buffer.hpp"
 
 // Generated protobuf command
 #include "conf.pb-c.h"
@@ -65,26 +65,19 @@ bool trans_pb::proto_command_parse(const uint8_t *data, size_t size)
 //
 void trans_pb::proto_command_reply(bool is_ok)
 {
-    std::vector<struct c3qo_zmq_part> msg;
-    struct c3qo_zmq_part part;
+    struct buffer buf;
     const char *topic;
     const char *status;
 
     topic = "CONF.PROTO.CMD.REP";
-    part.len = strlen(topic);
-    part.data = new char[part.len];
-    memcpy(part.data, topic, part.len);
-    msg.push_back(part);
+    buf.push_back(topic, strlen(topic));
 
     status = is_ok ? "OK" : "KO";
-    part.len = strlen(status);
-    part.data = new char[part.len];
-    memcpy(part.data, status, part.len);
-    msg.push_back(part);
+    buf.push_back(status, strlen(status));
 
-    process_data_(1, &msg);
+    process_data_(1, &buf);
 
-    c3qo_zmq_msg_del(msg);
+    buf.clear();
 }
 
 int trans_pb::data_(void *vdata)
@@ -95,23 +88,24 @@ int trans_pb::data_(void *vdata)
         return PORT_STOP;
     }
 
-    std::vector<struct c3qo_zmq_part> &msg = *(static_cast<std::vector<struct c3qo_zmq_part> *>(vdata));
-    if (msg.size() != 2u)
+    struct buffer &buf = *(static_cast<struct buffer *>(vdata));
+    if (buf.parts_.size() != 2u)
     {
-        LOGGER_ERR("Failed to decode message: unexpected parts count [expected=%u ; actual=%zu]", 2u, msg.size());
+        LOGGER_ERR("Failed to decode message: unexpected parts count [expected=%u ; actual=%zu]", 2u, buf.parts_.size());
         return PORT_STOP;
     }
 
     // Action to take upon topic value
-    if (strcmp("CONF.PROTO.CMD", msg[0].data) == 0)
+    if (memcmp("CONF.PROTO.CMD", buf.parts_[0].data, buf.parts_[0].len) == 0)
     {
         bool is_ok;
-        is_ok = proto_command_parse(reinterpret_cast<uint8_t *>(msg[1].data), msg[1].len);
+        is_ok = proto_command_parse(static_cast<uint8_t *>(buf.parts_[1].data), buf.parts_[1].len);
         proto_command_reply(is_ok);
     }
     else
     {
-        LOGGER_ERR("Failed to decode message: unknown topic [topic=%s]", msg[0].data);
+        LOGGER_ERR("Failed to decode message: unknown topic [topic=%s]",
+                   static_cast<char *>(buf.parts_[0].data));
         return PORT_STOP;
     }
 

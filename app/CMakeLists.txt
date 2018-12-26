@@ -15,4 +15,5 @@ target_link_libraries(proxy hook_zmq)
 # Build network CLI executable
 c3qo_add_executable(ncli src/ncli.cpp)
 target_link_libraries(ncli manager)
+target_link_libraries(ncli hook_zmq)
 target_link_libraries(ncli pb_config)

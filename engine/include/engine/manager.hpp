@@ -4,10 +4,16 @@
 // Project headers
 #include "engine/block.hpp"
 #include "utils/logger.hpp"
-#include "utils/socket.hpp"
+#include "utils/buffer.hpp"
 
 // C++ headers
 #include <forward_list>
+
+// C headers
+extern "C"
+{
+#include <zmq.h>
+}
 
 bool operator<(const struct timespec &a, const struct timespec &b);
 

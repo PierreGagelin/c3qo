@@ -11,7 +11,8 @@ struct ncli : public block
     virtual void start_() override final;
     virtual void stop_() override final;
 
-    virtual void on_fd_(struct file_desc &fd) override final;
+    virtual int data_(void *vdata) override final;
+
     virtual void on_timer_(struct timer &tm) override final;
 
     // ZeroMQ contexts
@@ -25,6 +26,12 @@ struct ncli : public block
     // Status of the command
     bool received_answer_;
     bool timeout_expired_;
+};
+
+struct ncli_factory : block_factory
+{
+    virtual struct block *constructor(struct manager *mgr) override final;
+    virtual void destructor(struct block *bk) override final;
 };
 
 #endif // NCLI_HPP

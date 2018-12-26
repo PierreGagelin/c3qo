@@ -10,7 +10,7 @@ set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_tm.cpp)
 c3qo_add_library(manager "${SOURCES_MANAGER}")
 target_include_directories(manager PUBLIC include/)
 target_link_libraries(manager logger)
-target_link_libraries(manager socket)
+target_link_libraries(manager buffer)
 
 if (${C3QO_TEST})
     # Build TU for block
