@@ -23,58 +23,58 @@ static void signal_handler(int, siginfo_t *, void *)
 
 int main(int argc, char **argv)
 {
-    struct manager mgr;
-    int opt;
+    enum logger_level level;
+    const char *options;
+    const char *identity;
 
-    LOGGER_OPEN("c3qo");
-    logger_set_level(LOGGER_LEVEL_DEBUG);
-
-    while ((opt = getopt(argc, argv, "hl:")) != -1)
+    options = "hi:l:";
+    identity = "default_identity";
+    level = LOGGER_LEVEL_DEBUG;
+    for (int opt = getopt(argc, argv, options); opt != -1; opt = getopt(argc, argv, options))
     {
         switch (opt)
         {
         case 'h':
-            LOGGER_DEBUG("CLI help: lol, help is for the weaks");
+            printf("lol, help is for the weaks");
             return 0;
 
+        case 'i':
+            identity = optarg;
+            break;
+
         case 'l':
-        {
-            enum logger_level level;
-
-            errno = 0;
-            level = (enum logger_level)strtol(optarg, nullptr, 10);
-            if (errno != 0)
-            {
-                LOGGER_ERR("Failed to call strtol for log level: %s [errno=%d ; level=%s]", strerror(errno), errno, optarg);
-                break;
-            }
-
-            LOGGER_DEBUG("CLI setting log level [level=%s]", get_logger_level(level));
-
-            logger_set_level(level);
-        }
-        break;
+            level = static_cast<enum logger_level>(strtol(optarg, nullptr, 10));
+            break;
 
         default:
-            LOGGER_ERR("CLI argument error");
             return 1;
         }
     }
 
+    LOGGER_OPEN(identity);
+    logger_set_level(level);
+
     // Register block factories
+    struct manager mgr;
     struct hello_factory hello;
     struct trans_pb_factory trans_pb;
     struct hook_zmq_factory hook_zmq;
+
     mgr.block_factory_register("hello", &hello);
     mgr.block_factory_register("trans_pb", &trans_pb);
     mgr.block_factory_register("hook_zmq", &hook_zmq);
 
-    // Add the ZMQ monitoring server
+    // Add the ZMQ monitoring client
     struct hook_zmq *block;
+
     mgr.block_add(-1, "hook_zmq");
+
     block = static_cast<struct hook_zmq *>(mgr.block_get(-1));
-    block->addr_ = "tcp://127.0.0.1:1664";
-    block->client_ = false;
+    block->type_ = ZMQ_DEALER;
+    block->name_ = std::string(identity);
+    block->addr_ = std::string("tcp://127.0.0.1:1664");
+    block->client_ = true;
+
     mgr.block_start(-1);
 
     // Add the protobuf transcoder
@@ -90,22 +90,14 @@ int main(int argc, char **argv)
     sa.sa_flags = SA_SIGINFO;
     sigemptyset(&sa.sa_mask);
     sa.sa_sigaction = signal_handler;
-    if (sigaction(SIGINT, &sa, NULL) == -1)
-    {
-        LOGGER_ERR("Failed to register signal handler: %s [signal=SIGINT ; errno=%d]",
-                    strerror(errno),
-                    errno);
-        return 1;
-    }
-    LOGGER_NOTICE("Registered signal handler for SIGINT");
-    if (sigaction(SIGTERM, &sa, NULL) == -1)
-    {
-        LOGGER_ERR("Failed to register signal handler: %s [signal=SIGTERM ; errno=%d]",
-                    strerror(errno),
-                    errno);
-        return 1;
-    }
-    LOGGER_NOTICE("Registered signal handler for SIGTERM");
+
+    int rc;
+    rc = sigaction(SIGINT, &sa, NULL);
+    ASSERT(rc != -1);
+    rc = sigaction(SIGTERM, &sa, NULL);
+    ASSERT(rc != -1);
+
+    LOGGER_INFO("Registered signal handler for SIGINT and SIGTERM");
 
     // Main loop
     while (end_signal_received == false)

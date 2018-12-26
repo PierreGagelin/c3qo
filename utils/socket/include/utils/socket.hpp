@@ -21,6 +21,5 @@ struct c3qo_zmq_part
 void c3qo_zmq_msg_del(std::vector<struct c3qo_zmq_part> &msg);
 void socket_zmq_read(void *socket, std::vector<struct c3qo_zmq_part> &msg, int flags = ZMQ_DONTWAIT);
 bool socket_zmq_write(void *socket, std::vector<struct c3qo_zmq_part> &msg, int flags = ZMQ_DONTWAIT);
-int socket_zmq_get_event(void *monitor);
 
 #endif // SOCKET_HPP

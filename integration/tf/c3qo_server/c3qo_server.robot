@@ -1,12 +1,10 @@
 *** Settings ***
 Library    Process
 
-*** Variables ***
-${VERSION}    0.0.7    # Just here to keep "Variables"
-
 *** Test Cases ***
 Check Server Startup
     [Documentation]    Various ways to start c3qo server
+    [Setup]    Process.Start Process    /tmp/c3qo-0.0.7-local/bin/proxy
     Run Server
     Run Server With Help
     Run Server With Log Level

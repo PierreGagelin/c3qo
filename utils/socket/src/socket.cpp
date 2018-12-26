@@ -89,29 +89,3 @@ bool socket_zmq_write(void *socket, std::vector<struct c3qo_zmq_part> &msg, int 
     }
     return true;
 }
-
-//
-// @brief Return an event sniffed on monitored ZMQ socket
-//
-// Beware that read operation is intentionally blocking
-//
-int socket_zmq_get_event(void *monitor)
-{
-    std::vector<struct c3qo_zmq_part> msg;
-    uint16_t event;
-
-    // Retrieve event in the first message part
-    socket_zmq_read(monitor, msg, 0);
-    if (msg.size() != 2u)
-    {
-        event = 0xffff;
-    }
-    else
-    {
-        event = *(uint16_t *)(msg[0].data);
-    }
-
-    c3qo_zmq_msg_del(msg);
-
-    return event;
-}

@@ -104,12 +104,31 @@ void hook_zmq::start_()
         LOGGER_DEBUG("Bound server socket [bk_id=%d ; addr=%s]", id_, addr_.c_str());
     }
 
-    // Register the subscriber's callback
+    // Register a callback for reception
     zmq_sock_.bk = this;
     zmq_sock_.fd = -1;
     zmq_sock_.read = true;
     zmq_sock_.write = false;
     mgr_->fd_add(zmq_sock_);
+
+    // Send a first message to register identity
+    if (type_ == ZMQ_DEALER)
+    {
+        std::vector<struct c3qo_zmq_part> msg;
+        struct c3qo_zmq_part part;
+        char dummy[] = "dummy";
+
+        part.data = dummy;
+        part.len = strlen(dummy);
+        msg.push_back(part);
+
+        bool is_ok = socket_zmq_write(zmq_sock_.socket, msg, 0);
+        if (is_ok == false)
+        {
+            LOGGER_ERR("Failed to register identity");
+            return;
+        }
+    }
 
     LOGGER_INFO("Started ZMQ hook [bk_id=%d ; type=%d]", id_, type_);
 }

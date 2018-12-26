@@ -1,6 +1,9 @@
 *** Settings ***
 Library    Process
 
+*** Variables ***
+${c3qo_identity}    toto
+
 *** Test Cases ***
 Network CLI Errors
     [Documentation]    Check failure cases
@@ -39,13 +42,15 @@ Remote Block Management
 *** Keywords ***
 Setup Server
     [Documentation]    Start c3qo server
-    Process.Start Process    /tmp/c3qo-0.0.7-local/bin/c3qo    alias=c3qo
+    Process.Start Process    /tmp/c3qo-0.0.7-local/bin/proxy    -i    ${c3qo_identity}    alias=proxy
+    Process.Start Process    /tmp/c3qo-0.0.7-local/bin/c3qo    -i    ${c3qo_identity}    alias=c3qo
 
 Teardown Server
     [Documentation]    Stop c3qo server
     Process.Terminate Process    c3qo
+    Process.Terminate Process    proxy    kill=${True}
 
 Send Protobuf Command
     [Arguments]    ${command}    ${expected_rc}=${0}
-    ${result}    Process.Run Process    /tmp/c3qo-0.0.7-local/bin/ncli    -A    ${command}
+    ${result}    Process.Run Process    /tmp/c3qo-0.0.7-local/bin/ncli    -i    ${c3qo_identity}    -A    ${command}
     Builtin.Should Be True    ${result.rc} == ${expected_rc}
