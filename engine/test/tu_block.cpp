@@ -6,35 +6,32 @@
 #include "block/hello.hpp"
 #include "engine/tu.hpp"
 
-// Generic purpose block structure
-struct block_derived : block
-{
-    explicit block_derived(struct manager *mgr) : block(mgr) {}
-    virtual ~block_derived() override final {}
-};
-
 struct hello_factory factory;
 struct manager mgr_;
 
 //
 // @brief Test creation and use of default block
 //
+// Dynamic allocation is required to hit every destructors
+//
 static void tu_block_interface()
 {
-    struct block_derived bk(&mgr_);
+    struct block *bk = new struct block(&mgr_);
 
-    bk.bind_(0, 0);
-    bk.start_();
-    bk.stop_();
+    bk->bind_(0, 0);
+    bk->start_();
+    bk->stop_();
 
-    ASSERT(bk.data_(nullptr) == 0);
-    bk.ctrl_(nullptr);
+    ASSERT(bk->data_(nullptr) == 0);
+    bk->ctrl_(nullptr);
 
     struct timer t;
-    bk.on_timer_(t);
+    bk->on_timer_(t);
 
     struct file_desc f;
-    bk.on_fd_(f);
+    bk->on_fd_(f);
+
+    delete bk;
 }
 
 //

@@ -45,8 +45,6 @@ struct timer
 //
 struct file_desc
 {
-    file_desc();
-
     struct block *bk; // Block to be notified on event
     int fd;           // File descriptor to monitor
     void *socket;     // ZMQ socket to monitor
@@ -69,7 +67,7 @@ struct block
     struct manager *mgr_; // Manager of this block
 
     explicit block(struct manager *mgr);
-    virtual ~block() = 0;
+    virtual ~block();
 
     // Management callbacks
     virtual void bind_(int port, int bk_id);

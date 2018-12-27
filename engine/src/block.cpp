@@ -4,11 +4,6 @@
 #include "engine/manager.hpp"
 
 //
-// @brief Block file descriptor constructor
-//
-file_desc::file_desc() : bk(nullptr), fd(-1), socket(nullptr), read(false), write(false) {}
-
-//
 // @brief Block constructor and destructor
 //
 block::block(struct manager *mgr) : id_(0), state_(STATE_STOP), mgr_(mgr) {}
