@@ -5,7 +5,6 @@ This file contains some ideas of things to do
 
 ## Environment
 
-- build external projects (protobuf, zmq) with CMake and offline
 - use doxygen
 
 ## Dev

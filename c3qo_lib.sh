@@ -19,11 +19,9 @@ COLOR_NO="\033[0m"
 #
 function c3qo_generate_path()
 {
-    C3QO_DIR_SOURCE=$(readlink -f $1)
-    C3QO_DIR_INT=$(readlink -f $C3QO_DIR_SOURCE/integration)
-    C3QO_DIR_BUILD=$(readlink -f $C3QO_DIR_SOURCE/../build/c3qo)
-    C3QO_DIR_LCOV=$(readlink -f $C3QO_DIR_BUILD/lcov)
+    C3QO_DIR_SOURCE=$(readlink -m $1)
+    C3QO_DIR_INT=$(readlink -m $C3QO_DIR_SOURCE/integration)
+    C3QO_DIR_BUILD=$(readlink -m $C3QO_DIR_SOURCE/../build/c3qo)
+    C3QO_DIR_TOOLS=$(readlink -m $C3QO_DIR_SOURCE/../build/tools)
+    C3QO_DIR_LCOV=$(readlink -m $C3QO_DIR_BUILD/lcov)
 }
-
-# Name of the build command
-C3QO_CMD_BUILD=build.sh

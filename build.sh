@@ -93,24 +93,46 @@ function action_build
 #
 function action_install
 {
-    wget --directory-prefix=/tmp/ https://github.com/protocolbuffers/protobuf/releases/download/v3.6.1/protobuf-cpp-3.6.1.tar.gz
-    wget --directory-prefix=/tmp/ https://github.com/protobuf-c/protobuf-c/releases/download/v1.3.1/protobuf-c-1.3.1.tar.gz
+    local url_protobuf="https://github.com/protobuf-c/protobuf-c/releases/download/v1.3.1/protobuf-c-1.3.1.tar.gz"
+    local url_zeromq="https://github.com/zeromq/libzmq/releases/download/v4.3.0/zeromq-4.3.0.tar.gz"
 
-    tar -C /tmp/ -xzf /tmp/protobuf-cpp-3.6.1.tar.gz
-    tar -C /tmp/ -xzf /tmp/protobuf-c-1.3.1.tar.gz
+    mkdir -p $C3QO_DIR_TOOLS
 
-    cd /tmp/protobuf-3.6.1
-    CFLAGS=-O2 CXXFLAGS="-std=c++11 -O2" ./configure
-    make -j 4
-    sudo make install
-    sudo ldconfig
-    cd -
+    #
+    # Protobuf-c installation
+    #
+    if [ ! -d $C3QO_DIR_TOOLS/protobuf-c-1.3.1 ]
+    then
+        wget --directory-prefix=$C3QO_DIR_TOOLS $url_protobuf
 
-    cd /tmp/protobuf-c-1.3.1
-    CFLAGS=-O2 CXXFLAGS="-O2" ./configure
-    make -j 4
-    sudo make install
-    cd -
+        tar -C $C3QO_DIR_TOOLS -xzf $C3QO_DIR_TOOLS/protobuf-c-1.3.1.tar.gz
+
+        cd $C3QO_DIR_TOOLS/protobuf-c-1.3.1
+        CFLAGS=-O2 CXXFLAGS="-O2" ./configure
+        make -j 4
+        cd -
+
+        # Don't know why it needs a symlink?
+        cd $C3QO_DIR_TOOLS/protobuf-c-1.3.1/protoc-c
+        ln -s protoc-gen-c protoc-c
+        cd -
+    fi
+
+    #
+    # ZeroMQ installation
+    #
+    if [ ! -d $C3QO_DIR_TOOLS/zeromq-4.3.0-build ]
+    then
+        wget --directory-prefix=$C3QO_DIR_TOOLS $url_zeromq
+
+        tar -C $C3QO_DIR_TOOLS -xzf $C3QO_DIR_TOOLS/zeromq-4.3.0.tar.gz
+
+        mkdir -p $C3QO_DIR_TOOLS/zeromq-4.3.0-build
+        cd $C3QO_DIR_TOOLS/zeromq-4.3.0-build
+        cmake ../zeromq-4.3.0
+        make -j 4
+        cd -
+    fi
 }
 
 #
@@ -259,6 +281,8 @@ CMAKE_OPTIONS="$CMAKE_OPTIONS -DCMAKE_BUILD_TYPE:STRING=$CMAKE_BUILD_TYPE"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DCMAKE_TOOLCHAIN_FILE:STRING=$CMAKE_TOOLCHAIN_FILE"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_COVERAGE:BOOL=$C3QO_COVERAGE"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_LOG:BOOL=$C3QO_LOG"
+CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_PROTOBUF:STRING=$C3QO_DIR_TOOLS/protobuf-c-1.3.1"
+CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_ZEROMQ:STRING=$C3QO_DIR_TOOLS/zeromq-4.3.0-build"
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_TEST:BOOL=$C3QO_TEST"
 
 #

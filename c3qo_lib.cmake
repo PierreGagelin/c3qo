@@ -44,7 +44,7 @@ endfunction()
 #
 function (c3qo_target_link_flags t_name)
     # Required for ZeroMQ runtime
-    target_link_libraries(${t_name} zmq)
+    target_link_libraries(${t_name} ${C3QO_ZEROMQ}/lib/libzmq.so)
 
     # XXX: apparently causes .gcno to be corrupted under ubuntu 14.04.5 toolchain
     #set_property(TARGET ${t_name} APPEND_STRING PROPERTY LINK_FLAGS " -flto")
@@ -113,9 +113,12 @@ function(c3qo_add_library_protobuf_c target_name proto_dir proto_prefix)
     set(proto_src_dir ${CMAKE_CURRENT_SOURCE_DIR}/${proto_dir})
     set(proto_src_file ${proto_prefix}.proto)
 
+    set(proto_cmd ${C3QO_PROTOBUF}/protoc-c/protoc-c)
+    set(proto_lib ${C3QO_PROTOBUF}/protobuf-c/.libs/libprotobuf-c.so)
+
     set(proto_gen_dir ${CMAKE_CURRENT_BINARY_DIR}/${proto_dir})
     set(proto_gen_file ${proto_gen_dir}/${proto_prefix}.pb-c.c)
-    set(proto_gen_cmd protoc-c --c_out=${proto_gen_dir} ${proto_src_file})
+    set(proto_gen_cmd ${proto_cmd} --c_out=${proto_gen_dir} ${proto_src_file})
 
     execute_process(COMMAND mkdir -p ${proto_gen_dir})
     add_custom_command(
@@ -126,7 +129,7 @@ function(c3qo_add_library_protobuf_c target_name proto_dir proto_prefix)
     )
 
     add_library(${target_name} STATIC ${proto_gen_file})
-    target_link_libraries(${target_name} /usr/local/lib/libprotobuf-c.a)
+    target_link_libraries(${target_name} ${proto_lib})
     target_compile_options(${target_name} PRIVATE ${COMPILE_FLAGS_C})
     target_include_directories(${target_name} PUBLIC ${proto_gen_dir})
 endfunction()
