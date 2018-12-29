@@ -1,5 +1,5 @@
 
 
 # Build logger library
-add_library(logger INTERFACE)
-target_include_directories(logger INTERFACE include/)
+c3qo_add_library(logger src/logger.cpp)
+target_include_directories(logger PUBLIC include/)

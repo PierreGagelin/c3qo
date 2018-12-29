@@ -14,14 +14,19 @@ extern "C"
 #define LOGGER_OPEN(name) openlog(name, 0, 0)
 #define LOGGER_CLOSE() closelog()
 
+// Enable or disable logging
+extern bool logger_enabled;
+#define LOGGER_ENABLE() logger_enabled = true
+#define LOGGER_DISABLE() logger_enabled = false
+
 #ifdef C3QO_LOG
 
 #define LOGGER_TRACE(level, msg, ...)                \
-    do                                               \
+    if (logger_enabled == true)                      \
     {                                                \
         syslog(level, msg, ##__VA_ARGS__);           \
         printf(#level ": " msg "\n", ##__VA_ARGS__); \
-    } while (false)
+    }
 
 #else
 

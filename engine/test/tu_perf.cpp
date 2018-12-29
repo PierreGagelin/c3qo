@@ -64,7 +64,9 @@ int main(int, char **)
 
     mgr_.block_factory_register("hello", &factory);
 
+    LOGGER_DISABLE();
     tu_perf_commutation();
+    LOGGER_ENABLE();
 
     LOGGER_CLOSE();
     return 0;
