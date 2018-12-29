@@ -95,7 +95,6 @@ static void tu_manager_bk_life_cycle()
 int main(int, char **)
 {
     LOGGER_OPEN("tu_manager_bk");
-    logger_set_level(LOGGER_LEVEL_DEBUG);
 
     tu_manager_bk_life_cycle();
 

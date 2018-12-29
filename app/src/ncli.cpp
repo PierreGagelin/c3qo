@@ -240,7 +240,6 @@ int main(int argc, char **argv)
     struct manager mgr;
 
     LOGGER_OPEN("ncli");
-    logger_set_level(LOGGER_LEVEL_DEBUG);
 
     //
     // Create

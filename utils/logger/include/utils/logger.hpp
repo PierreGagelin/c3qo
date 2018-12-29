@@ -14,97 +14,39 @@ extern "C"
 #define LOGGER_OPEN(name) openlog(name, 0, 0)
 #define LOGGER_CLOSE() closelog()
 
-// Differents levels of log
-enum logger_level
-{
-    LOGGER_LEVEL_NONE = 0,
-    LOGGER_LEVEL_EMERG = 1,
-    LOGGER_LEVEL_ALERT = 2,
-    LOGGER_LEVEL_CRIT = 3,
-    LOGGER_LEVEL_ERR = 4,
-    LOGGER_LEVEL_WARNING = 5,
-    LOGGER_LEVEL_NOTICE = 6,
-    LOGGER_LEVEL_INFO = 7,
-    LOGGER_LEVEL_DEBUG = 8,
-};
-const char *get_logger_level(enum logger_level l);
-
-// Setting logger level
-void logger_set_level(enum logger_level l);
-
-//
-// MAN SYSLOG :
-// - LOG_EMERG   : system is unusable
-// - LOG_ALERT   : action must be taken immediately
-// - LOG_CRIT    : critical conditions
-// - LOG_ERR     : error conditions
-// - LOG_WARNING : warning conditions
-// - LOG_NOTICE  : normal, but significant, condition
-// - LOG_INFO    : informational message
-// - LOG_DEBUG   : debug-level message
-//
-
 #ifdef C3QO_LOG
 
-#define LOGGER_TRACE(level, msg, ...)  \
-    syslog(level, msg, ##__VA_ARGS__); \
-    printf("[%s] " msg "\n", get_logger_level(static_cast<enum logger_level>(level + 1)), ##__VA_ARGS__);
+#define LOGGER_TRACE(level, msg, ...)                \
+    do                                               \
+    {                                                \
+        syslog(level, msg, ##__VA_ARGS__);           \
+        printf(#level ": " msg "\n", ##__VA_ARGS__); \
+    } while (false)
 
 #else
 
-// Code will be removed if unused and without a warning
-#define LOGGER_TRACE(level, msg, ...)      \
-    if (false == true)                     \
-    {                                      \
-        syslog(level, msg, ##__VA_ARGS__); \
-    }
+#include <tuple>
+
+//
+// Trick to remove any trace of log
+//
+#define LOGGER_TRACE(level, msg, ...)                                         \
+    do                                                                        \
+    {                                                                         \
+        (void)level;                                                          \
+        (void)msg;                                                            \
+        (void)std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value; \
+    } while (false)
 
 #endif // C3QO_LOG
 
-// Current level of log. Only log with lower level will be displayed
-extern enum logger_level logger_level;
-
-// Format a log entry with function name, line and level
-#define LOGGER_EMERG(msg, ...)                       \
-    if (logger_level >= LOGGER_LEVEL_EMERG)          \
-    {                                                \
-        LOGGER_TRACE(LOG_EMERG, msg, ##__VA_ARGS__); \
-    }
-#define LOGGER_ALERT(msg, ...)                       \
-    if (logger_level >= LOGGER_LEVEL_ALERT)          \
-    {                                                \
-        LOGGER_TRACE(LOG_ALERT, msg, ##__VA_ARGS__); \
-    }
-#define LOGGER_CRIT(msg, ...)                       \
-    if (logger_level >= LOGGER_LEVEL_CRIT)          \
-    {                                               \
-        LOGGER_TRACE(LOG_CRIT, msg, ##__VA_ARGS__); \
-    }
-#define LOGGER_ERR(msg, ...)                       \
-    if (logger_level >= LOGGER_LEVEL_ERR)          \
-    {                                              \
-        LOGGER_TRACE(LOG_ERR, msg, ##__VA_ARGS__); \
-    }
-#define LOGGER_WARNING(msg, ...)                       \
-    if (logger_level >= LOGGER_LEVEL_WARNING)          \
-    {                                                  \
-        LOGGER_TRACE(LOG_WARNING, msg, ##__VA_ARGS__); \
-    }
-#define LOGGER_NOTICE(msg, ...)                       \
-    if (logger_level >= LOGGER_LEVEL_NOTICE)          \
-    {                                                 \
-        LOGGER_TRACE(LOG_NOTICE, msg, ##__VA_ARGS__); \
-    }
-#define LOGGER_INFO(msg, ...)                       \
-    if (logger_level >= LOGGER_LEVEL_INFO)          \
-    {                                               \
-        LOGGER_TRACE(LOG_INFO, msg, ##__VA_ARGS__); \
-    }
-#define LOGGER_DEBUG(msg, ...)                       \
-    if (logger_level >= LOGGER_LEVEL_DEBUG)          \
-    {                                                \
-        LOGGER_TRACE(LOG_DEBUG, msg, ##__VA_ARGS__); \
-    }
+//
+// Some different level of traces mapped to syslog levels
+//
+#define LOGGER_CRIT(msg, ...) LOGGER_TRACE(LOG_CRIT, msg, ##__VA_ARGS__)
+#define LOGGER_ERR(msg, ...) LOGGER_TRACE(LOG_ERR, msg, ##__VA_ARGS__)
+#define LOGGER_INFO(msg, ...) LOGGER_TRACE(LOG_INFO, msg, ##__VA_ARGS__)
+#define LOGGER_DEBUG(msg, ...) LOGGER_TRACE(LOG_DEBUG, msg, ##__VA_ARGS__)
 
 #define ASSERT(condition)                                           \
     do                                                              \

@@ -22,7 +22,6 @@ int main(int, char **)
     struct manager mgr;
 
     LOGGER_OPEN("proxy");
-    logger_set_level(LOGGER_LEVEL_DEBUG);
 
     // Register a signal handler
     struct sigaction sa;

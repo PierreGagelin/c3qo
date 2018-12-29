@@ -184,20 +184,14 @@ static void tu_manager_tm_del()
 //
 static void tu_manager_tm_error()
 {
-    // Hide logs as errors are normal
-    logger_set_level(LOGGER_LEVEL_ERR);
-
     struct timer t;
     t.bk = nullptr;
     ASSERT(mgr_.timer_add(t) == false);
-
-    logger_set_level(LOGGER_LEVEL_DEBUG);
 }
 
 int main(int, char **)
 {
     LOGGER_OPEN("tu_manager_tm");
-    logger_set_level(LOGGER_LEVEL_DEBUG);
 
     tu_manager_tm_del();
     tu_manager_tm_error();

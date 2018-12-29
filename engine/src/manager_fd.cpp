@@ -53,12 +53,12 @@ bool manager::fd_add(const struct file_desc &fd)
     // Verify user input
     if (fd.bk == nullptr)
     {
-        LOGGER_WARNING("Cannot add file descriptor: nullptr block");
+        LOGGER_ERR("Failed to add file descriptor: nullptr block");
         return false;
     }
     if ((fd.fd < 0) && (fd.socket == nullptr))
     {
-        LOGGER_WARNING("Cannot add file descriptor: negative fd and nullptr socket [fd=%d ; socket=%p]", fd.fd, fd.socket);
+        LOGGER_ERR("Failed to add file descriptor: wrong values [fd=%d ; socket=%p]", fd.fd, fd.socket);
         return false;
     }
 

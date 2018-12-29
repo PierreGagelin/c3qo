@@ -45,12 +45,6 @@ Check Server Startup
     ${args}    BuiltIn.Create List
     Start Server    ${args}
     Stop Server
-    #
-    # Setting log level
-    #
-    ${args}    BuiltIn.Create List    -l    2
-    Start Server    ${args}
-    Stop Server
     [Teardown]    Teardown Server
 
 Remote Block Management

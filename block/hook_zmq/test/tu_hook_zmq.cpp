@@ -138,9 +138,6 @@ static void tu_hook_zmq_error()
 {
     struct hook_zmq block(&mgr_);
 
-    // Errors are expected
-    logger_set_level(LOGGER_LEVEL_CRIT);
-
     block.id_ = 1;
 
     block.data_(nullptr);
@@ -160,14 +157,11 @@ static void tu_hook_zmq_error()
     struct file_desc fd;
     fd.socket = nullptr;
     block.on_fd_(fd);
-
-    logger_set_level(LOGGER_LEVEL_DEBUG);
 }
 
 int main(int, char **)
 {
     LOGGER_OPEN("tu_hook_zmq");
-    logger_set_level(LOGGER_LEVEL_DEBUG);
 
     tu_hook_pair_pair();
     tu_hook_dealer_router();

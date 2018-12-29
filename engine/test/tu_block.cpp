@@ -101,7 +101,6 @@ static void tu_block_errors()
 int main(int, char **)
 {
     LOGGER_OPEN("tu_block");
-    logger_set_level(LOGGER_LEVEL_DEBUG);
 
     mgr_.block_factory_register("hello", &factory);
 

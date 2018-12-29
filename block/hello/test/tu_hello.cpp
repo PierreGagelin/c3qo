@@ -36,7 +36,6 @@ static void tu_hello_hello()
 int main(int, char **)
 {
     LOGGER_OPEN("tu_hello");
-    logger_set_level(LOGGER_LEVEL_DEBUG);
 
     tu_hello_hello();
 

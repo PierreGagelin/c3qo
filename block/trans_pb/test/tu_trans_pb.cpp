@@ -111,9 +111,6 @@ static void tu_trans_pb_errors()
 {
     struct tu_trans_pb test;
 
-    // Do not display error messages as we known there will be
-    logger_set_level(LOGGER_LEVEL_CRIT);
-
     // No message
     {
         test.block_.data_(nullptr);
@@ -155,8 +152,6 @@ static void tu_trans_pb_errors()
     {
         test.proto_cmd_send(static_cast<Command__TypeCase>(12), 42, "");
     }
-
-    logger_set_level(LOGGER_LEVEL_DEBUG);
 }
 
 static void tu_trans_pb_pbc_conf()
@@ -185,7 +180,6 @@ static void tu_trans_pb_pbc_conf()
 int main(int, char **)
 {
     LOGGER_OPEN("tu_trans_pb");
-    logger_set_level(LOGGER_LEVEL_DEBUG);
 
     tu_trans_pb_errors();
     tu_trans_pb_pbc_conf();

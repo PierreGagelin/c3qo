@@ -23,13 +23,11 @@ static void signal_handler(int, siginfo_t *, void *)
 
 int main(int argc, char **argv)
 {
-    enum logger_level level;
     const char *options;
     const char *identity;
 
-    options = "hi:l:";
+    options = "hi:";
     identity = "default_identity";
-    level = LOGGER_LEVEL_DEBUG;
     for (int opt = getopt(argc, argv, options); opt != -1; opt = getopt(argc, argv, options))
     {
         switch (opt)
@@ -42,17 +40,12 @@ int main(int argc, char **argv)
             identity = optarg;
             break;
 
-        case 'l':
-            level = static_cast<enum logger_level>(strtol(optarg, nullptr, 10));
-            break;
-
         default:
             return 1;
         }
     }
 
     LOGGER_OPEN(identity);
-    logger_set_level(level);
 
     // Register block factories
     struct manager mgr;

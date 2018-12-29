@@ -61,7 +61,6 @@ static void tu_perf_commutation()
 int main(int, char **)
 {
     LOGGER_OPEN("tu_perf");
-    logger_set_level(LOGGER_LEVEL_CRIT);
 
     mgr_.block_factory_register("hello", &factory);
 

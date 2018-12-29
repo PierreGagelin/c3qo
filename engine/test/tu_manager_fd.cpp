@@ -81,7 +81,6 @@ static void tu_manager_fd_errors()
 int main(int, char **)
 {
     LOGGER_OPEN("tu_manager_fd");
-    logger_set_level(LOGGER_LEVEL_DEBUG);
 
     tu_manager_fd_fd();
     tu_manager_fd_errors();
