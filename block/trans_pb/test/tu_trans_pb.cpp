@@ -168,10 +168,10 @@ static void tu_trans_pb_pbc_conf()
     ASSERT(test.proto_cmd_send(COMMAND__TYPE_BIND, bk_id, "", 2, 5));
 
     ASSERT(test.proto_cmd_send(COMMAND__TYPE_START, bk_id, ""));
-    ASSERT(bk->state_ == STATE_START);
+    ASSERT(bk->is_started_ == true);
 
     ASSERT(test.proto_cmd_send(COMMAND__TYPE_STOP, bk_id, ""));
-    ASSERT(bk->state_ == STATE_STOP);
+    ASSERT(bk->is_started_ == false);
 
     ASSERT(test.proto_cmd_send(COMMAND__TYPE_DEL, bk_id, ""));
     ASSERT(test.mgr_.block_get(bk_id) == nullptr);

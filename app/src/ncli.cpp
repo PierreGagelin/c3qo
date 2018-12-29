@@ -168,7 +168,7 @@ void ncli::start_()
 
     wordfree(&we);
 
-    process_data_(1, &buf);
+    process_data_(&buf);
 
     buf.clear();
 
@@ -193,14 +193,14 @@ void ncli::stop_()
     mgr_->timer_del(tm);
 }
 
-int ncli::data_(void *vdata)
+bool ncli::data_(void *vdata)
 {
     struct buffer &buf = *(static_cast<struct buffer *>(vdata));
 
     if (buf.parts_.size() != 3u)
     {
         LOGGER_DEBUG("Discard message: wrong parts count [expected=3 ; actual=%zu]", buf.parts_.size());
-        return PORT_STOP;
+        return false;
     }
     if ((memcmp(buf.parts_[0].data, ncli_peer_, buf.parts_[0].len) != 0) ||
         (memcmp(buf.parts_[1].data, "CONF.PROTO.CMD.REP", buf.parts_[1].len) != 0) ||
@@ -210,13 +210,13 @@ int ncli::data_(void *vdata)
                      static_cast<char *>(buf.parts_[0].data),
                      static_cast<char *>(buf.parts_[1].data),
                      static_cast<char *>(buf.parts_[2].data));
-        return PORT_STOP;
+        return false;
     }
 
     LOGGER_INFO("Received expected answer");
     received_answer_ = true;
 
-    return PORT_STOP;
+    return false;
 }
 
 void ncli::on_timer_(struct timer &)
@@ -294,8 +294,8 @@ int main(int argc, char **argv)
     //
     // Bind and start
     //
-    mgr.block_bind(1, 1, 2);
-    mgr.block_bind(2, 1, 1);
+    mgr.block_bind(1, 0, 2);
+    mgr.block_bind(2, 0, 1);
 
     mgr.block_start(1);
     mgr.block_start(2);

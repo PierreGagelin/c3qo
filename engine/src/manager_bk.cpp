@@ -43,7 +43,7 @@ bool manager::block_add(int id, const char *type)
 
     bk->id_ = id;
     bk->type_ = type;
-    bk->state_ = STATE_STOP;
+    bk->is_started_ = false;
 
     bk_map_.insert({id, bk});
 
@@ -67,13 +67,13 @@ bool manager::block_start(int id)
     }
 
     // Verify block state
-    if (bk->state_ == STATE_START)
+    if (bk->is_started_ == true)
     {
         // Nothing to do
         return true;
     }
 
-    bk->state_ = STATE_START;
+    bk->is_started_ = true;
     bk->start_();
 
     LOGGER_INFO("Started block [bk_id=%d ; bk_type=%s]", bk->id_, bk->type_.c_str());
@@ -96,13 +96,13 @@ bool manager::block_stop(int id)
     }
 
     // Verify block state
-    if (bk->state_ == STATE_STOP)
+    if (bk->is_started_ == false)
     {
         // Nothing to do
         return true;
     }
 
-    bk->state_ = STATE_STOP;
+    bk->is_started_ = false;
     bk->stop_();
 
     LOGGER_INFO("Stopped block [bk_id=%d ; bk_type=%s]", id, bk->type_.c_str());
@@ -125,7 +125,7 @@ bool manager::block_del(int id)
     }
 
     // Verify block state
-    if (bk->state_ != STATE_STOP)
+    if (bk->is_started_ != false)
     {
         LOGGER_ERR("Failed to delete block: block not stopped [bk_id=%d]", bk->id_);
         return false;
@@ -151,8 +151,6 @@ bool manager::block_del(int id)
 //
 bool manager::block_bind(int bk_id_src, int port, int bk_id_dst)
 {
-    struct bind_info bind;
-
     // Find the block concerned by the command
     const auto &src = bk_map_.find(bk_id_src);
     const auto &dst = bk_map_.find(bk_id_dst);
@@ -163,14 +161,18 @@ bool manager::block_bind(int bk_id_src, int port, int bk_id_dst)
         return false;
     }
 
-    bind.bk = dst->second;
-    bind.port = port;
-    src->second->binds_.push_back(bind);
+    // Save this block as the new sink
+    src->second->sink_ = dst->second;
 
     LOGGER_INFO("Bound block [bk_id_src=%d ; port=%d ; bk_id_dest=%d]", bk_id_src, port, bk_id_dst);
 
-    // Notify the block that it has been bound
-    src->second->bind_(port, bk_id_dst);
+    //
+    // Notify the block that it has been bound. It could
+    // keep a map of whatever (port => block) translation
+    // to make packets flow as in a graph. This routing job is
+    // not done by the framework itself
+    //
+    src->second->bind_(port, dst->second);
 
     return true;
 }

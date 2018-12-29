@@ -75,8 +75,8 @@ int main(int argc, char **argv)
     mgr.block_start(-2);
 
     // Bind ZMQ and transcoder
-    mgr.block_bind(-1, 1, -2);
-    mgr.block_bind(-2, 1, -1);
+    mgr.block_bind(-1, 0, -2);
+    mgr.block_bind(-2, 0, -1);
 
     // Register a signal handler
     struct sigaction sa;

@@ -29,11 +29,7 @@ static void tu_perf_commutation()
     //   - bk_1 -> bk_2 -> bk_3 -> bk_4... -> bk_N
     for (size_t i = 1; i < nb_block; i++)
     {
-        for (int j = 1; j < 9; j++)
-        {
-            // Bind port j of bk_i to bk_i+1
-            ASSERT(mgr_.block_bind(i, j, i + 1) == true);
-        }
+        ASSERT(mgr_.block_bind(i, 0, i + 1) == true);
     }
 
     // Send data from bk_1
@@ -41,7 +37,7 @@ static void tu_perf_commutation()
     ASSERT(bk != nullptr);
     for (size_t i = 0; i < nb_buf; i++)
     {
-        bk->process_data_(1, nullptr);
+        bk->process_data_(nullptr);
     }
 
     // Verify that buffers crossed bk_2 to the last block

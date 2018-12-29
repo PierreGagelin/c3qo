@@ -100,7 +100,7 @@ void hook_zmq::on_fd_(struct file_desc &fd)
     LOGGER_DEBUG("Received message [bk_id=%d ; parts_count=%zu]", id_, buf.parts_.size());
 
     // Send it to the next block
-    process_data_(1, &buf);
+    process_data_(&buf);
 
     buf.clear();
 }
@@ -214,14 +214,14 @@ void hook_zmq::stop_()
 //
 // @brief Send data to the exterior
 //
-int hook_zmq::data_(void *vdata)
+bool hook_zmq::data_(void *vdata)
 {
     bool ok;
 
     if (vdata == nullptr)
     {
         LOGGER_ERR("Failed to process buffer: nullptr data");
-        return PORT_STOP;
+        return false;
     }
     struct buffer &buf = *(static_cast<struct buffer *>(vdata));
 
@@ -233,7 +233,7 @@ int hook_zmq::data_(void *vdata)
         tx_pkt_++;
     }
 
-    return PORT_STOP;
+    return false;
 }
 
 //

@@ -18,7 +18,7 @@ static void tu_block_interface()
 {
     struct block *bk = new struct block(&mgr_);
 
-    bk->bind_(0, 0);
+    bk->bind_(0, nullptr);
     bk->start_();
     bk->stop_();
 
@@ -50,10 +50,7 @@ static void tu_block_flow()
     }
 
     // Bind block 1 to block 2
-    for (int i = 1; i < 9; ++i)
-    {
-        ASSERT(mgr_.block_bind(1, i, 2) == true);
-    }
+    ASSERT(mgr_.block_bind(1, 0, 2) == true);
 
     // Retrieve block 1 and block 2
     bk_1 = static_cast<struct hello *>(mgr_.block_get(1));
@@ -72,10 +69,9 @@ static void tu_block_flow()
     ASSERT(bk_2->count_ == 1);
 
     // Generate flow from the block
-    bk_1->process_data_(1, nullptr);
+    bk_1->process_data_(nullptr);
+    ASSERT(bk_1->count_ == 1);
     ASSERT(bk_2->count_ == 2);
-    bk_1->process_data_(1, nullptr);
-    ASSERT(bk_2->count_ == 3);
 
     // Clear blocks
     mgr_.block_clear();
@@ -95,7 +91,7 @@ static void tu_block_errors()
     bk->process_ctrl_(42, nullptr);
 
     // Flow without a route
-    bk->process_data_(1, nullptr);
+    bk->process_data_(nullptr);
 }
 
 int main(int, char **)

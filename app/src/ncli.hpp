@@ -11,7 +11,7 @@ struct ncli : public block
     virtual void start_() override final;
     virtual void stop_() override final;
 
-    virtual int data_(void *vdata) override final;
+    virtual bool data_(void *vdata) override final;
 
     virtual void on_timer_(struct timer &tm) override final;
 

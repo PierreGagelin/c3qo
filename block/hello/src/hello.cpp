@@ -24,24 +24,21 @@ void hello::stop_()
     LOGGER_DEBUG("Goodbye world");
 }
 
-int hello::data_(void *)
+bool hello::data_(void *)
 {
-    int ret;
-
     LOGGER_DEBUG("Process data [bk_id=%d]", id_);
 
-    // Get and increment index to return
-    ret = 1;
-    ret += count_++ % 8;
+    // Increment packet count
+    ++count_;
 
-    return ret;
+    return true;
 }
 
 void hello::ctrl_(void *)
 {
     LOGGER_DEBUG("Process notification [bk_id=%d]", id_);
 
-    // Increment index to return
+    // Increment packet count
     ++count_;
 }
 

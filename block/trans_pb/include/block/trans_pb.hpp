@@ -9,7 +9,7 @@ struct trans_pb : block
     explicit trans_pb(struct manager *mgr);
     virtual ~trans_pb() override final;
 
-    virtual int data_(void *vdata) override final;
+    virtual bool data_(void *vdata) override final;
 
     bool proto_command_parse(const uint8_t *data, size_t size);
     void proto_command_reply(bool is_ok);

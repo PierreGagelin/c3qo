@@ -80,24 +80,24 @@ void trans_pb::proto_command_reply(bool is_ok)
     status = is_ok ? "OK" : "KO";
     buf.push_back(status, strlen(status));
 
-    process_data_(1, &buf);
+    process_data_(&buf);
 
     buf.clear();
 }
 
-int trans_pb::data_(void *vdata)
+bool trans_pb::data_(void *vdata)
 {
     if (vdata == nullptr)
     {
         LOGGER_ERR("Failed to process data: nullptr data");
-        return PORT_STOP;
+        return false;
     }
 
     struct buffer &buf = *(static_cast<struct buffer *>(vdata));
     if (buf.parts_.size() != 2u)
     {
         LOGGER_ERR("Failed to decode message: unexpected parts count [expected=%u ; actual=%zu]", 2u, buf.parts_.size());
-        return PORT_STOP;
+        return false;
     }
 
     // Action to take upon topic value
@@ -111,10 +111,10 @@ int trans_pb::data_(void *vdata)
     {
         LOGGER_ERR("Failed to decode message: unknown topic [topic=%s]",
                    static_cast<char *>(buf.parts_[0].data));
-        return PORT_STOP;
+        return false;
     }
 
-    return PORT_STOP;
+    return false;
 }
 
 //

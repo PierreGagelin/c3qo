@@ -17,17 +17,14 @@ static void tu_hello_hello()
 
     block.start_();
 
+    ASSERT(block.count_ == 0);
+
     // Verify data and control behaviors
-    for (int i = 1; i < 9; i++)
-    {
-        ASSERT(block.data_(nullptr) == i);
-    }
-    ASSERT(block.count_ == 8);
-    for (int i = 0; i < 8; i++)
-    {
-        block.ctrl_(nullptr);
-    }
-    ASSERT(block.count_ == 16);
+    ASSERT(block.data_(nullptr) == true);
+    ASSERT(block.count_ == 1);
+
+    block.ctrl_(nullptr);
+    ASSERT(block.count_ == 2);
 
     // Stop block
     block.stop_();

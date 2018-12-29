@@ -15,7 +15,7 @@ struct hello : block
     virtual void start_() override final;
     virtual void stop_() override final;
 
-    virtual int data_(void *vdata) override final;
+    virtual bool data_(void *vdata) override final;
     virtual void ctrl_(void *vnotif) override final;
 };
 

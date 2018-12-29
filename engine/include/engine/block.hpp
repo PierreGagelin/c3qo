@@ -4,31 +4,6 @@
 // Project headers
 #include "utils/logger.hpp"
 
-// Port value to return in order to stop a data flow
-#define PORT_STOP 0
-
-//
-// @enum bk_state
-//
-// @brief Block state
-//
-enum bk_state
-{
-    STATE_STOP,  // Block is stopped
-    STATE_START, // Block is started
-};
-
-//
-// @struct bind_info
-//
-// @brief Information to bind to blocks together
-//
-struct bind_info
-{
-    int port;         // Port from source block
-    struct block *bk; // Destination block
-};
-
 //
 // @struct timer
 //
@@ -59,10 +34,10 @@ struct file_desc
 //
 struct block
 {
-    std::vector<struct bind_info> binds_; // Block bindings
-    int id_;                              // Block ID
-    std::string type_;                    // Block type
-    enum bk_state state_;                 // Block state
+    int id_;             // Block ID
+    std::string type_;   // Block type
+    bool is_started_;    // Block state
+    struct block *sink_; // Block bindings
 
     struct manager *mgr_; // Manager of this block
 
@@ -70,7 +45,7 @@ struct block
     virtual ~block();
 
     // Management callbacks
-    virtual void bind_(int port, int bk_id);
+    virtual void bind_(int port, struct block *bk);
     virtual void start_();
     virtual void stop_();
 
@@ -81,12 +56,12 @@ struct block
     virtual void on_fd_(struct file_desc &fd);
 
     // Data callbacks
-    virtual int data_(void *vdata);
-    virtual void ctrl_(void *vnotif);
+    virtual bool data_(void *data);
+    virtual void ctrl_(void *notif);
 
     // Flow methods
-    void process_data_(int port, void *data);
-    void process_ctrl_(int port, void *notif);
+    void process_data_(void *data);
+    void process_ctrl_(int bk_id, void *notif);
 };
 
 // Factory to create and destroy blocks

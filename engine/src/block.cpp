@@ -1,25 +1,26 @@
 
 
+// Project headers
 #include "engine/block.hpp"
 #include "engine/manager.hpp"
 
 //
 // @brief Block constructor and destructor
 //
-block::block(struct manager *mgr) : id_(0), state_(STATE_STOP), mgr_(mgr) {}
+block::block(struct manager *mgr) : id_(0), is_started_(false), sink_(nullptr), mgr_(mgr) {}
 block::~block() {}
 
 // Block interface default implementation
-void block::bind_(int, int) {}
+void block::bind_(int, struct block *) {}
 void block::start_() {}
 void block::stop_() {}
-int block::data_(void *) { return 0; }
+bool block::data_(void *) { return false; }
 void block::ctrl_(void *) {}
 void block::on_timer_(struct timer &) {}
 void block::on_fd_(struct file_desc &) {}
 
 //
-// @brief Send NOTIF data to a block
+// @brief Send a notification to a block
 //
 void block::process_ctrl_(int bk_id, void *notif)
 {
@@ -37,47 +38,32 @@ void block::process_ctrl_(int bk_id, void *notif)
 //
 // @brief Start a data flow from this block
 //
-// @param port  : Source port to find a peer block
-// @param data  : Data to process
-// @param type  : Flow type (RX, TX)
-//
-void block::process_data_(int port, void *data)
+void block::process_data_(void *data)
 {
     struct block *current;
+
+    LOGGER_DEBUG("Started data flow [bk_id_src=%d]", id_);
 
     // Process the data from one block to the other
     current = this;
     while (true)
     {
-        const struct bind_info *bind;
-
-        if (port == PORT_STOP)
+        // Get the sink in which to send data
+        current = current->sink_;
+        if (current == nullptr)
         {
-            LOGGER_DEBUG("Ended data flow [bk_id_begin=%d ; bk_id_end=%d]", id_, current->id_);
-            break;
-        }
-
-        // Find the source port in bindings
-        bind = nullptr;
-        for (const auto &it : current->binds_)
-        {
-            if (it.port == port)
-            {
-                // We found the requested port
-                bind = &it;
-                break;
-            }
-        }
-        if (bind == nullptr)
-        {
-            LOGGER_ERR("Failed to route data flow: unknown port [bk_id=%d ; port=%d]", current->id_, port);
+            LOGGER_ERR("Failed to forward data flow: no block bound");
             return;
         }
 
-        LOGGER_DEBUG("Routed data flow [bk_id_src=%d ; port=%d ; bk_id_dst=%d]", current->id_, port, bind->bk->id_);
+        LOGGER_DEBUG("Forwarding data [bk_id=%d]", current->id_);
 
         // The destination block is the new source of the data flow
-        current = bind->bk;
-        port = current->data_(data);
+        bool forward = current->data_(data);
+        if (forward == false)
+        {
+            LOGGER_DEBUG("Stopped data flow [bk_id_src=%d ; bk_id_sink=%d]", id_, current->id_);
+            break;
+        }
     }
 }
