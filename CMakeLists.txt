@@ -8,6 +8,7 @@ project(c3qo)
 # Generate a JSON file with compilation commands (used with Visual Studio Code)
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
+# If not empty an undesired "rdynamic" option is added
 set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
 
 #
@@ -30,7 +31,6 @@ endif()
 #
 find_program(MEMORYCHECK_COMMAND valgrind)
 set(MEMORYCHECK_COMMAND_OPTIONS "--leak-check=full --show-leak-kinds=all")
-set(MEMORYCHECK_SUPPRESSIONS_FILE ${CMAKE_SOURCE_DIR}/c3qo_valgrind.supp)
 include(CTest)
 
 #
