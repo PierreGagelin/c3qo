@@ -108,7 +108,7 @@ function action_install
         tar -C $C3QO_DIR_TOOLS -xzf $C3QO_DIR_TOOLS/protobuf-c-1.3.1.tar.gz
 
         cd $C3QO_DIR_TOOLS/protobuf-c-1.3.1
-        CFLAGS=-O2 CXXFLAGS="-O2" ./configure
+        CFLAGS="-O2" CXXFLAGS="-O2" ./configure
         make -j 4
         cd -
 

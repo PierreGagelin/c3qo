@@ -11,9 +11,6 @@ set(COMPILE_FLAGS_COMMON ${COMPILE_FLAGS_COMMON} -Wall)
 set(COMPILE_FLAGS_COMMON ${COMPILE_FLAGS_COMMON} -Wextra)
 set(COMPILE_FLAGS_COMMON ${COMPILE_FLAGS_COMMON} -fno-rtti)
 
-# XXX: apparently causes .gcno to be corrupted under ubuntu 14.04.5 toolchain
-#set(COMPILE_FLAGS_COMMON ${COMPILE_FLAGS_COMMON} -flto)
-
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_COMMON})
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Werror)
 set(COMPILE_FLAGS_BLOCK ${COMPILE_FLAGS_BLOCK} -Woverloaded-virtual)
@@ -45,9 +42,6 @@ endfunction()
 function (c3qo_target_link_flags t_name)
     # Required for ZeroMQ runtime
     target_link_libraries(${t_name} ${C3QO_ZEROMQ}/lib/libzmq.so)
-
-    # XXX: apparently causes .gcno to be corrupted under ubuntu 14.04.5 toolchain
-    #set_property(TARGET ${t_name} APPEND_STRING PROPERTY LINK_FLAGS " -flto")
 
     # Add coverage link flag
     if (${C3QO_COVERAGE})
