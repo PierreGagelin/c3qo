@@ -50,9 +50,9 @@ void hook_zmq::recv_(struct buffer &buf)
 //
 // @brief Send a ZMQ multi-part message
 //
-bool hook_zmq::send_(struct buffer &buf, int flags = ZMQ_DONTWAIT)
+bool hook_zmq::send_(struct buffer &buf)
 {
-    flags |= ZMQ_SNDMORE;
+    int flags = ZMQ_DONTWAIT | ZMQ_SNDMORE;
 
     for (size_t idx = 0u; idx < buf.parts_.size(); ++idx)
     {
@@ -181,7 +181,7 @@ void hook_zmq::start_()
 
         buf.push_back(dummy, strlen(dummy));
 
-        bool is_ok = send_(buf, 0);
+        bool is_ok = send_(buf);
         if (is_ok == false)
         {
             LOGGER_ERR("Failed to register identity");

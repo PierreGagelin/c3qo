@@ -36,7 +36,7 @@ int main(int argc, char **argv)
         {
         case 'h':
             printf("lol, help is for the weaks");
-            return 0;
+            return 1;
 
         case 'i':
             identity = optarg;
@@ -100,7 +100,8 @@ int main(int argc, char **argv)
     LOGGER_INFO("Registered signal handler for SIGINT and SIGTERM");
 
     // Main loop
-    while (end_signal_received == false)
+    mgr.start_();
+    while ((end_signal_received == false) && (mgr.is_term_ == false))
     {
         mgr.fd_poll();
         mgr.timer_check_exp();

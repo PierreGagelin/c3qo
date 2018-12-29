@@ -34,10 +34,14 @@ message Command
 {
     oneof type
     {
+        // Block management
         BlockAdd add = 1;
         BlockStart start = 2;
         BlockStop stop = 3;
         BlockDel del = 4;
-        BlockBind bind = 6;
+        BlockBind bind = 5;
+
+        // Application management
+        bool term = 6;
     }
 }

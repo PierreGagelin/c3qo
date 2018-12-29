@@ -31,6 +31,11 @@ struct manager
     manager();
     ~manager();
 
+    bool is_term_;
+
+    void start_();
+    void stop_();
+
     //
     // Blocks management
     //

@@ -48,6 +48,11 @@ bool trans_pb::proto_command_parse(const uint8_t *data, size_t size)
         is_ok = mgr_->block_bind(cmd->bind->id, cmd->bind->port, cmd->bind->dest);
         break;
 
+    case COMMAND__TYPE_TERM:
+        is_ok = true;
+        mgr_->stop_();
+        break;
+
     case COMMAND__TYPE__NOT_SET:
     default:
         LOGGER_ERR("Failed to execute protobuf command: unknown command type [type=%d]", cmd->type_case);

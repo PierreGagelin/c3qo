@@ -4,16 +4,6 @@
 #include "engine/manager.hpp"
 
 //
-// @brief Constructor and destructor
-//
-manager::manager() {}
-manager::~manager()
-{
-    block_clear();
-    block_factory_clear();
-}
-
-//
 // @brief Add or replace a block
 //
 // @param id    : Identifier to give to the block

@@ -49,32 +49,32 @@ static bool ncli_conf_proto(int argc, char **argv, struct buffer &buf)
         switch (opt)
         {
         case 'a':
-            LOGGER_DEBUG("CLI: PROTO [block_arg=%s]", optarg);
+            LOGGER_DEBUG("Set command option [block_arg=%s]", optarg);
             block_arg = optarg;
             break;
 
         case 'd':
-            LOGGER_DEBUG("CLI: PROTO [dest=%s]", optarg);
+            LOGGER_DEBUG("Set command option [dest=%s]", optarg);
             dest = static_cast<int32_t>(atoi(optarg));
             break;
 
         case 'i':
-            LOGGER_DEBUG("CLI: PROTO [block_id=%s]", optarg);
+            LOGGER_DEBUG("Set command option [block_id=%s]", optarg);
             block_id = static_cast<int32_t>(atoi(optarg));
             break;
 
         case 'p':
-            LOGGER_DEBUG("CLI: PROTO [port=%s]", optarg);
+            LOGGER_DEBUG("Set command option [port=%s]", optarg);
             port = static_cast<int32_t>(atoi(optarg));
             break;
 
         case 't':
-            LOGGER_DEBUG("CLI: PROTO [cmd_type=%s]", optarg);
+            LOGGER_DEBUG("Set command option [cmd_type=%s]", optarg);
             type = optarg;
             break;
 
         default:
-            LOGGER_WARNING("Unknown CLI option [opt=%c]", static_cast<char>(opt));
+            LOGGER_ERR("Failed to set command option: unknown option [opt=%c]", static_cast<char>(opt));
             return false;
         }
     }
@@ -125,6 +125,11 @@ static bool ncli_conf_proto(int argc, char **argv, struct buffer &buf)
         cmd.bind->id = block_id;
         cmd.bind->port = port;
         cmd.bind->dest = dest;
+    }
+    else if (strcmp(type, "term") == 0)
+    {
+        cmd.type_case = COMMAND__TYPE_TERM;
+        cmd.term = true;
     }
     else
     {
@@ -208,7 +213,7 @@ int ncli::data_(void *vdata)
         return PORT_STOP;
     }
 
-    LOGGER_DEBUG("Received expected answer");
+    LOGGER_INFO("Received expected answer");
     received_answer_ = true;
 
     return PORT_STOP;

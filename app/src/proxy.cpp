@@ -50,9 +50,13 @@ int main(int, char **)
     backend.addr_ = std::string("tcp://127.0.0.1:1665");
     backend.start_();
 
-    zmq_proxy(frontend.zmq_sock_.socket, backend.zmq_sock_.socket, nullptr);
+    rc = zmq_proxy(frontend.zmq_sock_.socket, backend.zmq_sock_.socket, nullptr);
+    ASSERT(rc == -1);
 
-    LOGGER_INFO("Proxy has stopped: end of program");
+    LOGGER_INFO("Proxy has stopped: %s [errno=%d]", strerror(errno), errno);
+
+    backend.stop_();
+    frontend.stop_();
 
     LOGGER_CLOSE();
 

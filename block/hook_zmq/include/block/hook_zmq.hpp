@@ -20,7 +20,7 @@ struct hook_zmq : block
     unsigned long rx_pkt_;
     unsigned long tx_pkt_;
 
-    bool send_(struct buffer &buf, int flags);
+    bool send_(struct buffer &buf);
     void recv_(struct buffer &buf);
 
     explicit hook_zmq(struct manager *mgr);

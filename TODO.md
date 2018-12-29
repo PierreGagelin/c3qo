@@ -9,8 +9,8 @@ This file contains some ideas of things to do
 
 ## Dev
 
-- add a protobuf message to terminate the application
 - implement a queue to send messages in hook
+- add a synchronous signal manager
 
 ## Integration
 
