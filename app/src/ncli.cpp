@@ -1,5 +1,6 @@
 
 
+// C headers
 extern "C"
 {
 #include <wordexp.h>
@@ -20,153 +21,335 @@ extern "C"
 extern int optind;
 extern char *optarg;
 
-ncli::ncli(struct manager *mgr) : block(mgr) {}
+ncli::ncli(struct manager *mgr) : block(mgr),
+                                  ncli_peer_(nullptr),
+                                  ncli_cmd_type_(nullptr),
+                                  ncli_cmd_args_(nullptr),
+                                  add_id_(0),
+                                  add_type_(nullptr),
+                                  start_id_(0),
+                                  stop_id_(0),
+                                  del_id_(0),
+                                  bind_id_(0),
+                                  bind_port_(0),
+                                  bind_dest_(0),
+                                  hook_zmq_id_(0),
+                                  hook_zmq_client_(false),
+                                  hook_zmq_type_(0),
+                                  hook_zmq_name_(nullptr),
+                                  hook_zmq_addr_(nullptr)
+{
+}
 ncli::~ncli() {}
 
-//
-// @brief Fills a ZMQ message to send a raw configuration line
-//
-static bool ncli_conf_proto(int argc, char **argv, struct buffer &buf)
+bool ncli::parse_add(int argc, char **argv)
 {
-    const char *options;
-    char *block_arg;
-    int32_t block_id;
-    int32_t port;
-    int32_t dest;
-    const char *type;
-
-    // Default parameters
-    block_arg = nullptr;
-    block_id = 1;
-    port = 1;
-    dest = 1;
-    type = "unknown";
-
-    optind = 1; // reset getopt
-    options = "a:d:i:p:t:";
+    const char *options = "i:t:";
     for (int opt = getopt(argc, argv, options); opt != -1; opt = getopt(argc, argv, options))
     {
         switch (opt)
         {
-        case 'a':
-            LOGGER_DEBUG("Set command option [block_arg=%s]", optarg);
-            block_arg = optarg;
-            break;
-
-        case 'd':
-            LOGGER_DEBUG("Set command option [dest=%s]", optarg);
-            dest = static_cast<int32_t>(atoi(optarg));
-            break;
-
         case 'i':
-            LOGGER_DEBUG("Set command option [block_id=%s]", optarg);
-            block_id = static_cast<int32_t>(atoi(optarg));
-            break;
-
-        case 'p':
-            LOGGER_DEBUG("Set command option [port=%s]", optarg);
-            port = static_cast<int32_t>(atoi(optarg));
+            LOGGER_DEBUG("Set block identifier [value=%s]", optarg);
+            add_id_ = atoi(optarg);
             break;
 
         case 't':
-            LOGGER_DEBUG("Set command option [cmd_type=%s]", optarg);
-            type = optarg;
+            LOGGER_DEBUG("Set block type [value=%s]", optarg);
+            add_type_ = optarg;
             break;
 
         default:
-            LOGGER_ERR("Failed to set command option: unknown option [opt=%c]", static_cast<char>(opt));
+            LOGGER_ERR("Failed to parse option: unknown option [opt=%c]", static_cast<char>(opt));
             return false;
         }
     }
 
-    // Prepare a protobuf message
-    Command cmd;
-    BlockAdd add;
-    BlockStart start;
-    BlockStop stop;
-    BlockDel del;
-    BlockBind bind;
-    command__init(&cmd);
+    command__init(&cmd_);
+    cmd_.type_case = COMMAND__TYPE_ADD;
+    block_add__init(&bk_add_);
+    cmd_.add = &bk_add_;
+    cmd_.add->id = add_id_;
+    cmd_.add->type = add_type_;
 
-    if (strcmp(type, "add") == 0)
+    return true;
+}
+
+bool ncli::parse_start(int argc, char **argv)
+{
+    const char *options = "i:";
+    for (int opt = getopt(argc, argv, options); opt != -1; opt = getopt(argc, argv, options))
     {
-        cmd.type_case = COMMAND__TYPE_ADD;
-        block_add__init(&add);
-        cmd.add = &add;
-        cmd.add->id = block_id;
-        cmd.add->type = block_arg;
+        switch (opt)
+        {
+        case 'i':
+            LOGGER_DEBUG("Set block identifier [value=%s]", optarg);
+            start_id_ = atoi(optarg);
+            break;
+
+        default:
+            LOGGER_ERR("Failed to parse option: unknown option [opt=%c]", static_cast<char>(opt));
+            return false;
+        }
     }
-    else if (strcmp(type, "start") == 0)
+
+    command__init(&cmd_);
+    cmd_.type_case = COMMAND__TYPE_START;
+    block_start__init(&bk_start_);
+    cmd_.start = &bk_start_;
+    cmd_.start->id = start_id_;
+
+    return true;
+}
+
+bool ncli::parse_stop(int argc, char **argv)
+{
+    const char *options = "i:";
+    for (int opt = getopt(argc, argv, options); opt != -1; opt = getopt(argc, argv, options))
     {
-        cmd.type_case = COMMAND__TYPE_START;
-        block_start__init(&start);
-        cmd.start = &start;
-        cmd.start->id = block_id;
+        switch (opt)
+        {
+        case 'i':
+            LOGGER_DEBUG("Set block identifier [value=%s]", optarg);
+            stop_id_ = atoi(optarg);
+            break;
+
+        default:
+            LOGGER_ERR("Failed to parse option: unknown option [opt=%c]", static_cast<char>(opt));
+            return false;
+        }
     }
-    else if (strcmp(type, "stop") == 0)
+
+    command__init(&cmd_);
+    cmd_.type_case = COMMAND__TYPE_STOP;
+    block_stop__init(&bk_stop_);
+    cmd_.stop = &bk_stop_;
+    cmd_.stop->id = stop_id_;
+
+    return true;
+}
+
+bool ncli::parse_del(int argc, char **argv)
+{
+    const char *options = "i:";
+    for (int opt = getopt(argc, argv, options); opt != -1; opt = getopt(argc, argv, options))
     {
-        cmd.type_case = COMMAND__TYPE_STOP;
-        block_stop__init(&stop);
-        cmd.stop = &stop;
-        cmd.stop->id = block_id;
+        switch (opt)
+        {
+        case 'i':
+            LOGGER_DEBUG("Set block identifier [value=%s]", optarg);
+            del_id_ = atoi(optarg);
+            break;
+
+        default:
+            LOGGER_ERR("Failed to parse option: unknown option [opt=%c]", static_cast<char>(opt));
+            return false;
+        }
     }
-    else if (strcmp(type, "del") == 0)
+
+    command__init(&cmd_);
+    cmd_.type_case = COMMAND__TYPE_DEL;
+    block_del__init(&bk_del_);
+    cmd_.del = &bk_del_;
+    cmd_.del->id = del_id_;
+
+    return true;
+}
+
+bool ncli::parse_bind(int argc, char **argv)
+{
+    const char *options = "i:p:d:";
+    for (int opt = getopt(argc, argv, options); opt != -1; opt = getopt(argc, argv, options))
     {
-        cmd.type_case = COMMAND__TYPE_DEL;
-        block_del__init(&del);
-        cmd.del = &del;
-        cmd.del->id = block_id;
+        switch (opt)
+        {
+        case 'i':
+            LOGGER_DEBUG("Set bind source [value=%s]", optarg);
+            bind_id_ = atoi(optarg);
+            break;
+
+        case 'p':
+            LOGGER_DEBUG("Set bind port [value=%s]", optarg);
+            bind_port_ = atoi(optarg);
+            break;
+
+        case 'd':
+            LOGGER_DEBUG("Set bind destination [value=%s]", optarg);
+            bind_dest_ = atoi(optarg);
+            break;
+
+        default:
+            LOGGER_ERR("Failed to parse option: unknown option [opt=%c]", static_cast<char>(opt));
+            return false;
+        }
     }
-    else if (strcmp(type, "bind") == 0)
+
+    command__init(&cmd_);
+    cmd_.type_case = COMMAND__TYPE_BIND;
+    block_bind__init(&bk_bind_);
+    cmd_.bind = &bk_bind_;
+    cmd_.bind->id = bind_id_;
+    cmd_.bind->port = bind_port_;
+    cmd_.bind->dest = bind_dest_;
+
+    return true;
+}
+
+bool ncli::parse_hook_zmq(int argc, char **argv)
+{
+    const char *options = "i:ct:n:a:";
+    for (int opt = getopt(argc, argv, options); opt != -1; opt = getopt(argc, argv, options))
     {
-        cmd.type_case = COMMAND__TYPE_BIND;
-        block_bind__init(&bind);
-        cmd.bind = &bind;
-        cmd.bind->id = block_id;
-        cmd.bind->port = port;
-        cmd.bind->dest = dest;
+        switch (opt)
+        {
+        case 'i':
+            LOGGER_DEBUG("Set hook identifier [value=%s]", optarg);
+            hook_zmq_id_ = atoi(optarg);
+            break;
+
+        case 'c':
+            LOGGER_DEBUG("Set hook client");
+            hook_zmq_client_ = true;
+            break;
+
+        case 't':
+            LOGGER_DEBUG("Set hook type [value=%s]", optarg);
+            hook_zmq_type_ = atoi(optarg);
+            break;
+
+        case 'n':
+            LOGGER_DEBUG("Set hook name [value=%s]", optarg);
+            hook_zmq_name_ = optarg;
+            break;
+
+        case 'a':
+            LOGGER_DEBUG("Set hook address [value=%s]", optarg);
+            hook_zmq_addr_ = optarg;
+            break;
+
+        default:
+            LOGGER_ERR("Failed to parse option: unknown option [opt=%c]", static_cast<char>(opt));
+            return false;
+        }
     }
-    else if (strcmp(type, "term") == 0)
+
+    command__init(&cmd_);
+    cmd_.type_case = COMMAND__TYPE_HOOK_ZMQ;
+    conf_hook_zmq__init(&conf_hook_zmq_);
+    cmd_.hook_zmq = &conf_hook_zmq_;
+    cmd_.hook_zmq->id = hook_zmq_id_;
+    cmd_.hook_zmq->client = hook_zmq_client_;
+    cmd_.hook_zmq->type = hook_zmq_type_;
+    cmd_.hook_zmq->name = hook_zmq_name_;
+    cmd_.hook_zmq->addr = hook_zmq_addr_;
+
+    return true;
+}
+
+bool ncli::parse_term(int, char **)
+{
+    command__init(&cmd_);
+    cmd_.type_case = COMMAND__TYPE_TERM;
+    cmd_.term = true;
+
+    return true;
+}
+
+bool ncli::options_parse(int argc, char **argv)
+{
+    const char *options = "i:o:t:";
+    for (int opt = getopt(argc, argv, options); opt != -1; opt = getopt(argc, argv, options))
     {
-        cmd.type_case = COMMAND__TYPE_TERM;
-        cmd.term = true;
+        switch (opt)
+        {
+        case 'i':
+            LOGGER_DEBUG("Set peer identity [value=%s]", optarg);
+            ncli_peer_ = optarg;
+            break;
+
+        case 'o':
+            LOGGER_DEBUG("Set command options [value=%s]", optarg);
+            ncli_cmd_args_ = optarg;
+            break;
+
+        case 't':
+            LOGGER_DEBUG("Set command type [value=%s]", optarg);
+            ncli_cmd_type_ = optarg;
+            break;
+
+        default:
+            LOGGER_ERR("Failed to parse option: unknown option [opt=%c]", static_cast<char>(opt));
+            return false;
+        }
+    }
+    ASSERT(ncli_peer_ != nullptr);
+    ASSERT(ncli_cmd_type_ != nullptr);
+    ASSERT(ncli_cmd_args_ != nullptr);
+
+    ASSERT(wordexp(ncli_cmd_args_, &wordexp_, 0) == 0);
+    optind = 1; // reset getopt
+
+    bool ret;
+    if (strcmp(ncli_cmd_type_, "add") == 0)
+    {
+        ret = parse_add(wordexp_.we_wordc, wordexp_.we_wordv);
+    }
+    else if (strcmp(ncli_cmd_type_, "start") == 0)
+    {
+        ret = parse_start(wordexp_.we_wordc, wordexp_.we_wordv);
+    }
+    else if (strcmp(ncli_cmd_type_, "stop") == 0)
+    {
+        ret = parse_stop(wordexp_.we_wordc, wordexp_.we_wordv);
+    }
+    else if (strcmp(ncli_cmd_type_, "del") == 0)
+    {
+        ret = parse_del(wordexp_.we_wordc, wordexp_.we_wordv);
+    }
+    else if (strcmp(ncli_cmd_type_, "bind") == 0)
+    {
+        ret = parse_bind(wordexp_.we_wordc, wordexp_.we_wordv);
+    }
+    else if (strcmp(ncli_cmd_type_, "hook_zmq") == 0)
+    {
+        ret = parse_hook_zmq(wordexp_.we_wordc, wordexp_.we_wordv);
+    }
+    else if (strcmp(ncli_cmd_type_, "term") == 0)
+    {
+        ret = parse_term(wordexp_.we_wordc, wordexp_.we_wordv);
     }
     else
     {
-        cmd.type_case = COMMAND__TYPE__NOT_SET;
+        LOGGER_ERR("Failed to parse option: unknown command type [type=%s]", ncli_cmd_type_);
+        ret = false;
     }
 
-    size_t size = command__get_packed_size(&cmd);
-    uint8_t *buffer = new uint8_t[size];
-    command__pack(&cmd, buffer);
+    return ret;
+}
+
+void ncli::options_clear()
+{
+    wordfree(&wordexp_);
+}
+
+void ncli::start_()
+{
+    //
+    // Prepare and send the network command
+    //
+    struct buffer buf;
+
+    buf.push_back(ncli_peer_, strlen(ncli_peer_) + 1);
+
+    size_t size = command__get_packed_size(&cmd_);
+    uint8_t *proto = new uint8_t[size];
+    command__pack(&cmd_, proto);
 
     // Fill ZMQ message
     const char *topic = "CONF.PROTO.CMD";
     buf.push_back(topic, strlen(topic));
 
-    buf.push_back(buffer, size);
-
-    return true;
-}
-
-void ncli::start_()
-{
-    bool ok;
-
-    //
-    // Prepare and send the network command
-    //
-    struct buffer buf;
-    wordexp_t we;
-
-    ASSERT(wordexp(ncli_args_, &we, 0) == 0);
-
-    buf.push_back(ncli_peer_, strlen(ncli_peer_) + 1);
-
-    ok = ncli_conf_proto(we.we_wordc, we.we_wordv, buf);
-    ASSERT(ok == true);
-
-    wordfree(&we);
+    buf.push_back(proto, size);
 
     process_data_(&buf);
 
@@ -191,6 +374,9 @@ void ncli::stop_()
     tm.bk = this;
     tm.tid = 1;
     mgr_->timer_del(tm);
+
+    // Release command options
+    options_clear();
 }
 
 bool ncli::data_(void *vdata)
@@ -265,31 +451,7 @@ int main(int argc, char **argv)
     hook->type_ = ZMQ_PAIR;
     hook->addr_ = std::string("tcp://127.0.0.1:1665");
 
-    const char *options;
-    options = "A:i:";
-    cli->ncli_args_ = nullptr;
-    cli->ncli_peer_ = nullptr;
-    for (int opt = getopt(argc, argv, options); opt != -1; opt = getopt(argc, argv, options))
-    {
-        switch (opt)
-        {
-        case 'A':
-            LOGGER_DEBUG("Set network option request [value=%s]", optarg);
-            cli->ncli_args_ = optarg;
-            break;
-
-        case 'i':
-            LOGGER_DEBUG("Set identity of the peer [value=%s]", optarg);
-            cli->ncli_peer_ = optarg;
-            break;
-
-        default:
-            LOGGER_CRIT("Failed to parse option: unknown option [opt=%c]", static_cast<char>(opt));
-            return 1;
-        }
-    }
-    ASSERT(cli->ncli_args_ != nullptr);
-    ASSERT(cli->ncli_peer_ != nullptr);
+    ASSERT(cli->options_parse(argc, argv) == true);
 
     //
     // Bind and start

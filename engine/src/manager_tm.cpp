@@ -28,11 +28,7 @@ bool manager::timer_add(const struct timer &tm)
     tmr = tm;
 
     // Convert relative time to absolute time
-    if (clock_gettime(CLOCK_REALTIME, &tmr.time) == -1)
-    {
-        LOGGER_ERR("Failed to add timer: clock_gettime failed [tid=%d]", tm.tid);
-        return false;
-    }
+    clock_gettime(CLOCK_REALTIME, &tmr.time);
     tmr.time.tv_sec += tm.time.tv_sec;
     tmr.time.tv_nsec += tm.time.tv_nsec;
 
@@ -68,11 +64,7 @@ void manager::timer_check_exp()
     struct timer timer;
     struct timespec time;
 
-    if (clock_gettime(CLOCK_REALTIME, &time) == -1)
-    {
-        LOGGER_ERR("Failed to check expiration: clock_gettime failed");
-        return;
-    }
+    clock_gettime(CLOCK_REALTIME, &time);
 
     while (true)
     {

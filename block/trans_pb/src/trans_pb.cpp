@@ -1,6 +1,7 @@
 
 
 // Project headers
+#include "block/hook_zmq.hpp"
 #include "block/trans_pb.hpp"
 #include "engine/manager.hpp"
 #include "utils/buffer.hpp"
@@ -47,6 +48,33 @@ bool trans_pb::proto_command_parse(const uint8_t *data, size_t size)
     case COMMAND__TYPE_BIND:
         is_ok = mgr_->block_bind(cmd->bind->id, cmd->bind->port, cmd->bind->dest);
         break;
+
+    case COMMAND__TYPE_HOOK_ZMQ:
+    {
+        struct hook_zmq *hook;
+        hook = static_cast<struct hook_zmq *>(mgr_->block_get(cmd->hook_zmq->id));
+        if (hook == nullptr)
+        {
+            LOGGER_ERR("Failed to configure ZMQ hook: unknown block [bk_id=%d]", cmd->hook_zmq->id);
+            is_ok = false;
+        }
+        else
+        {
+            hook->client_ = cmd->hook_zmq->client;
+            hook->type_ = cmd->hook_zmq->type;
+            hook->name_ = std::string(cmd->hook_zmq->name);
+            hook->addr_ = std::string(cmd->hook_zmq->addr);
+
+            LOGGER_INFO("Configured ZMQ hook [bk_id=%d ; client=%s ; type=%d ; name=%s ; addr=%s]",
+                        hook->id_,
+                        hook->client_ ? "true" : "false",
+                        hook->type_,
+                        hook->name_.c_str(),
+                        hook->addr_.c_str());
+            is_ok = true;
+        }
+    }
+    break;
 
     case COMMAND__TYPE_TERM:
         is_ok = true;

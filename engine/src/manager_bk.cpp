@@ -14,11 +14,6 @@ bool manager::block_add(int id, const char *type)
     struct block *bk;
 
     // Check input
-    if (id == 0)
-    {
-        LOGGER_ERR("Failed to add block: forbidden block ID [bk_id=%d ; bk_type=%s]", id, type);
-        return false;
-    }
     if (block_get(id) != nullptr)
     {
         LOGGER_ERR("Failed to add block: block already exists [bk_id=%d]", id);

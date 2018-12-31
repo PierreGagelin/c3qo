@@ -42,9 +42,6 @@ static void tu_manager_bk_life_cycle()
     struct factory_failure failure;
     struct factory_success success;
 
-    // Can't add block 0
-    ASSERT(mgr_.block_add(0, "block_derived") == false);
-
     // Can't add block with unregistered factory
     ASSERT(mgr_.block_add(1, "dummy") == false);
 
@@ -79,6 +76,9 @@ static void tu_manager_bk_life_cycle()
     // will actually only be stopped once
     ASSERT(mgr_.block_stop(1) == true);
     ASSERT(mgr_.block_stop(1) == true);
+
+    // Can't delete an unknown block
+    ASSERT(mgr_.block_del(42) == false);
 
     // Can't delete a block without a factory
     mgr_.block_factory_unregister("block_derived");

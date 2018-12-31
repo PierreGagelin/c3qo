@@ -30,18 +30,30 @@ message BlockBind
     int32 dest = 3;
 }
 
+message ConfHookZmq
+{
+    int32 id = 1;
+    bool client = 2;
+    int32 type = 3;
+    string name = 4;
+    string addr = 5;
+}
+
 message Command
 {
     oneof type
     {
-        // Block management
+        // Block creation
         BlockAdd add = 1;
         BlockStart start = 2;
         BlockStop stop = 3;
         BlockDel del = 4;
-        BlockBind bind = 5;
 
-        // Application management
-        bool term = 6;
+        // Block configuration
+        BlockBind bind = 5;
+        ConfHookZmq hook_zmq = 6;
+
+        // Application termination
+        bool term = 7;
     }
 }
