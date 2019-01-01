@@ -21,7 +21,7 @@ struct hook_zmq : block
     unsigned long tx_pkt_;
 
     bool send_(struct buffer &buf);
-    void recv_(struct buffer &buf);
+    bool recv_(struct buffer &buf);
 
     explicit hook_zmq(struct manager *mgr);
     virtual ~hook_zmq() override final;

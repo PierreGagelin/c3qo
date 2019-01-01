@@ -19,32 +19,32 @@ hook_zmq::~hook_zmq() {}
 //
 // @brief Receive a ZMQ multi-parts message
 //
-void hook_zmq::recv_(struct buffer &buf)
+bool hook_zmq::recv_(struct buffer &buf)
 {
-    int ret;
-
-    ret = 1;
-    while (ret == 1)
+    for (int more = 1; more == 1;)
     {
         zmq_msg_t part;
 
         // Receive a message
         zmq_msg_init(&part);
 
-        ret = zmq_msg_recv(&part, zmq_sock_.socket, ZMQ_DONTWAIT);
+        int ret = zmq_msg_recv(&part, zmq_sock_.socket, ZMQ_DONTWAIT);
         if (ret <= 0)
         {
             LOGGER_ERR("Failed to receive data from ZMQ socket: %s [errno=%d]", strerror(errno), errno);
-            break;
+            zmq_msg_close(&part);
+            return false;
         }
 
         buf.push_back(zmq_msg_data(&part), zmq_msg_size(&part));
 
         // Look if there is another part to come
-        ret = zmq_msg_more(&part);
+        more = zmq_msg_more(&part);
 
         zmq_msg_close(&part);
     }
+
+    return true;
 }
 
 //
@@ -93,14 +93,16 @@ void hook_zmq::on_fd_(struct file_desc &fd)
         return;
     }
 
-    // Read a possibly multi-part message
-    recv_(buf);
-    ++rx_pkt_;
+    bool is_ok = recv_(buf);
+    if (is_ok == true)
+    {
+        ++rx_pkt_;
 
-    LOGGER_DEBUG("Received message [bk_id=%d ; parts_count=%zu]", id_, buf.parts_.size());
+        LOGGER_DEBUG("Received message [bk_id=%d ; parts_count=%zu]", id_, buf.parts_.size());
 
-    // Send it to the next block
-    process_data_(&buf);
+        // Send it to the next block
+        process_data_(&buf);
+    }
 
     buf.clear();
 }
@@ -114,11 +116,7 @@ void hook_zmq::start_()
 
     // Create a ZMQ context
     zmq_ctx_ = zmq_ctx_new();
-    if (zmq_ctx_ == nullptr)
-    {
-        LOGGER_ERR("Failed to create ZMQ context [bk_id=%d]", id_);
-        return;
-    }
+    ASSERT(zmq_ctx_ != nullptr);
 
     // Create the socket
     zmq_sock_.socket = zmq_socket(zmq_ctx_, type_);
@@ -132,7 +130,8 @@ void hook_zmq::start_()
     ret = zmq_setsockopt(zmq_sock_.socket, ZMQ_IDENTITY, name_.c_str(), name_.size() + 1);
     if (ret != 0)
     {
-        LOGGER_ERR("Failed to set ZMQ_IDENTITY [bk_id=%d ; identity=%s]", id_, name_.c_str());
+        LOGGER_ERR("Failed to set ZMQ_IDENTITY: %s [errno=%d ; bk_id=%d ; identity=%s]",
+                   strerror(errno), errno, id_, name_.c_str());
         return;
     }
 
@@ -181,12 +180,7 @@ void hook_zmq::start_()
 
         buf.push_back(dummy, strlen(dummy));
 
-        bool is_ok = send_(buf);
-        if (is_ok == false)
-        {
-            LOGGER_ERR("Failed to register identity");
-            return;
-        }
+        send_(buf);
 
         buf.clear();
     }

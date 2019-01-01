@@ -138,25 +138,59 @@ static void tu_hook_zmq_error()
 {
     struct hook_zmq block(&mgr_);
 
-    block.id_ = 1;
+    // Socket creation failure
+    block.type_ = 42;
+    block.start_();
+    ASSERT(block.zmq_sock_.socket == nullptr);
+    block.stop_();
+    block.type_ = 0;
 
-    block.data_(nullptr);
+    // Socket identity failure
+    block.name_ = "more than 255 characters: ";
+    for (int i = 0; i < 300; ++i)
+    {
+        block.name_ += "a";
+    }
+    block.start_();
+    ASSERT(block.zmq_sock_.socket != nullptr);
+    block.stop_();
+    block.zmq_sock_.socket = nullptr;
+    block.name_ = "";
 
     // Connect failure
     block.addr_ = "well, obviously it's not an address";
     block.client_ = true;
     block.start_();
+    ASSERT(block.zmq_sock_.socket != nullptr);
     block.stop_();
+    block.zmq_sock_.socket = nullptr;
 
     // Bind failure
+    block.type_ = 0;
+    block.addr_ = "well, obviously it's not an address";
     block.client_ = false;
     block.start_();
+    ASSERT(block.zmq_sock_.socket != nullptr);
     block.stop_();
+    block.zmq_sock_.socket = nullptr;
+
+    // Send and receive failure
+    struct buffer buf;
+    buf.push_back("dummy", strlen("dummy"));
+    ASSERT(block.send_(buf) == false);
+    ASSERT(block.recv_(buf) == false);
+    buf.clear();
 
     // Callback on unknown socket
     struct file_desc fd;
     fd.socket = nullptr;
+    block.start_();
+    ASSERT(block.zmq_sock_.socket != nullptr);
     block.on_fd_(fd);
+    block.stop_();
+
+    // Data failure
+    block.data_(nullptr);
 }
 
 int main(int, char **)
