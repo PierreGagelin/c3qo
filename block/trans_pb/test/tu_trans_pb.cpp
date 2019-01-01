@@ -89,7 +89,7 @@ struct tu_trans_pb
 
         struct buffer buf;
 
-        const char *topic = "CONF.PROTO.CMD";
+        const char *topic = "PROTO.CMD";
         buf.push_back(topic, strlen(topic));
         buf.push_back(buffer, size);
 
@@ -139,7 +139,7 @@ static void tu_trans_pb_errors()
     {
         struct buffer buf;
 
-        const char *tmp = "CONF.PROTO.CMD";
+        const char *tmp = "PROTO.CMD";
         buf.push_back(tmp, strlen(tmp)); // topic: OK
         buf.push_back(tmp, strlen(tmp)); // protobuf data: not OK
 

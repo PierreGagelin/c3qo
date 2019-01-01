@@ -14,20 +14,23 @@ Network CLI Errors
     Builtin.Should Be True    ${result.rc} != ${0}
 
     # Wrong command type
-    Send Protobuf Command    wrong_type    dummy    ${1}
+    Send Protobuf Command    wrong_type    dummy    dummy    ${1}
 
     # Wrong protobuf option
-    Send Protobuf Command    add         dummy -w    ${1}
-    Send Protobuf Command    start       dummy -w    ${1}
-    Send Protobuf Command    stop        dummy -w    ${1}
-    Send Protobuf Command    del         dummy -w    ${1}
-    Send Protobuf Command    bind        dummy -w    ${1}
-    Send Protobuf Command    hook_zmq    dummy -w    ${1}
+    Send Protobuf Command    add         dummy -w    dummy    ${1}
+    Send Protobuf Command    start       dummy -w    dummy    ${1}
+    Send Protobuf Command    stop        dummy -w    dummy    ${1}
+    Send Protobuf Command    del         dummy -w    dummy    ${1}
+    Send Protobuf Command    bind        dummy -w    dummy    ${1}
+    Send Protobuf Command    hook_zmq    dummy -w    dummy    ${1}
 
     # Configure unknown block
     Start Proxy
     Start C3qo
-    Send Protobuf Command    hook_zmq    dummy -i 42 -c -t 0 -n dummy -a dummy    ${1}
+    Send Protobuf Command    hook_zmq    dummy -i 42 -c -t 0 -n dummy -a dummy    KO
+
+    # Wrong expected output
+    Send Protobuf Command    add      dummy -i 0 -t hello    wrong    ${1}
     [Teardown]    Process.Terminate All Processes
 
 C3qo Errors
@@ -47,7 +50,7 @@ Remote Application Management
     Start C3qo
 
     # Stop c3qo via network CLI
-    Send Protobuf Command    term    dummy
+    Send Protobuf Command    term    dummy    OK
 
     # c3qo should be terminated gracefully
     ${result}    Process.Wait For Process    handle=c3qo    timeout=1 s
@@ -61,19 +64,19 @@ Remote Block Management
     Start C3qo
 
     # Life cycle of a block
-    Send Protobuf Command    add      dummy -i 0 -t hello
-    Send Protobuf Command    start    dummy -i 0
-    Send Protobuf Command    stop     dummy -i 0
-    Send Protobuf Command    del      dummy -i 0
+    Send Protobuf Command    add      dummy -i 0 -t hello    OK
+    Send Protobuf Command    start    dummy -i 0             OK
+    Send Protobuf Command    stop     dummy -i 0             OK
+    Send Protobuf Command    del      dummy -i 0             OK
 
     # Bind two blocks
-    Send Protobuf Command    add     dummy -i 1 -t hello
-    Send Protobuf Command    add     dummy -i 2 -t hello
-    Send Protobuf Command    bind    dummy -i 1 -p 0 -d 2
+    Send Protobuf Command    add     dummy -i 1 -t hello     OK
+    Send Protobuf Command    add     dummy -i 2 -t hello     OK
+    Send Protobuf Command    bind    dummy -i 1 -p 0 -d 2    OK
 
     # Configure a ZeroMQ hook
-    Send Protobuf Command    add         dummy -i 3 -t hook_zmq
-    Send Protobuf Command    hook_zmq    dummy -i 3 -c -t 0 -n name -a tcp://192.168.0.1:7777
+    Send Protobuf Command    add         dummy -i 3 -t hook_zmq                                  OK
+    Send Protobuf Command    hook_zmq    dummy -i 3 -c -t 0 -n name -a tcp://192.168.0.1:7777    OK
 
     [Teardown]    Process.Terminate All Processes
 
@@ -96,6 +99,7 @@ Stop C3qo
     Process.Terminate Process    handle=c3qo
 
 Send Protobuf Command
-    [Arguments]  ${type}  ${opt}  ${expected_rc}=${0}
-    ${result}  Process.Run Process  /tmp/c3qo-0.0.7-local/bin/ncli  -i  ${c3qo_identity}  -t  ${type}  -o  ${opt}
-    Builtin.Should Be True  ${result.rc} == ${expected_rc}
+    [Arguments]    ${type}    ${opt}    ${ret}    ${expected_rc}=${0}
+    ${args}    BuiltIn.Create List    -i    ${c3qo_identity}    -t    ${type}    -o    ${opt}    -r    ${ret}
+    ${result}    Process.Run Process    /tmp/c3qo-0.0.7-local/bin/ncli    @{args}
+    Builtin.Should Be True    ${result.rc} == ${expected_rc}

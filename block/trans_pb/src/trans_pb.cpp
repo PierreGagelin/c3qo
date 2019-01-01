@@ -102,7 +102,7 @@ void trans_pb::proto_command_reply(bool is_ok)
     const char *topic;
     const char *status;
 
-    topic = "CONF.PROTO.CMD.REP";
+    topic = "PROTO.CMD.REP";
     buf.push_back(topic, strlen(topic));
 
     status = is_ok ? "OK" : "KO";
@@ -129,7 +129,7 @@ bool trans_pb::data_(void *vdata)
     }
 
     // Action to take upon topic value
-    if (memcmp("CONF.PROTO.CMD", buf.parts_[0].data, buf.parts_[0].len) == 0)
+    if (memcmp("PROTO.CMD", buf.parts_[0].data, buf.parts_[0].len) == 0)
     {
         bool is_ok;
         is_ok = proto_command_parse(static_cast<uint8_t *>(buf.parts_[1].data), buf.parts_[1].len);

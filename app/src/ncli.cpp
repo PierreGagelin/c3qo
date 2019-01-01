@@ -25,6 +25,7 @@ ncli::ncli(struct manager *mgr) : block(mgr),
                                   ncli_peer_(nullptr),
                                   ncli_cmd_type_(nullptr),
                                   ncli_cmd_args_(nullptr),
+                                  ncli_cmd_ret_(nullptr),
                                   add_id_(0),
                                   add_type_(nullptr),
                                   start_id_(0),
@@ -257,7 +258,7 @@ bool ncli::parse_term(int, char **)
 
 bool ncli::options_parse(int argc, char **argv)
 {
-    const char *options = "i:o:t:";
+    const char *options = "i:o:t:r:";
     for (int opt = getopt(argc, argv, options); opt != -1; opt = getopt(argc, argv, options))
     {
         switch (opt)
@@ -277,6 +278,11 @@ bool ncli::options_parse(int argc, char **argv)
             ncli_cmd_type_ = optarg;
             break;
 
+        case 'r':
+            LOGGER_DEBUG("Set command expected return [value=%s]", optarg);
+            ncli_cmd_ret_ = optarg;
+            break;
+
         default:
             LOGGER_ERR("Failed to parse option: unknown option [opt=%c]", static_cast<char>(opt));
             return false;
@@ -285,6 +291,7 @@ bool ncli::options_parse(int argc, char **argv)
     ASSERT(ncli_peer_ != nullptr);
     ASSERT(ncli_cmd_type_ != nullptr);
     ASSERT(ncli_cmd_args_ != nullptr);
+    ASSERT(ncli_cmd_ret_ != nullptr);
 
     ASSERT(wordexp(ncli_cmd_args_, &wordexp_, 0) == 0);
     optind = 1; // reset getopt
@@ -346,7 +353,7 @@ void ncli::start_()
     command__pack(&cmd_, proto);
 
     // Fill ZMQ message
-    const char *topic = "CONF.PROTO.CMD";
+    const char *topic = "PROTO.CMD";
     buf.push_back(topic, strlen(topic));
 
     buf.push_back(proto, size);
@@ -389,8 +396,8 @@ bool ncli::data_(void *vdata)
         return false;
     }
     if ((memcmp(buf.parts_[0].data, ncli_peer_, buf.parts_[0].len) != 0) ||
-        (memcmp(buf.parts_[1].data, "CONF.PROTO.CMD.REP", buf.parts_[1].len) != 0) ||
-        (memcmp(buf.parts_[2].data, "OK", buf.parts_[2].len) != 0))
+        (memcmp(buf.parts_[1].data, "PROTO.CMD.REP", buf.parts_[1].len) != 0) ||
+        (memcmp(buf.parts_[2].data, ncli_cmd_ret_, buf.parts_[2].len) != 0))
     {
         LOGGER_DEBUG("Discard unexpected message [peer=%s ; topic=%s ; status=%s]",
                      static_cast<char *>(buf.parts_[0].data),

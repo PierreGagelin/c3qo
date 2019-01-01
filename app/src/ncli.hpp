@@ -15,6 +15,7 @@ struct ncli : public block
     char *ncli_peer_;     // Identity of the peer to configure
     char *ncli_cmd_type_; // Command type
     char *ncli_cmd_args_; // Command arguments
+    char *ncli_cmd_ret_;  // Command expected return
 
     wordexp_t wordexp_;
     bool options_parse(int argc, char **argv);
