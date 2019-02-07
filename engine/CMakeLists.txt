@@ -10,6 +10,7 @@ set(SOURCES_MANAGER ${SOURCES_MANAGER} src/manager_tm.cpp)
 
 c3qo_add_library(manager "${SOURCES_MANAGER}")
 target_include_directories(manager PUBLIC include/)
+target_include_directories(manager PUBLIC ${C3QO_ZEROMQ}/include/)
 target_link_libraries(manager logger)
 target_link_libraries(manager buffer)
 

@@ -41,7 +41,7 @@ endfunction()
 #
 function (c3qo_target_link_flags t_name)
     # Required for ZeroMQ runtime
-    target_link_libraries(${t_name} ${C3QO_ZEROMQ}/lib/libzmq.so)
+    target_link_libraries(${t_name} ${C3QO_ZEROMQ_BUILD}/lib/libzmq.so)
 
     # Add coverage link flag
     if (${C3QO_COVERAGE})
@@ -126,4 +126,5 @@ function(c3qo_add_library_protobuf_c target_name proto_dir proto_prefix)
     target_link_libraries(${target_name} ${proto_lib})
     target_compile_options(${target_name} PRIVATE ${COMPILE_FLAGS_C})
     target_include_directories(${target_name} PUBLIC ${proto_gen_dir})
+    target_include_directories(${target_name} PUBLIC ${C3QO_PROTOBUF})
 endfunction()
