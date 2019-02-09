@@ -299,31 +299,31 @@ bool ncli::options_parse(int argc, char **argv)
     bool ret;
     if (strcmp(ncli_cmd_type_, "add") == 0)
     {
-        ret = parse_add(wordexp_.we_wordc, wordexp_.we_wordv);
+        ret = parse_add(static_cast<int>(wordexp_.we_wordc), wordexp_.we_wordv);
     }
     else if (strcmp(ncli_cmd_type_, "start") == 0)
     {
-        ret = parse_start(wordexp_.we_wordc, wordexp_.we_wordv);
+        ret = parse_start(static_cast<int>(wordexp_.we_wordc), wordexp_.we_wordv);
     }
     else if (strcmp(ncli_cmd_type_, "stop") == 0)
     {
-        ret = parse_stop(wordexp_.we_wordc, wordexp_.we_wordv);
+        ret = parse_stop(static_cast<int>(wordexp_.we_wordc), wordexp_.we_wordv);
     }
     else if (strcmp(ncli_cmd_type_, "del") == 0)
     {
-        ret = parse_del(wordexp_.we_wordc, wordexp_.we_wordv);
+        ret = parse_del(static_cast<int>(wordexp_.we_wordc), wordexp_.we_wordv);
     }
     else if (strcmp(ncli_cmd_type_, "bind") == 0)
     {
-        ret = parse_bind(wordexp_.we_wordc, wordexp_.we_wordv);
+        ret = parse_bind(static_cast<int>(wordexp_.we_wordc), wordexp_.we_wordv);
     }
     else if (strcmp(ncli_cmd_type_, "hook_zmq") == 0)
     {
-        ret = parse_hook_zmq(wordexp_.we_wordc, wordexp_.we_wordv);
+        ret = parse_hook_zmq(static_cast<int>(wordexp_.we_wordc), wordexp_.we_wordv);
     }
     else if (strcmp(ncli_cmd_type_, "term") == 0)
     {
-        ret = parse_term(wordexp_.we_wordc, wordexp_.we_wordv);
+        ret = parse_term(static_cast<int>(wordexp_.we_wordc), wordexp_.we_wordv);
     }
     else
     {

@@ -76,7 +76,7 @@ bool manager::fd_add(const struct file_desc &fd)
         callback_.push_back(fd);
         fd_.push_back(new_fd);
 
-        index = fd_.size() - 1;
+        index = static_cast<int>(fd_.size()) - 1;
     }
 
     // Reset event flags
