@@ -35,6 +35,7 @@ ACTION_CLEAN="false"
 ACTION_INSTALL="false"
 ACTION_LCOV="false"
 ACTION_PACK="false"
+ACTION_SETUP="false"
 ACTION_TEST="false"
 
 #
@@ -89,9 +90,9 @@ function action_build
 }
 
 #
-# Install required packages
+# Setup required tools
 #
-function action_install
+function action_setup
 {
     local url_protobuf="https://github.com/protobuf-c/protobuf-c/releases/download/v1.3.1/protobuf-c-1.3.1.tar.gz"
     local url_zeromq="https://github.com/zeromq/libzmq/releases/download/v4.3.0/zeromq-4.3.0.tar.gz"
@@ -152,6 +153,14 @@ function action_package
 
     # Extract the package
     tar -C /tmp -xzf $C3QO_DIR_BUILD/c3qo-0.0.7-local.tar.gz
+}
+
+#
+# Install c3qo on the local machine
+#
+function action_install
+{
+    make -C $C3QO_DIR_BUILD install
 }
 
 #
@@ -223,7 +232,7 @@ function action_lcov
 #
 # Retrieve command line options
 #
-while getopts "bchilptAB:C:GJ:LT" opt
+while getopts "bchilpstAB:C:GJ:LT" opt
 do
     case "${opt}" in
         b)
@@ -243,6 +252,9 @@ do
             ;;
         p)
             ACTION_PACK="true"
+            ;;
+        s)
+            ACTION_SETUP="true"
             ;;
         t)
             ACTION_TEST="true"
@@ -291,9 +303,9 @@ CMAKE_OPTIONS="$CMAKE_OPTIONS -DC3QO_TEST:BOOL=$C3QO_TEST"
 #
 # Execute actions
 #
-if [ $ACTION_INSTALL = "true" ]
+if [ $ACTION_SETUP = "true" ]
 then
-    action_install
+    action_setup
 fi
 
 if [ $ACTION_CLEAN = "true" ]
@@ -314,6 +326,11 @@ fi
 if [ $ACTION_PACK = "true" ]
 then
     action_package
+fi
+
+if [ $ACTION_INSTALL = "true" ]
+then
+    action_install
 fi
 
 if [ $ACTION_LCOV = "true" ]
