@@ -36,12 +36,16 @@ function (c3qo_target_compile_flags t_name)
     endif()
 endfunction()
 
+install(FILES ${C3QO_ZEROMQ_BUILD}/lib/libzmq.so DESTINATION lib)
+install(FILES ${C3QO_ZEROMQ_BUILD}/lib/libzmq.so.5 DESTINATION lib)
+install(FILES ${C3QO_ZEROMQ_BUILD}/lib/libzmq.so.5.2.0 DESTINATION lib)
+
 #
 # Add link flags
 #
 function (c3qo_target_link_flags t_name)
     # Required for ZeroMQ runtime
-    target_link_libraries(${t_name} ${C3QO_ZEROMQ_BUILD}/lib/libzmq.so)
+    target_link_libraries(${t_name} ${C3QO_ZEROMQ_BUILD}/lib/libzmq.so.5.2.0)
 
     # Add coverage link flag
     if (${C3QO_COVERAGE})
@@ -99,6 +103,10 @@ function (c3qo_add_test target_name target_sources)
     add_test(NAME ${target_name} COMMAND ${target_name})
 endfunction()
 
+install(FILES ${C3QO_PROTOBUF}/protobuf-c/.libs/libprotobuf-c.so DESTINATION lib)
+install(FILES ${C3QO_PROTOBUF}/protobuf-c/.libs/libprotobuf-c.so.1 DESTINATION lib)
+install(FILES ${C3QO_PROTOBUF}/protobuf-c/.libs/libprotobuf-c.so.1.0.0 DESTINATION lib)
+
 #
 # Add a protobuf-c library
 #
@@ -108,7 +116,7 @@ function(c3qo_add_library_protobuf_c target_name proto_dir proto_prefix)
     set(proto_src_file ${proto_prefix}.proto)
 
     set(proto_cmd ${C3QO_PROTOBUF}/protoc-c/protoc-c)
-    set(proto_lib ${C3QO_PROTOBUF}/protobuf-c/.libs/libprotobuf-c.so)
+    set(proto_lib ${C3QO_PROTOBUF}/protobuf-c/.libs/libprotobuf-c.so.1.0.0)
 
     set(proto_gen_dir ${CMAKE_CURRENT_BINARY_DIR}/${proto_dir})
     set(proto_gen_file ${proto_gen_dir}/${proto_prefix}.pb-c.c)

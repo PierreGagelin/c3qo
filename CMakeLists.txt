@@ -11,6 +11,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 # If not empty an undesired "rdynamic" option is added
 set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
 
+set(CMAKE_INSTALL_PREFIX /tmp/c3qo)
+set(CMAKE_INSTALL_RPATH $ORIGIN/../lib)
+
 #
 # GCOV
 #
